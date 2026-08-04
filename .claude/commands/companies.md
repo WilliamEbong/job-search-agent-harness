@@ -20,6 +20,16 @@ page, sometimes days earlier, sometimes exclusively.
 
 ---
 
+## Step 0: Check they are set up
+
+If `evidence/register.yaml` or `preferences.yaml` is missing, stop and say so in one
+line, then offer to fix it — never fail into undefined behaviour, and never read the
+shipped `.example.yaml` as though it were the user's:
+
+> You have not set up a profile yet. Want to do that now? It takes about five minutes.
+
+If they say yes, run `/setup-harness` and come back here afterwards.
+
 ## Step 1: Show what is there
 
 Read `companies.yaml` (schema in `companies.example.yaml`). Show the current list

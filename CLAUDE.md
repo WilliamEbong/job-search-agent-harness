@@ -162,4 +162,49 @@ Harness workflows: `/setup-harness`, `/career-review`, `/companies`, `/scrape`,
 The Verification Checklist above still governs every generated document. The harness adds
 one blocking step to it: **`/verify-facts` runs on the final text, after any humanizer
 edit and after the final compile.** A package with an open red line is not presented.
+
+### Saying it in plain language
+
+Slash commands are optional. These phrases route to the same workflows, and the
+model should treat them as equivalent:
+
+| The user says | Run |
+|---|---|
+| "what should I do today", "where am I", "what's next" | `/today` |
+| "find me jobs", "any new jobs", "search" | `/scrape` |
+| "apply to this", "apply", + a link/screenshot/PDF/pasted text | `/apply-any` |
+| "I got rejected by X", "they offered me the job", "I had the interview", "I applied" | `/outcome` |
+| "remember that I ...", "I actually did X" | `/fact` |
+| "check my spreadsheet", "update the tracker" | `/tracker` |
+| "look at my GitHub / portfolio" | `/career-review` |
+| "watch this company", "add employer" | `/companies` |
+| "set me up", "start over with my CV" | `/setup-harness` |
+| "prep me for the interview" | `/interview` |
+
+**Before any harness workflow runs, check the user is set up.** If
+`evidence/register.yaml` or `preferences.yaml` is missing, do not fail into
+undefined behaviour and do not read the `.example.yaml` as if it were theirs.
+Say so in one line and offer onboarding:
+
+> You have not set up a profile yet - want to do that now? It takes about five
+> minutes.
+
+**`/apply` is upstream's inner workflow.** If the user types it directly, they
+skip posting intake, the hard-constraint gate, the humanizer pass, the fact
+gate, the package, and the tracker row - every addition this harness makes.
+Redirect to `/apply-any` unless they say they meant `/apply` specifically.
+
+**Application status vocabulary.** One set of values, everywhere:
+`in_progress`, `interview_only`, `hired`, `offer_declined`, `rejected`,
+`no_response`, `withdrawn`. When a workflow's own prose suggests something else
+("applied", "interview", "offer"), write the canonical value instead - the
+workbook and the archiver classify on these, and an unrecognised status used to
+drop rows out of the funnel silently. `python harness/status.py` is the
+reference.
+
+**Tracker writes go through the script**, never hand-written CSV:
+`python harness/tracker_row.py --company "..." --role "..." --set status=...`.
+It handles quoting, and it repairs a short header (a tracker created by
+`/outcome` lacks `submitted_date`, without which nothing ever moves to
+`applied/`).
 <!-- harness:end -->

@@ -185,6 +185,35 @@ def section(title: str) -> None:
     print(f"\n{title}\n{'-' * len(title)}")
 
 
+def step(message: str) -> None:
+    """Say what is about to happen, before a step that takes a while.
+
+    `run()` captures output, so several steps here are silent for minutes —
+    installing dependencies for seven job-board CLIs, and MiKTeX downloading
+    packages on its first compile. With no signal at all, the reasonable
+    conclusion is that it has hung.
+    """
+    print(f"  {message}", flush=True)
+
+
+def offer_express() -> bool:
+    """Ask once whether to take every recommended answer.
+
+    The per-item prompts are 7 on one runtime and 13 on two, which is a lot of
+    decisions to ask someone before they have seen the thing work.
+    """
+    if DOCTOR_ONLY or AUTO_YES:
+        return AUTO_YES
+    print("\nTwo ways to do this:")
+    print("  express - take the recommended answer to everything (about 2 questions)")
+    print("  custom  - decide each item yourself (about 7, or 13 if you use both")
+    print("            Claude Code and Codex)")
+    print("\nExpress installs: the Python packages, the job-board tools, and")
+    print("Ponytail. It offers Caveman, the browser tools and the statusline")
+    print("but does not assume them.")
+    return confirm("\nUse express setup?", default=True)
+
+
 # --------------------------------------------------------------------------
 # prerequisite checks
 # --------------------------------------------------------------------------
@@ -335,6 +364,8 @@ def _test_compile(exe: str, engine: str, subdir: Path, texfile: str,
         # bundled OpenFonts path relative to the current directory, and
         # compiling from elsewhere fails with a font-not-found error that
         # looks nothing like the real cause.
+        step(f"compiling the stock {label} with {engine} - on a fresh TeX "
+             f"install this downloads packages and can take several minutes")
         code, out = run(
             [exe, "-interaction=nonstopmode", "-halt-on-error",
              f"-output-directory={tmp}", texfile],
@@ -351,8 +382,9 @@ def _test_compile(exe: str, engine: str, subdir: Path, texfile: str,
         )
         return Check(
             f"{engine} compile", DEGRADED, f"{label} failed to build",
-            f"{reason}  (MiKTeX downloads missing packages on first use — if this "
-            f"is a fresh TeX install, run the compile once by hand to let it finish)",
+            f"{reason}\n"
+            f"      Run this once by hand to let TeX finish downloading:\n"
+            f"        cd {subdir.as_posix()} && {engine} {texfile}",
         )
 
 
@@ -448,6 +480,89 @@ FIRECRAWL_URL = "https://mcp.firecrawl.dev/v2/mcp"
 FIRECRAWL_KEY_VAR = "FIRECRAWL_API_KEY"
 
 STATUSLINE_COMMAND = "python harness/telemetry_statusline.py"
+
+# The harness scripts an application run invokes. Without these pre-approved,
+# a single /apply-any raises six to eight separate "allow this command?"
+# dialogs, several of them inside a multi-minute compile loop.
+HARNESS_PERMISSIONS = [
+    "Bash(python harness/apply_package.py:*)",
+    "Bash(python harness/fact_check.py:*)",
+    "Bash(python harness/tracker_row.py:*)",
+    "Bash(python harness/tracker_xlsx.py:*)",
+    "Bash(python harness/archive_applications.py:*)",
+    "Bash(python harness/run_log.py:*)",
+    "Bash(python harness/rotate_backup.py:*)",
+    "Bash(python harness/today.py:*)",
+    "Bash(python harness/tex_to_md.py:*)",
+    "Bash(lualatex:*)",
+    "Bash(xelatex:*)",
+    "Bash(pandoc:*)",
+]
+
+
+def _read_local_settings(settings: Path):
+    """Parse .claude/settings.local.json, or return None if unusable."""
+    import json
+
+    if not settings.is_file():
+        return {}
+    try:
+        data = json.loads(settings.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _write_local_settings(settings: Path, data) -> bool:
+    import json
+
+    try:
+        settings.parent.mkdir(parents=True, exist_ok=True)
+        temporary = settings.with_name(settings.name + ".tmp")
+        temporary.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+        os.replace(temporary, settings)
+    except OSError:
+        return False
+    return True
+
+
+def offer_permissions() -> Check:
+    """Pre-approve the harness's own scripts in settings.local.json.
+
+    Never .claude/settings.json: that file is frozen by upstream's security
+    guard, and a permissions file the setup script edits is a permissions file
+    an attacker can edit through the setup script.
+    """
+    settings = ROOT / ".claude" / "settings.local.json"
+    data = _read_local_settings(settings)
+    if data is None:
+        return Check("permissions", UNVERIFIED,
+                     f"{settings.name} is not readable JSON - left alone",
+                     required=False)
+
+    permissions = data.setdefault("permissions", {})
+    allow = permissions.setdefault("allow", [])
+    missing = [entry for entry in HARNESS_PERMISSIONS if entry not in allow]
+    if not missing:
+        return Check("permissions", OK, "harness scripts already approved",
+                     required=False)
+
+    print("\n  Without this, every application run stops to ask permission for")
+    print("  each script it uses - six to eight prompts, some mid-compile.")
+    print("  These would be pre-approved, in your local settings only:")
+    for entry in missing:
+        print(f"    {entry}")
+    if not confirm("\n  Pre-approve the harness's own commands?"):
+        return Check("permissions", OPTIONAL,
+                     "declined - expect a prompt per script", required=False)
+
+    allow.extend(missing)
+    if not _write_local_settings(settings, data):
+        return Check("permissions", UNVERIFIED, f"could not write {settings.name}",
+                     required=False)
+    return Check("permissions", OK,
+                 f"{len(missing)} command(s) approved in {settings.name}",
+                 required=False)
 
 
 def offer_statusline() -> Check:
@@ -575,6 +690,7 @@ def install_python_deps() -> Check:
     req = ROOT / "requirements.txt"
     if not req.is_file():
         return Check("Python packages", MISSING, "requirements.txt not found")
+    step("installing the Python packages (pyyaml, openpyxl, pypdf)")
     code, out = run([sys.executable, "-m", "pip", "install", "-r", str(req)],
                     timeout=900)
     if code != 0:
@@ -598,7 +714,10 @@ def install_portal_deps() -> list[Check]:
                       f"{len(dirs)} CLIs cannot be prepared without a working Bun",
                       "Fix the Bun row above, then re-run setup.")]
     failed: list[str] = []
-    for cli in dirs:
+    step(f"installing dependencies for {len(dirs)} job-board tools "
+         f"- this takes a few minutes")
+    for index, cli in enumerate(dirs, 1):
+        step(f"  [{index}/{len(dirs)}] {cli.parent.name}")
         code, out = run([bun, "install"], timeout=600, cwd=cli)
         if code != 0:
             tail = out.strip().splitlines()[-1][:80] if out.strip() else "failed"
@@ -658,6 +777,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Repository: {ROOT}")
     if DOCTOR_ONLY:
         print("Mode: doctor only. Nothing will be installed or changed.")
+    elif offer_express():
+        AUTO_YES = True
+        print("\nExpress setup: taking the recommended answer to each item.")
 
     checks: list[Check] = []
 
@@ -718,6 +840,8 @@ def main(argv: list[str] | None = None) -> int:
             section(f"Optional MCP servers for {runtime.name}")
             checks.extend(offer_mcp(runtime))
             if runtime.name == "claude":
+                section("Permissions")
+                checks.append(offer_permissions())
                 section("Session continuity")
                 checks.append(offer_statusline())
 

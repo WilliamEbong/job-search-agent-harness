@@ -15,10 +15,33 @@ tells the user **what the run will cost** before it starts.
 
 ---
 
+## Step 0: Check they are set up
+
+If `evidence/register.yaml` or `preferences.yaml` is missing, stop and say so in one
+line, then offer to fix it — never fail into undefined behaviour, and never read the
+shipped `.example.yaml` as though it were the user's:
+
+> You have not set up a profile yet. Want to do that now? It takes about five minutes.
+
+If they say yes, run `/setup-harness` and come back here afterwards.
+
 ## Step 1: Resolve scope and mode
 
-Read `preferences.yaml` for `default_search_scope` and `usage.mode`. Per-run flags
-override both; nothing is written back unless the user says "make that the default".
+A bare `/scrape` should never require the user to choose. Resolve in this order:
+
+1. the scope and mode of the **last run**, from the newest `run_log.csv` row;
+2. `default_search_scope` and `usage.mode` in `preferences.yaml`;
+3. `boards` + `focused`.
+
+Then print one line naming what you are about to search and the nearest
+alternative — so the fifteen scope-and-mode combinations stay available without
+anyone having to learn them:
+
+> Searching your 4 job boards (focused). Say "companies" to check your saved
+> employers instead, or "everything" for both.
+
+Per-run flags override all of it; nothing is written back unless the user says
+"make that the default".
 
 **The five scopes** — this is the whole selection surface:
 

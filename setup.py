@@ -205,12 +205,12 @@ def offer_express() -> bool:
     if DOCTOR_ONLY or AUTO_YES:
         return AUTO_YES
     print("\nTwo ways to do this:")
-    print("  express - take the recommended answer to everything (about 2 questions)")
-    print("  custom  - decide each item yourself (about 7, or 13 if you use both")
-    print("            Claude Code and Codex)")
-    print("\nExpress installs: the Python packages, the job-board tools, and")
-    print("Ponytail. It offers Caveman, the browser tools and the statusline")
-    print("but does not assume them.")
+    print("  express - take the recommended answer to everything (1 question)")
+    print("  custom  - decide each item yourself (8 questions, or 12 if you use")
+    print("            both Claude Code and Codex)")
+    print("\nExpress installs: the Python packages, the job-board tools, Ponytail,")
+    print("the Playwright and Firecrawl browser tools, and the statusline. The only")
+    print("thing it declines for you is Caveman.")
     return confirm("\nUse express setup?", default=True)
 
 
@@ -497,6 +497,10 @@ HARNESS_PERMISSIONS = [
     "Bash(lualatex:*)",
     "Bash(xelatex:*)",
     "Bash(pandoc:*)",
+    # The ATS text-layer check in the Verification Checklist is not optional,
+    # so this fires on every application; without it the seeded list still
+    # leaves one dialog per run.
+    "Bash(pdftotext:*)",
 ]
 
 
@@ -720,6 +724,15 @@ def install_portal_deps() -> list[Check]:
         step(f"  [{index}/{len(dirs)}] {cli.parent.name}")
         code, out = run([bun, "install"], timeout=600, cwd=cli)
         if code != 0:
+            # `@types/bun` pulls in the `bun` npm package, whose postinstall
+            # downloads a platform binary and fails on Windows the first time
+            # ("Failed to find package @oven/bun-windows-x64-baseline"). The
+            # packages themselves are already extracted by then, so the second
+            # install completes. Measured: 4 of 7 CLIs fail on a clean clone
+            # and all 7 pass on a re-run, which is the loop this removes.
+            step("      first attempt failed, retrying once")
+            code, out = run([bun, "install"], timeout=600, cwd=cli)
+        if code != 0:
             tail = out.strip().splitlines()[-1][:80] if out.strip() else "failed"
             failed.append(f"{cli.parent.name}: {tail}")
     if failed:
@@ -752,7 +765,17 @@ def print_doctor(checks: list[Check]) -> int:
                 print(f"      fix: {check.fix}")
         print("\n  The harness will not work correctly until these are resolved.")
     else:
-        print("\n  All required prerequisites are in place.")
+        # A tool on the persistent PATH but not this shell's is not a failure,
+        # but it is not an all-clear either: the job-board install reads the
+        # shell's PATH and fails on exactly this state. Saying "all in place"
+        # above the restart note contradicts it.
+        stale = [c for c in checks if c.status == STALE_PATH]
+        if stale:
+            print(f"\n  {len(stale)} tool(s) are installed but not visible to this "
+                  f"shell. Close and reopen your terminal, then re-run setup — "
+                  f"anything that needs them is skipped until you do.")
+        else:
+            print("\n  All required prerequisites are in place.")
     return len(problems)
 
 

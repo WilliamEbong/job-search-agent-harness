@@ -318,5 +318,54 @@ class ConfirmBehaviour(unittest.TestCase):
             self.assertFalse(setup.confirm("Install Caveman?", default=False))
 
 
+class PortalInstallRetry(unittest.TestCase):
+    """A clean clone fails `bun install` once and succeeds on the second run.
+
+    `@types/bun` pulls in the `bun` npm package, whose postinstall downloads a
+    platform binary; on Windows it exits 1 with "Failed to find package
+    @oven/bun-windows-x64-baseline". Measured on a clean clone of 2a4772b: 4 of
+    7 CLIs failed, setup exited 1 telling the user the harness would not work,
+    and a plain re-run fixed all 7 without any other change.
+    """
+
+    POSTINSTALL_FAILURE = (1, 'error: postinstall script from "bun" exited with 1')
+
+    def _install(self, outcomes):
+        """Run install_portal_deps against two fake CLI dirs. `outcomes` is the
+        sequence of (code, output) pairs returned per `bun install` call."""
+        calls: list[Path] = []
+
+        def _run(args, timeout=180, cwd=None):
+            calls.append(cwd)
+            return outcomes[min(len(calls) - 1, len(outcomes) - 1)]
+
+        dirs = [Path("/fake/a/cli"), Path("/fake/b/cli")]
+        with mock.patch.object(setup.shutil, "which",
+                               fake_which({"bun": "/fake/bun"})), \
+             mock.patch.object(setup, "portal_cli_dirs", return_value=dirs), \
+             mock.patch.object(setup, "run", _run), \
+             mock.patch("builtins.print"):
+            return setup.install_portal_deps(), calls
+
+    def test_first_attempt_failure_is_retried_and_clears(self):
+        checks, calls = self._install([self.POSTINSTALL_FAILURE, (0, "ok")])
+        self.assertEqual(checks[0].status, setup.OK)
+        # Two attempts on the first directory, one on the second.
+        self.assertEqual(len(calls), 3)
+
+    def test_a_failure_that_survives_the_retry_is_still_reported(self):
+        checks, calls = self._install([self.POSTINSTALL_FAILURE])
+        self.assertEqual(checks[0].status, setup.DEGRADED)
+        self.assertIn("2 of 2 failed", checks[0].detail)
+        self.assertEqual(len(calls), 4)  # never more than one retry each
+
+
+class SeededPermissions(unittest.TestCase):
+    def test_the_ats_text_extraction_is_pre_approved(self):
+        """`pdftotext -layout` is a mandatory step of the Verification
+        Checklist, so leaving it out costs one dialog on every application."""
+        self.assertIn("Bash(pdftotext:*)", setup.HARNESS_PERMISSIONS)
+
+
 if __name__ == "__main__":
     unittest.main()

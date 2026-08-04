@@ -182,11 +182,7 @@ Nothing is broken or half-finished. These are the honest gaps.
 
 ### A. Verification debt (highest value, do first)
 
-1. **Timed stranger-run from a clean clone.** The plan's Wave 3 acceptance
-   criteria were *asserted, not measured*: ≤2 setup prompts, ≤5 min to
-   onboarded, ≤2 permission dialogs per apply, zero commands beyond `/today` +
-   a number. Clone to a fresh directory outside the repo, run it as a stranger,
-   record actual numbers. **This is the single most valuable next task.**
+1. ~~**Timed stranger-run from a clean clone.**~~ **DONE — measured, see §5.**
 2. **Screenshot / PDF intake has never run live** (waivers W2, plan-M tests 11
    and 12). It is a headline capability; a silent OCR misread of a company name
    or date propagates into a submitted document. **Highest real user risk in
@@ -238,3 +234,86 @@ Nothing is broken or half-finished. These are the honest gaps.
 - `docs/build-history/BUILD-STATE.md` still describes the Stage-3 build and has
   **not** been updated with the four review waves. Consider appending a short
   "post-review remediation" section pointing at this file.
+
+---
+
+## 5. The stranger-run (measured 2026-08-04, outstanding item A1)
+
+`git clone` of the public repo at `2a4772b` into a fresh directory outside the
+working tree, then `python setup.py` driven exactly as a new user would drive
+it. Every number below is a stopwatch or a count from the captured transcript,
+not an estimate. Host: Windows 10, Python 3.14.3, Bun 1.3.14, MiKTeX 25.12,
+both `claude` and `codex` present.
+
+Two things had to be simulated rather than run, and both are stated as such:
+
+- **The agent CLIs were replaced with a shim** that answers `plugin list` /
+  `mcp list` from its own empty state file. Running the real ones would have
+  reported the owner's already-installed plugins (hiding four prompts) and
+  would have mutated the owner's machine. The shim changes *nothing* about
+  which questions setup asks or how long its own work takes.
+- **Permission dialogs cannot be counted without a live agent session.** They
+  were derived instead: every shell command the apply path issues, checked
+  against the seeded allowlist. That is stated as a structural count, not a
+  measurement.
+
+### Measured against the Wave 3 acceptance criteria
+
+| Criterion | Asserted | Measured | Verdict |
+|---|---|---|---|
+| Setup prompts | ≤2 | **1** (express) · 12 (custom, both runtimes) | **pass** |
+| Minutes to onboarded | ≤5 | **6.0 min** installer alone, before onboarding starts | **fail** |
+| Permission dialogs per apply | ≤2 | **1** un-seeded command, now 0 | pass (was one short of the seed list) |
+| Nothing typed beyond `/today` + a number | — | holds; first-run `/today` correctly offers onboarding | pass |
+
+Raw timings: clone 10.0 s · `--doctor` 2.5 s · express install **358.4 s** ·
+custom install 205.3 s. Roughly 280 s of the express run is seven sequential
+`bun install`s at ~40 s each; the two MiKTeX test compiles are most of the
+rest. `--quick` skips the compiles and is the only lever that exists.
+
+### What the run found
+
+1. **4 of the 7 job-board CLIs failed to install on a clean clone**, and setup
+   exited 1 with *"The harness will not work correctly until these are
+   resolved"* — a dead end, since the printed fix ("Fix the Bun row above") did
+   not apply: Bun was fine. Root cause is `@types/bun` pulling in the `bun` npm
+   package, whose postinstall downloads a platform binary and fails on Windows
+   with `Failed to find package "@oven/bun-windows-x64-baseline"`. The packages
+   are already extracted by then, so a second `bun install` completes — a plain
+   re-run cleared all 7 without any other change (415.7 s over two runs, two
+   prompts). **Fixed:** `install_portal_deps` retries once. Single pass now
+   exits 0 with 7/7 in 358.4 s. Pinned by `PortalInstallRetry`. The failing
+   package.json files are upstream `[U]`; the retry is harness-side.
+2. **`pdftotext` was missing from the seeded permissions.** The ATS text-layer
+   check is a mandatory step of the Verification Checklist, so it fires on
+   every application — the only un-seeded command left in the apply path.
+   **Fixed:** added to `HARNESS_PERMISSIONS`, pinned by `SeededPermissions`.
+3. **Express described itself wrongly.** It claimed to offer "Caveman, the
+   browser tools and the statusline but does not assume them". Express sets
+   `AUTO_YES`, so every `confirm()` takes its default — and Playwright,
+   Firecrawl and the statusline all default to yes. Only Caveman defaults to
+   no. **Fixed:** the blurb now says what it does, with the counts corrected to
+   the measured 1 / 8 / 12. (README and USER-GUIDE were already accurate: "one
+   confirmation instead of a dozen questions" is exactly 1 vs 12.)
+4. **The doctor's all-clear contradicted its own notes.** With Bun, both TeX
+   engines and pandoc on the persistent PATH but not the running shell, the
+   table printed four `RESTART SHELL` rows, told the user to reopen the
+   terminal — and then closed with "All required prerequisites are in place".
+   The next real run fails portal install on exactly that state. **Fixed:** the
+   all-clear is now withheld when any row is `RESTART SHELL`.
+
+### Honest shortfalls left standing
+
+- **≤5 minutes is not achievable as specified.** The installer alone is 6
+  minutes on a warm network, and that is *before* `/setup-harness`, whose
+  quick-start path advertises another ~5. A truthful figure for clone-to-first-
+  search is **10–12 minutes**. Either the criterion or the claim should move;
+  the code cannot close a 280-second dependency install.
+- **The onboarding half was not measured.** `/setup-harness` deliberately has
+  no fixed question list ("the gaps you actually found — never a fixed list"),
+  so its cost is not machine-countable. Measuring it needs a live agent session
+  with a real CV, which is the natural companion to outstanding item A2.
+- **`Bash(python harness/*.py:*)` patterns assume the literal command `python`.**
+  An agent that reaches for `python3` or `py` matches none of them and every
+  seeded permission silently stops working. Not hit on Windows; would be worth
+  a second pattern per entry if anyone runs this on Linux.

@@ -145,3 +145,21 @@ ATS parsers read the PDF's embedded text layer, not the rendered page. Extract i
 - [ ] Email and phone appear as **literal text** in the extraction (icon-glyph noise like `MOBILE-ALT`/`Envelope` is harmless, but a contact detail carried only by an icon or hyperlink is invisible to ATS)
 - [ ] Reading order of the extracted text matches the visual order (single-column stock template is safe; multi-column custom templates are where this breaks)
 - [ ] Posting keywords covered or honestly absent - synonym-only matches tightened to the posting's exact term where truthfully applicable, keywords the profile genuinely supports added to experience bullets, genuine gaps left visible and **never stuffed**
+
+<!-- harness:begin -->
+## Job Search Agent Harness layer
+
+See `AGENTS.md` for the full harness orientation and `RUNTIME-MAP.md` for anything
+runtime-specific. Both files are shared with Codex; this block exists so Claude Code picks
+up the same pointers from the file it loads automatically.
+
+Truth store: `evidence/register.yaml` (every entry sourced) · preferences:
+`preferences.yaml` · companies of interest: `companies.yaml` · continuity: `state/`.
+
+Harness workflows: `/setup-harness`, `/career-review`, `/companies`, `/scrape`,
+`/apply-any`, `/verify-facts`, `/fact`, `/tracker`, `/continue`.
+
+The Verification Checklist above still governs every generated document. The harness adds
+one blocking step to it: **`/verify-facts` runs on the final text, after any humanizer
+edit and after the final compile.** A package with an open red line is not presented.
+<!-- harness:end -->

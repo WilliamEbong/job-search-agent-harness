@@ -444,6 +444,56 @@ def offer_plugins(runtime: Runtime) -> list[Check]:
 FIRECRAWL_URL = "https://mcp.firecrawl.dev/v2/mcp"
 FIRECRAWL_KEY_VAR = "FIRECRAWL_API_KEY"
 
+STATUSLINE_COMMAND = "python harness/telemetry_statusline.py"
+
+
+def offer_statusline() -> Check:
+    """Register the telemetry statusline (Claude only).
+
+    This is the only channel through which the running agent can see how full
+    its context window is — hooks receive no usage fields. Without it the
+    continuity engine still works, but on milestone cadence alone.
+
+    Writes `.claude/settings.local.json`. Never `.claude/settings.json`, which
+    upstream's security guard freezes: a permissions file that setup edits is a
+    permissions file an attacker can edit through setup.
+    """
+    import json
+
+    settings = ROOT / ".claude" / "settings.local.json"
+    try:
+        existing = json.loads(settings.read_text(encoding="utf-8")) if settings.is_file() else {}
+    except (OSError, json.JSONDecodeError) as exc:
+        return Check("statusline", UNVERIFIED, f"could not read {settings.name}: {exc}",
+                     required=False)
+    if not isinstance(existing, dict):
+        return Check("statusline", UNVERIFIED,
+                     f"{settings.name} is not a JSON object", required=False)
+
+    current = (existing.get("statusLine") or {}).get("command")
+    if current == STATUSLINE_COMMAND:
+        return Check("statusline", OK, "already registered", required=False)
+    if current:
+        return Check("statusline", OPTIONAL,
+                     "a different statusline is already configured — left alone",
+                     f"To use the harness telemetry mirror instead, set "
+                     f"statusLine.command to: {STATUSLINE_COMMAND}", required=False)
+
+    if not confirm("Register the harness statusline? (optional — mirrors context and "
+                   "rate-limit usage so long tasks can hand off before they run out)"):
+        return Check("statusline", OPTIONAL,
+                     "declined — continuity falls back to milestone cadence",
+                     required=False)
+
+    existing["statusLine"] = {"type": "command", "command": STATUSLINE_COMMAND}
+    try:
+        settings.parent.mkdir(parents=True, exist_ok=True)
+        settings.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")
+    except OSError as exc:
+        return Check("statusline", UNVERIFIED, f"could not write {settings.name}: {exc}",
+                     required=False)
+    return Check("statusline", OK, f"registered in {settings.name}", required=False)
+
 
 def mcp_listing(runtime: Runtime) -> str:
     code, out = run([runtime.exe, "mcp", "list"], timeout=180)
@@ -664,6 +714,9 @@ def main(argv: list[str] | None = None) -> int:
             checks.extend(offer_plugins(runtime))
             section(f"Optional MCP servers for {runtime.name}")
             checks.extend(offer_mcp(runtime))
+            if runtime.name == "claude":
+                section("Session continuity")
+                checks.append(offer_statusline())
 
     failures = print_doctor(checks)
     if not DOCTOR_ONLY and not failures:

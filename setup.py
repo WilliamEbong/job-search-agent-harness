@@ -719,9 +719,18 @@ def main(argv: list[str] | None = None) -> int:
                 checks.append(offer_statusline())
 
     failures = print_doctor(checks)
-    if not DOCTOR_ONLY and not failures:
-        print("\nNext step: open this folder in your agent and run /setup to build "
-              "your evidence bank and preferences.")
+    if not DOCTOR_ONLY:
+        if failures:
+            # Guidance matters MORE when something failed, not less. The
+            # previous version printed the next step only on a clean run, so
+            # the user who most needed direction got a list of complaints and
+            # nothing to do about it.
+            print("\nNext step: fix the item(s) above, then run this again:")
+            print(f"    {sys.executable} setup.py")
+        else:
+            print("\nNext step: open this folder in your agent and run "
+                  "/setup-harness to build your evidence bank and preferences.")
+            print("Then /today will tell you what to do each morning.")
     return failures
 
 

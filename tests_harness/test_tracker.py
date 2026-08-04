@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import csv
 import datetime
+import os
 import shutil
 import sys
 import tempfile
@@ -225,12 +226,12 @@ class Archiver(unittest.TestCase):
 
     def test_recent_folder_is_not_archived(self):
         self.make_application("Acme_Analyst")
-        self.assertEqual([], archiver.archive_due())
+        self.assertEqual(([], []), archiver.archive_due())
 
     def test_old_folder_is_zipped_and_removed(self):
         folder = self.make_application("Acme_Analyst")
         future = time.time() + (archiver.MAX_AGE_DAYS + 1) * 86400
-        archived = archiver.archive_due(now=future)
+        archived, _ = archiver.archive_due(now=future)
         self.assertEqual(["Acme_Analyst"], archived)
         self.assertFalse(folder.exists())
         self.assertTrue((archiver.ARCHIVE_DIR / "Acme_Analyst.zip").is_file())
@@ -238,7 +239,7 @@ class Archiver(unittest.TestCase):
     def test_dry_run_changes_nothing(self):
         folder = self.make_application("Acme_Analyst")
         future = time.time() + (archiver.MAX_AGE_DAYS + 1) * 86400
-        archived = archiver.archive_due(now=future, dry_run=True)
+        archived, _ = archiver.archive_due(now=future, dry_run=True)
         self.assertEqual(["Acme_Analyst"], archived)
         self.assertTrue(folder.exists())
 
@@ -246,7 +247,7 @@ class Archiver(unittest.TestCase):
         (self.applications / "archive").mkdir()
         (self.applications / "applied").mkdir()
         future = time.time() + (archiver.MAX_AGE_DAYS + 1) * 86400
-        self.assertEqual([], archiver.archive_due(now=future))
+        self.assertEqual(([], []), archiver.archive_due(now=future))
 
     def test_empty_submitted_date_does_not_move_a_folder(self):
         self.make_application("Rivermouth_Environmental_Data_Analyst")
@@ -268,6 +269,98 @@ class Archiver(unittest.TestCase):
         self.assertTrue(
             (archiver.APPLIED_DIR / "Rivermouth_Environmental_Data_Analyst").is_dir()
         )
+
+    def test_dotted_folder_name_does_not_overwrite_a_previous_zip(self):
+        """REGRESSION: the one destructive bug found in the review.
+
+        `Path("Acme_Inc._Data_Analyst").with_suffix(".zip")` yields
+        `Acme_Inc.zip`, while make_archive wrote `Acme_Inc._Data_Analyst.zip`.
+        The existence check and the written file were different paths, so the
+        collision counter never fired and re-archiving a folder of the same name
+        silently overwrote the earlier zip — after the live folder had been
+        deleted. Company names ending "Inc." are the normal case.
+        """
+        future = time.time() + (archiver.MAX_AGE_DAYS + 1) * 86400
+        name = "Acme_Inc._Data_Analyst"
+
+        self.make_application(name)
+        archiver.archive_due(now=future)
+        self.make_application(name)  # a second application, same employer+role
+        archiver.archive_due(now=future)
+
+        zips = sorted(p.name for p in archiver.ARCHIVE_DIR.glob("*.zip"))
+        self.assertEqual([f"{name}-2.zip", f"{name}.zip"], zips,
+                         "the second archive must not overwrite the first")
+
+    def test_an_old_file_copied_in_does_not_age_the_folder(self):
+        """REGRESSION: folder age used to be the oldest mtime of its contents.
+
+        /apply-any copies a CV and PDFs into a brand-new folder. Any copy that
+        preserves mtime (shutil.copy2, a years-old CV) made the folder instantly
+        "8 weeks old", so it was zipped and deleted on the very next run.
+        """
+        folder = self.make_application("Acme_Analyst")
+        ancient = folder / "old_cv.tex"
+        ancient.write_text("content", encoding="utf-8")
+        long_ago = time.time() - (archiver.MAX_AGE_DAYS * 10) * 86400
+        os.utime(ancient, (long_ago, long_ago))
+
+        archived, _ = archiver.archive_due()
+        self.assertEqual([], archived, "a new folder must not age via its contents")
+        self.assertTrue(folder.exists())
+
+    def test_created_marker_is_authoritative(self):
+        folder = self.make_application("Acme_Analyst")
+        old = (datetime.datetime.now()
+               - datetime.timedelta(days=archiver.MAX_AGE_DAYS + 5))
+        (folder / archiver.CREATED_MARKER).write_text(old.isoformat(),
+                                                      encoding="utf-8")
+        archived, _ = archiver.archive_due(dry_run=True)
+        self.assertEqual(["Acme_Analyst"], archived)
+
+    def test_open_application_is_never_archived(self):
+        """An interview in progress must survive the 8-week sweep.
+
+        Archiving deletes the live folder, and /interview prepares from exactly
+        those documents.
+        """
+        folder = self.make_application("Rivermouth_Environmental_Data_Analyst")
+        write_tracker(archiver.TRACKER_CSV, [
+            {"date": "2026-01-01",
+             "company": "Rivermouth Environmental Consulting",
+             "role": "Environmental Data Analyst", "status": "interview_only"}
+        ])
+        future = time.time() + (archiver.MAX_AGE_DAYS + 1) * 86400
+        archived, protected = archiver.archive_due(now=future)
+        self.assertEqual([], archived)
+        self.assertEqual(["Rivermouth_Environmental_Data_Analyst"], protected)
+        self.assertTrue(folder.exists())
+
+    def test_upstream_status_vocabulary_also_protects(self):
+        """A row /outcome wrote as `applied` is open too."""
+        self.make_application("Rivermouth_Environmental_Data_Analyst")
+        write_tracker(archiver.TRACKER_CSV, [
+            {"date": "2026-01-01",
+             "company": "Rivermouth Environmental Consulting",
+             "role": "Environmental Data Analyst", "status": "applied"}
+        ])
+        future = time.time() + (archiver.MAX_AGE_DAYS + 1) * 86400
+        archived, protected = archiver.archive_due(now=future)
+        self.assertEqual([], archived)
+        self.assertEqual(["Rivermouth_Environmental_Data_Analyst"], protected)
+
+    def test_closed_application_is_archived(self):
+        """The protection must not simply disable archiving."""
+        self.make_application("Rivermouth_Environmental_Data_Analyst")
+        write_tracker(archiver.TRACKER_CSV, [
+            {"date": "2026-01-01",
+             "company": "Rivermouth Environmental Consulting",
+             "role": "Environmental Data Analyst", "status": "rejected"}
+        ])
+        future = time.time() + (archiver.MAX_AGE_DAYS + 1) * 86400
+        archived, protected = archiver.archive_due(now=future, dry_run=True)
+        self.assertEqual(["Rivermouth_Environmental_Data_Analyst"], archived)
+        self.assertEqual([], protected)
 
     def test_rows_predating_the_submitted_date_column_move_nothing(self):
         """Older CSVs have no such column; they must read as empty, not as set."""

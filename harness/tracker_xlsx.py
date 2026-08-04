@@ -31,21 +31,24 @@ SHORTLIST = os.path.join(ROOT, "shortlist.csv")
 # the applied/ move can never disagree about which folder a row belongs to.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from archive_applications import match_folder  # noqa: E402
+import status  # noqa: E402
 
 APPLICATIONS_DIR = os.path.join(ROOT, "documents", "applications")
 
-# Upstream's real CSV header (.claude/commands/outcome.md), adopted unchanged,
-# plus the three harness columns (location, rationale, submitted_date) which
-# render blank for rows written before they existed.
-COLUMNS = ["date", "company", "sector", "role", "role_type", "channel", "status",
-           "contact_person", "fit_rating", "notes", "cv_file", "cover_letter_file",
-           "source"]
+# The canonical tracker header lives in harness/tracker_row.py, which is the
+# only writer. It is not duplicated here: the copy that used to sit in this file
+# claimed in its comment to include location/rationale/submitted_date and did
+# not, and nothing read it.
 
-# Upstream's status vocabulary (documents/README.md), adopted unchanged.
-OPEN_STATUSES = {"in_progress", "interview_only"}
-CLOSED_STATUSES = {"hired", "offer_declined", "rejected", "no_response"}
-RESPONDED_STATUSES = {"hired", "offer_declined", "rejected", "interview_only"}
-INTERVIEW_STATUSES = {"interview_only", "hired", "offer_declined"}
+# Status classification lives in harness/status.py — one vocabulary shared with
+# the archiver, so a row written by upstream's /outcome ("applied", "interview")
+# lands in the same bucket as one written by /apply-any ("in_progress").
+# Previously anything outside these six sets counted as neither Open nor Closed
+# and silently disappeared from the funnel.
+OPEN_STATUSES = status.OPEN
+CLOSED_STATUSES = status.CLOSED
+RESPONDED_STATUSES = status.RESPONDED
+INTERVIEW_STATUSES = status.REACHED_INTERVIEW
 
 FILLS = {
     "in_progress":    "FFF2CC",  # amber      - live, waiting
@@ -157,16 +160,16 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None):
                "Application folder"]
     body, follow_ups = [], 0
     for row in rows:
-        status = (row.get("status") or "").strip().lower()
+        row_status = status.normalize(row.get("status"))
         applied_on = parse_date(row.get("date"))
         days = (today - applied_on).days if applied_on else ""
-        is_open = status in OPEN_STATUSES
+        is_open = status.is_open(row.get("status"))
         due = "YES" if (is_open and isinstance(days, int) and days > FOLLOWUP_DAYS) else ""
         if due:
             follow_ups += 1
         body.append([row.get("date", ""), row.get("company", ""), row.get("role", ""),
                      row.get("location", ""), row.get("role_type", ""),
-                     row.get("sector", ""), row.get("channel", ""), status,
+                     row.get("sector", ""), row.get("channel", ""), row_status,
                      "Open" if is_open else "Closed", days, due,
                      row.get("fit_rating", ""), row.get("rationale", ""),
                      row.get("contact_person", ""), row.get("notes", ""),
@@ -176,7 +179,7 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None):
 
     source_col, folder_col = 18, 19
     for index, row in enumerate(rows, start=2):
-        fill = FILLS.get((row.get("status") or "").strip().lower())
+        fill = FILLS.get(status.normalize(row.get("status")))
         if fill:
             pattern = PatternFill("solid", fgColor=fill)
             for column in range(1, len(headers) + 1):
@@ -195,8 +198,8 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None):
     by_status: dict[str, int] = {}
     by_source: dict[str, int] = {}
     for row in rows:
-        status = (row.get("status") or "").strip().lower()
-        by_status[status] = by_status.get(status, 0) + 1
+        row_status = status.normalize(row.get("status"))
+        by_status[row_status] = by_status.get(row_status, 0) + 1
         key = (row.get("channel") or row.get("source") or "unknown").strip() or "unknown"
         by_source[key] = by_source.get(key, 0) + 1
     responded = sum(by_status.get(s, 0) for s in RESPONDED_STATUSES)

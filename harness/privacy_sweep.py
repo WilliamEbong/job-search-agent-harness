@@ -93,7 +93,14 @@ SKIP_DIRS = {".git", "node_modules", "__pycache__", ".pytest_cache", "build",
              "OpenFonts", "assets"}
 
 
-def is_allowed(match: str, line: str) -> bool:
+# Categories where a documentation marker elsewhere on the line is NOT enough.
+# These can identify or contact a real person, so only the match itself (or an
+# explicit placeholder token) may excuse them. This split is the fix for the
+# old rule, which let any line containing "test" or "example" ship a real email.
+CONTACT_LABELS = {"email", "phone", "linkedin profile", "api key or token"}
+
+
+def is_allowed(match: str, line: str, label: str = "") -> bool:
     lowered = match.lower()
     if lowered in ALLOWED_LITERALS:
         return True
@@ -101,17 +108,31 @@ def is_allowed(match: str, line: str) -> bool:
         return True
     if FICTIONAL_PHONE.search(match):
         return True
-    # A placeholder rather than a value. Three conventions, all of which appear
-    # in the shipped templates and setup documentation:
-    #   [YOUR_NAME] / @@KEY@@ / <your.email@…>   — explicit tokens
-    #   your-profile, your_username              — "your-" prefixed samples
-    #   Example Company, 123 Hiring Street, Example City — the reserved
-    #                                              documentation vocabulary
-    # The last one is why "example" counts: RFC 2606 reserves example.com for
-    # exactly this purpose, and the templates use "Example <thing>" throughout.
-    if re.search(r"\[YOUR_|@@|<your|your[.\-_]|placeholder|\bexample\b|\btest\b",
-                 line, re.I):
+    # A placeholder rather than a value.
+    #
+    # This check is deliberately narrow, and it used to be far too wide: it
+    # allowed EVERY match on any line containing the word "example" or "test".
+    # A CHANGELOG entry reading "tested with jane.doe@realcompany.com" shipped
+    # clean. For a gate whose stated bias is "report too much rather than too
+    # little", that was the one rule pointing the other way.
+    #
+    # Now only explicit placeholder tokens excuse a line, and the documentation
+    # vocabulary ("Example Company", "123 Hiring Street") must appear in the
+    # MATCH ITSELF rather than merely somewhere on the line.
+    if re.search(r"\[YOUR_|@@|<your|your[.\-_]|placeholder", line, re.I):
         return True
+    # A documentation marker inside the MATCH itself always excuses it.
+    if re.search(r"\b(example|test|sample|acme)\b", lowered):
+        return True
+    # A marker merely elsewhere on the line excuses only the shape-based
+    # categories — a street-address or postal-code regex firing on
+    # "123 Hiring Street\\Example City" in a template snippet. It never
+    # excuses an email, phone number, profile URL or key: those are exactly
+    # what a real leak looks like, and "test" appears near real data all the
+    # time.
+    if label and label not in CONTACT_LABELS:
+        if re.search(r"\b(example|test|sample|placeholder|template)\b", line, re.I):
+            return True
     return False
 
 
@@ -157,7 +178,7 @@ def scan(scan_all: bool = False,
             for label, pattern, blocks in patterns:
                 for match in pattern.finditer(line):
                     value = match.group(0)
-                    if is_allowed(value, line):
+                    if is_allowed(value, line, label):
                         continue
                     (blocking if blocks else advisory).append(
                         (relative, number, label, value)
@@ -213,7 +234,10 @@ def main(argv=None) -> int:
           "deserves an allow entry with a reason - never a loosened pattern.\n")
     for relative, number, label, value in hits:
         print(f"  {relative}:{number}  [{label}]  {value}")
-    return len(hits)
+    # Capped, as fact_check.py already does. An uncapped count is an exit-status
+    # wraparound waiting to happen: exactly 256 hits would have exited 0 and the
+    # release gate would have reported a catastrophically dirty tree as clean.
+    return min(len(hits), 100)
 
 
 if __name__ == "__main__":

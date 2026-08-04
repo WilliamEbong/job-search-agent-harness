@@ -140,6 +140,17 @@ def canon_numeral(value) -> str:
     return PERCENT_RE.sub("%", words_of(value))
 
 
+def canon_plus(value) -> str:
+    """Normalized numeral with any '+' and its spacing removed.
+
+    NUMERAL_RE's unit group is `\\+?\\s*years?`, so a draft's "5+ years" yields
+    the unit "+ years" and the candidate "5 + years" — which never matched a
+    registered "5 years". Folding both sides onto the plus-free form fixes it
+    without loosening what counts as a claim.
+    """
+    return re.sub(r"\s*\+\s*", " ", canon_numeral(value)).strip()
+
+
 # --------------------------------------------------------------------- views
 
 
@@ -180,18 +191,22 @@ def registered_technologies(reg: dict) -> set[str]:
 
 
 def registered_numerals(reg: dict) -> set[str]:
-    """Every numeric value the register supports, plus aliases, normalized."""
+    """Every numeric value the register supports, plus aliases, normalized.
+
+    Employment start/end YEARS are deliberately not included. They used to be,
+    which meant any claim whose number happened to equal a year someone started
+    a job cleared the gate: "supported 2,020 participants" passed because a role
+    began in 2020. Date ranges are check 2's job; this set is about metrics.
+    """
     vals: set[str] = set()
     for metric in reg.get("metrics", []) or []:
-        vals.add(words_of(metric.get("value", "")))
-        vals.add(canon_numeral(metric.get("value", "")))
-        vals.update(words_of(a) for a in metric.get("aliases", []) or [])
-        vals.update(canon_numeral(a) for a in metric.get("aliases", []) or [])
-    for employer in reg.get("employers", []) or []:
-        for title in employer.get("titles", []) or []:
-            for key in ("start", "end"):
-                if title.get(key):
-                    vals.add(words_of(str(title[key]).split("-")[0]))
+        for raw in [metric.get("value", "")] + list(metric.get("aliases", []) or []):
+            vals.add(words_of(raw))
+            vals.add(canon_numeral(raw))
+            # "5+ years" in a draft is the same claim as a registered
+            # "5 years": the unit group captures the "+", so without this the
+            # plus-form never matched anything and read as a fabrication.
+            vals.add(canon_plus(raw))
     vals.discard("")
     return vals
 
@@ -294,6 +309,8 @@ def check(paths, posting_text: str = "", register_path: str = REGISTER,
                 claim,
                 canon_numeral(claim),
                 canon_numeral(value + " " + unit),
+                canon_plus(claim),
+                canon_plus(value + " " + unit),
             }
             if candidates & numerals:
                 continue
@@ -309,21 +326,43 @@ def check(paths, posting_text: str = "", register_path: str = REGISTER,
                 continue
             red.append((where, claim, "no registered metric has this value"))
 
-        # 2. Date ranges must sit inside a registered span.
+        # 2. Date ranges must sit inside a registered span — and where the
+        #    sentence names an entity, inside THAT entity's span.
+        #
+        #    Matching against any span let "Acme Corp, 2015 - 2016" pass on the
+        #    strength of a university course that ran 2014-2018. The span
+        #    labels were collected and then never used.
         for match in DATE_RANGE_RE.finditer(text):
             start = int(match.group(1))
             end_raw = match.group(2)
             end = 9999 if not end_raw[:4].isdigit() else int(end_raw[:4])
-            if any(s <= start and end <= x for _, s, x in spans):
+
+            window = norm(text[max(0, match.start() - 200): match.end() + 200])
+            named = [(label, s, x) for label, s, x in spans
+                     if label and norm(label) in window]
+            # An entity named nearby narrows the check to its own spans; with
+            # no entity in sight, fall back to the any-span behaviour so a
+            # skills-section date does not red-line spuriously.
+            applicable = named or spans
+
+            if any(s <= start and end <= x for _, s, x in applicable):
                 continue
-            if any(s == start for _, s, _ in spans) and end == 9999:
-                continue
-            red.append((
-                where,
-                match.group(0),
-                "date range is not contained in any registered employment, "
-                "education or project span",
-            ))
+            if end == 9999 and any(s <= start <= x for _, s, x in applicable):
+                # "2015 - present" is only honest if a span containing 2015 is
+                # itself still open. Previously any span that merely STARTED in
+                # 2015 satisfied this, so a role that ended in 2016 could be
+                # rendered as ongoing.
+                if any(s <= start and x == 9999 for _, s, x in applicable):
+                    continue
+            reason = ("date range is not contained in any registered "
+                      "employment, education or project span")
+            if named:
+                reason = ("date range does not fit the registered span for "
+                          + ", ".join(sorted({label for label, _, _ in named})))
+            elif any(s <= start for _, s, _ in spans) and any(end <= x for _, _, x in spans):
+                reason = ("date range spans two separate registered periods "
+                          "rather than sitting inside one")
+            red.append((where, match.group(0), reason))
 
         # 3. Unregistered technologies (posting keywords leaking into the draft).
         for tech in lexicon:
@@ -345,20 +384,33 @@ def check(paths, posting_text: str = "", register_path: str = REGISTER,
                     "technology is not in the register - it may not be claimed as used",
                 ))
 
-        # 4. In-progress credentials may never render without their qualifier.
+        # 4. In-progress credentials may never render without their qualifier —
+        #    at EVERY occurrence, not just the first.
+        #
+        #    The old check used low.find(), so a CV reading "PMP (in progress)"
+        #    in the summary and a bare "PMP" in the skills list passed clean.
+        #    The bare one is the rendering an employer reads as earned.
         for aliases, qualifier in creds:
+            flagged = False
             for alias in aliases:
-                idx = low.find(norm(alias))
-                if idx == -1:
+                if flagged:
+                    break
+                needle = norm(alias)
+                if not needle:
                     continue
-                window = low[max(0, idx - 120): idx + len(alias) + 160]
-                if norm(qualifier) in window or "in progress" in window or "in-progress" in window:
-                    continue
-                red.append((
-                    where, alias,
-                    'credential is in progress and must not render without "%s"' % qualifier,
-                ))
-                break
+                for occurrence in re.finditer(re.escape(needle), low):
+                    idx = occurrence.start()
+                    window = low[max(0, idx - 120): idx + len(needle) + 160]
+                    if (norm(qualifier) in window or "in progress" in window
+                            or "in-progress" in window):
+                        continue
+                    red.append((
+                        where, alias,
+                        'credential is in progress and must not render without "%s"'
+                        % qualifier,
+                    ))
+                    flagged = True
+                    break
 
         # 5. Credential-shaped phrases must name a registered credential or degree.
         for match in CREDENTIAL_RE.finditer(text):

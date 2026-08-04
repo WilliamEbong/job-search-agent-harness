@@ -266,6 +266,100 @@ class PercentSpellings(unittest.TestCase):
                          "registered percentages must pass in any spelling:\n" + out)
 
 
+class ReviewRegressions(unittest.TestCase):
+    """Four defects found in the post-build review. Each is pinned here.
+
+    All four passed silently before: three let a false claim through, one
+    rejected a true one. The gate's own rule is "fix the checker AND pin a
+    fixture", which is what these are.
+    """
+
+    def test_date_range_must_fit_the_entity_named_beside_it(self):
+        """A range next to an employer must fit THAT employer's span.
+
+        Northwind's registered spans are 2020-2022 and 2022-2024. The education
+        span is 2016-2020. Claiming "Northwind Analytical Services, 2016 - 2020"
+        used to pass on the strength of the degree.
+        """
+        with WriteDraft(
+            "Northwind Analytical Services, 2016 - 2020, laboratory operations.\n"
+        ) as draft:
+            code, out = run_checker(draft)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("Northwind", out)
+
+    def test_open_ended_range_needs_a_still_open_span(self):
+        """"2020 - present" must not pass on a span that ended in 2022."""
+        with WriteDraft(
+            "Northwind Analytical Services, 2020 - present.\n"
+        ) as draft:
+            code, out = run_checker(draft)
+        self.assertNotEqual(
+            code, 0,
+            "a closed role must not be renderable as ongoing:\n" + out,
+        )
+
+    def test_genuinely_open_range_still_passes(self):
+        """The fix must not break the true case: PWSA is open-ended."""
+        with WriteDraft(
+            "Prairie Water Stewardship Alliance, 2024 - present.\n"
+        ) as draft:
+            code, out = run_checker(draft)
+        self.assertEqual(code, 0, out)
+
+    def test_plus_form_matches_a_registered_plain_number(self):
+        """"22+ percent" is the same claim as a registered "22%".
+
+        NUMERAL_RE's unit group swallows the "+", so the plus form produced the
+        candidate "22 + %" and matched nothing.
+        """
+        with WriteDraft("Turnaround time fell 22+ percent.\n") as draft:
+            code, out = run_checker(draft)
+        self.assertEqual(code, 0, "plus-forms must fold onto the plain value:\n" + out)
+
+    def test_a_number_equal_to_a_job_start_year_is_not_a_free_pass(self):
+        """Employment years used to be injected into the metric whitelist.
+
+        Riley started at Northwind in 2020, which silently cleared any claim of
+        "2,020 <units>" — a fabricated headcount reading as evidence.
+        """
+        with WriteDraft("The programme reached 2,020 participants.\n") as draft:
+            code, out = run_checker(draft)
+        self.assertNotEqual(code, 0, out)
+
+    def test_credential_qualifier_required_at_every_occurrence(self):
+        """Qualified once, bare later — the bare one is what reads as earned.
+
+        The qualifier is only checked within ~120 characters either side of the
+        mention, so the two renderings are separated here by a realistic amount
+        of CV body text. That distance is the point: on a real two-page CV the
+        summary and the skills list are nowhere near each other, which is
+        exactly why checking only the first occurrence was unsafe.
+        """
+        body = (
+            "Coordinates the volunteer sampling programme across 6 sites, "
+            "covering scheduling, training and equipment logistics. Produces "
+            "the monthly watershed report for the board, combining field "
+            "sample data, laboratory results and trend commentary. Rebuilt "
+            "volunteer onboarding after the first season. Liaises with "
+            "municipal partners on data-sharing agreements and joint "
+            "sampling across the watershed network throughout the season.\n\n"
+        )
+        draft_text = (
+            "Currently completing the Google Data Analytics Professional "
+            "Certificate (in progress).\n\n"
+            + body
+            + "Skills: Excel, LIMS, QGIS, Google Data Analytics Professional "
+              "Certificate.\n"
+        )
+        with WriteDraft(draft_text) as draft:
+            code, out = run_checker(draft)
+        self.assertNotEqual(
+            code, 0,
+            "a second, unqualified rendering must still be caught:\n" + out,
+        )
+
+
 class LexiconFalsePositives(unittest.TestCase):
     def test_common_english_words_are_not_technology_claims(self):
         """REGRESSION: Go, Spring and React are English words as well as tools.

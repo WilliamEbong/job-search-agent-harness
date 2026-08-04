@@ -27,7 +27,11 @@ import re
 import shutil
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import status  # noqa: E402  (sibling module; path shim above must run first)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 APPLICATIONS_DIR = REPO_ROOT / "documents" / "applications"
@@ -40,27 +44,99 @@ MAX_AGE_DAYS = 56  # 8 weeks
 RESERVED = {"archive", "applied"}
 
 
+CREATED_MARKER = ".created"
+
+
 def folder_created_at(folder: Path) -> float:
-    """Best available creation timestamp for a folder (epoch seconds)."""
-    candidates = [folder.stat().st_ctime]
-    for path in folder.rglob("*"):
-        if path.is_file():
-            stat = path.stat()
-            candidates.append(min(stat.st_ctime, stat.st_mtime))
-    return min(candidates)
+    """Best available creation timestamp for a folder (epoch seconds).
+
+    Order: the `.created` marker written by harness/apply_package.py, then the
+    folder's own ctime.
+
+    It deliberately does NOT consider the mtimes of files inside. The previous
+    version took the OLDEST mtime of any contained file, presented as
+    anti-tamper hardening. It is a data-loss trap: `/apply-any` copies PDFs and
+    .tex files into the folder, and any copy that preserves mtime (shutil.copy2,
+    a downloaded posting PDF, a CV last edited years ago) made a brand-new
+    application instantly "8 weeks old" — zipped and deleted on the next run.
+    """
+    marker = folder / CREATED_MARKER
+    if marker.is_file():
+        try:
+            stamp = marker.read_text(encoding="utf-8").strip()
+            return datetime.fromisoformat(stamp).timestamp()
+        except (OSError, ValueError):
+            pass  # unreadable or malformed marker falls through to ctime
+    return folder.stat().st_ctime
 
 
-def archive_due(now: float | None = None, dry_run: bool = False) -> list[str]:
-    """Zip and remove every application folder older than MAX_AGE_DAYS.
+def open_application_folders() -> set[str]:
+    """Folder names whose tracker row is still open (in progress / interviewing).
 
-    Returns the names archived (or that would be, under --dry-run).
+    An application in an active interview process must never be archived: the
+    archive step deletes the live folder, and `/interview` then cannot find the
+    documents it needs to prepare from.
+    """
+    if not TRACKER_CSV.exists() or not APPLICATIONS_DIR.is_dir():
+        return set()
+    names = [d.name for d in APPLICATIONS_DIR.iterdir()
+             if d.is_dir() and d.name not in RESERVED]
+    if APPLIED_DIR.is_dir():
+        names += [d.name for d in APPLIED_DIR.iterdir() if d.is_dir()]
+    protected: set[str] = set()
+    try:
+        with TRACKER_CSV.open(newline="", encoding="utf-8-sig") as handle:
+            for row in csv.DictReader(handle):
+                if not status.is_open(row.get("status", "")):
+                    continue
+                hit = match_folder(row.get("company", ""), row.get("role", ""), names)
+                if hit:
+                    protected.add(hit)
+    except OSError:
+        # An unreadable tracker must not licence deletion. Protect everything.
+        return set(names)
+    return protected
+
+
+def _archive_stem(name: str) -> Path:
+    """Collision-free archive path *without the .zip suffix*, for make_archive.
+
+    Deliberately built by string concatenation and never with Path.with_suffix.
+
+    `with_suffix` replaces everything after the last dot, so for the very
+    ordinary folder name "Acme_Inc._Data_Analyst" it produced "Acme_Inc.zip" —
+    while shutil.make_archive wrote "Acme_Inc._Data_Analyst.zip". The existence
+    test and the written file were different paths, so the collision check never
+    fired and a re-archived folder silently OVERWROTE the previous zip, after
+    the live folder had already been deleted. Company names ending "Inc.",
+    "Ltd." or "Co." are the normal case, which made this the one genuinely
+    destructive path in the harness.
+    """
+    stem = name
+    suffix = 1
+    while (ARCHIVE_DIR / f"{stem}.zip").exists():
+        suffix += 1
+        stem = f"{name}-{suffix}"
+    return ARCHIVE_DIR / stem
+
+
+def archive_due(now: float | None = None, dry_run: bool = False,
+                skip_open: bool = True) -> tuple[list[str], list[str]]:
+    """Zip and remove application folders older than MAX_AGE_DAYS.
+
+    Returns (archived, protected) — the second list is folders old enough to
+    archive whose tracker row is still open, which are reported rather than
+    silently kept so the user can see the archiver made a judgement call.
     """
     if now is None:
         now = time.time()
     if not APPLICATIONS_DIR.is_dir():
-        return []
+        return [], []
 
+    protected_names = open_application_folders() if skip_open else set()
     archived: list[str] = []
+    protected: list[str] = []
+
     candidates = list(APPLICATIONS_DIR.iterdir())
     if APPLIED_DIR.is_dir():
         candidates += list(APPLIED_DIR.iterdir())  # submitted work ages out too
@@ -70,18 +146,17 @@ def archive_due(now: float | None = None, dry_run: bool = False) -> list[str]:
         age_days = (now - folder_created_at(folder)) / 86400
         if age_days < MAX_AGE_DAYS:
             continue
+        if folder.name in protected_names:
+            protected.append(folder.name)
+            continue
         archived.append(folder.name)
         if dry_run:
             continue
         ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
-        target = ARCHIVE_DIR / folder.name
-        suffix = 1
-        while target.with_suffix(".zip").exists():
-            suffix += 1
-            target = ARCHIVE_DIR / f"{folder.name}-{suffix}"
-        shutil.make_archive(str(target), "zip", root_dir=folder)
+        # make_archive appends its own ".zip", so it takes the stem.
+        shutil.make_archive(str(_archive_stem(folder.name)), "zip", root_dir=folder)
         shutil.rmtree(folder)
-    return archived
+    return archived, protected
 
 
 def _norm(text: str) -> str:
@@ -184,6 +259,11 @@ def move_applied(dry_run: bool = False) -> list[str]:
 
 def main(argv: list[str]) -> int:
     dry_run = "--dry-run" in argv
+    # Archiving DELETES the live folder after zipping it. It used to happen
+    # unattended inside every /apply-any and /tracker run. It is now opt-in:
+    # the default run does the (safe, reversible) applied/ move and only
+    # *reports* what is old enough to archive.
+    do_archive = "--archive" in argv and not dry_run
 
     moved = move_applied(dry_run=dry_run)
     verb = "would move" if dry_run else "moved"
@@ -192,13 +272,20 @@ def main(argv: list[str]) -> int:
     if not moved:
         print("no submitted applications to move")
 
-    names = archive_due(dry_run=dry_run)
-    verb = "would archive" if dry_run else "archived"
+    names, protected = archive_due(dry_run=not do_archive)
     if names:
+        verb = "archived" if do_archive else "due for archiving"
         for name in names:
             print(f"{verb}: {name}")
+        if not do_archive:
+            print(f"\n{len(names)} folder(s) are 8+ weeks old. Nothing was deleted.")
+            print("To zip and remove them: python harness/archive_applications.py "
+                  "--archive")
     else:
         print("no application folders due for archiving")
+
+    for name in protected:
+        print(f"kept (application still open): {name}")
     return 0
 
 

@@ -95,3 +95,44 @@ upskill/*.md
 
 # Brainstorm mockups (superpowers visual companion) - never ship
 .superpowers/
+
+# <!-- harness:begin --> Job Search Agent Harness additions.
+# Rules for editing this block:
+#   * NEVER add a `!negation` here. tools/security_guards.py (upstream-owned,
+#     never edited) fails any negation outside its own allowlist, and a
+#     negation can silently re-expose a personal-data family. Every rule below
+#     is therefore a positive pattern, and every file that must SHIP is named
+#     so it never matches one (`*.example.yaml`, `documents/demo/`).
+#   * Every family here is also asserted by tools/harness_guards.py, so a
+#     deletion fails CI rather than silently exposing data.
+
+# Evidence register: the truth store. Only the documented example ships.
+evidence/register.yaml
+evidence/backups/
+
+# Preferences and companies of interest: user answers, never shipped.
+preferences.yaml
+companies.yaml
+
+# Continuity state: HANDOFF quotes the work in flight, including employers.
+state/
+
+# Discovery + tracking outputs (views; regenerate-only, per plan-E).
+shortlist.csv
+run_log.csv
+Job_Search_Tracker.xlsx
+~$*.xlsx
+backups/
+
+# Career documents the harness adds to upstream's families.
+# (Upstream already ignores cv/, linkedin/, diplomas/, references/,
+# applications/, postings/, interview/. documents/demo/ is fictional and
+# ships, so it is deliberately absent from this list.)
+documents/writing_samples/**
+documents/portfolio/**
+
+# Build and cache droppings the private system accumulated in its working
+# tree (plan-A hygiene notes); ignored from the start here.
+.pytest_cache/
+build/
+# <!-- harness:end -->

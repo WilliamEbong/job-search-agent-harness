@@ -1,0 +1,17 @@
+# Job Search Agent Harness — Python dependencies.
+#
+# Upstream (ai-job-search) ships no requirements file; this is a harness
+# addition, recorded as original work in NOTICE.md.
+#
+# Pinned to the exact versions the P2–P6 suites were built and tested against
+# on the build machine (Python 3.14.3), per docs/plan-I-dependency-pinning.md.
+# setup.py installs these and the doctor table reports what is actually
+# importable — it never assumes an install succeeded.
+#
+# Not pinned here because they are external, non-pip tools that the doctor
+# probes instead: TeX (lualatex + xelatex), poppler (pdftotext + pdfinfo),
+# Bun, pandoc (soft — its absence only costs .docx output).
+
+PyYAML==6.0.3
+openpyxl==3.1.5
+pypdf==6.14.2

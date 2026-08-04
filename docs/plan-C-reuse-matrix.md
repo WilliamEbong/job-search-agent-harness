@@ -37,7 +37,13 @@ layer) · **install-dep** · **adapt** (upstream file + thin runtime shim) ·
 | Demo candidate + fixtures | build-minimal | Powers install test, CI, screenshots; privacy prerequisite for a public repo |
 | RUNTIME-MAP.md + .codex stubs + AGENTS.md completion | build-minimal | Completes upstream's existing portability seam; differences only (deliverable F) |
 | Humanizer | install-dep (vendored skill) | MIT; vendor SKILL.md + voice calibration; Codex fallback inline checklist |
-| Ponytail, Caveman | install-dep (per-runtime at setup; Caveman also P0 on build machine) | Verified install commands both runtimes |
+| Ponytail | install-dep (per-runtime at setup) | Verified install commands both runtimes |
+| Caveman | install-dep (OPTIONAL for users: setup explains + recommends lite; P0 on build machine per owner directive) | Verified install commands both runtimes; one flag disables |
+| Onboarding interview controls (speed-up / end / revisit) | build-minimal | Owner directive: built-in feature of the CV interview, not documentation; revisit via `setup --interview` |
+| Career review (portfolio/website/GitHub → CV improvement suggestions) | build-minimal (extends upstream `/expand`) | Owner directive; `/expand` already mines public presence with provenance — the review adds suggest-changes output, never auto-edits the CV or register |
+| Companies-of-interest engine (list build + company search) | build-minimal | Owner directive; list = user input + researched proposals (CV + location driven); search via WebSearch/Firecrawl per RUNTIME-MAP, no custom scrapers |
+| Search scopes (specific boards / specific company / all companies / all boards / everything) | build-minimal | Owner directive; extends the usage-mode wrapper's board selection |
+| USER-GUIDE.md (root) | build-minimal (docs) | Owner directive: top-level guide to all features and usage |
 | Playwright MCP | install-dep (optional) | Both runtimes support MCP; degrade to plain fetch + `unverified` |
 | Firecrawl MCP | install-dep (optional; owner directive) | Keyless tier verified; intake escalation + non-CLI board extraction; degrades cleanly |
 | openpyxl, pyyaml, pypdf | install-dep | Python already required; requirements.txt introduced (upstream has none) |

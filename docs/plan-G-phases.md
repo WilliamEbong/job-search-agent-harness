@@ -15,7 +15,7 @@ and deleted at P9 end; Opus ports mechanisms from it, never personal content.
 - **Rollback:** delete repo, re-clone; installs are idempotent.
 
 ## P1 — setup.py installer + doctor
-- **Objective:** doc 01 §2 one-command setup: detect runtimes on PATH, check/guide prerequisites (Python, Bun, TeX, poppler, Node; pandoc soft), offer per-runtime installs (Ponytail, Caveman, optional Playwright MCP, optional Firecrawl MCP), install portal CLI deps (`bun install` per dir), verify every step (list plugins after install, compile a test PDF, never assume), end with doctor table.
+- **Objective:** doc 01 §2 one-command setup: detect runtimes on PATH, check/guide prerequisites (Python, Bun, TeX, poppler, Node; pandoc soft), offer per-runtime installs (Ponytail; **Caveman as an explicit OPTION — setup explains what it does and recommends lite mode for this harness, user decides**; optional Playwright MCP; optional Firecrawl MCP), install portal CLI deps (`bun install` per dir), verify every step (list plugins after install, compile a test PDF, never assume), end with doctor table.
 - **Create:** `setup.py` (stdlib only), doctor output.
 - **Tests:** `tests_harness/test_setup_doctor.py` (mocked PATH probes); live run on this machine.
 - **Acceptance:** fresh-clone → `python setup.py` completes with an honest doctor table on this machine (all green after P0).
@@ -29,11 +29,41 @@ and deleted at P9 end; Opus ports mechanisms from it, never personal content.
 - **Acceptance:** `python harness/fact_check.py` exit codes correct on fixtures; gate wired into apply path doc; **no failure resolvable by weakening a check (bounded repair rule active from here on).**
 - **Rollback:** layer is additive; revert commit.
 
-## P3 — Onboarding (evidence bank + preference engine + templates)
-- **Objective:** doc 01 §3 complete.
-- **Create/modify:** extend `/setup` via a harness wrapper command (upstream setup.md untouched): documents→register build with `source:` tags, preference interview (question set harvested from snapshot, sanitized: compensation incl. missing-comp rule, location/commute/relocation, driving-only-if-plausible, exclusions free-text→structured, remote trade-offs asked never assumed, hard skill-skips with mandatory-vs-preferred preserved, role families/seniority/type/authorization/industries/direction; skip questions documents already answer) → `preferences.yaml` + `preferences.example.yaml`; template choice: stock · prior-resume→**template-inference** (bounded: reconstruct maintainable LaTeX structure — sections/hierarchy/spacing/bullets/length — then feed upstream `/add-template` which test-compiles; no pixel-perfect promise) · user-supplied→`/add-template`.
-- **Tests:** demo-candidate onboarding produces valid register+preferences (YAML parse + schema check); template-inference on a demo PDF produces a compiling template.
-- **Acceptance:** demo onboarding end-to-end on Claude lane; register entries all carry `source:`.
+## P3 — Onboarding (evidence bank + preference engine + templates + career review)
+- **Objective:** doc 01 §3 complete + owner-directed onboarding features.
+- **Create/modify:** extend `/setup` via a harness wrapper command (upstream setup.md untouched), flow order:
+  1. **CV first:** prompt the user for their CV; analyze it; then **interview
+     them on it** for missing detail. Built-in interview controls (feature,
+     not documentation): the command itself tells the user at interview start
+     that they can say "speed up" (fewer, higher-value questions) or "that's
+     enough" (end now, keep what's gathered) at ANY point, and honors both;
+     **revisit anytime** via `setup --interview` (resumes/extends, never
+     re-asks answered questions).
+  2. Documents→register build with `source:` tags.
+  3. **Career review (optional, offered):** user provides portfolio /
+     personal website / GitHub links → system reviews them (upstream
+     `/expand` mechanics, provenance kept) and **suggests CV
+     additions/changes to improve hire-ability** — suggestions only; nothing
+     enters the register or CV without user confirmation (`/fact` path for
+     facts, template edit for presentation).
+  4. Preference interview (question set harvested from snapshot, sanitized:
+     compensation incl. missing-comp rule, location/commute/relocation,
+     driving-only-if-plausible, exclusions free-text→structured, remote
+     trade-offs asked never assumed, hard skill-skips with
+     mandatory-vs-preferred preserved, role families/seniority/type/
+     authorization/industries/direction; skip questions documents already
+     answer) → `preferences.yaml` + `preferences.example.yaml`.
+  5. Template choice: stock · prior-resume→**template-inference** (bounded:
+     reconstruct maintainable LaTeX structure — sections/hierarchy/spacing/
+     bullets/length — then feed upstream `/add-template` which test-compiles;
+     no pixel-perfect promise) · user-supplied→`/add-template`.
+  6. **Companies of interest (offered once CV is finalized):** collect
+     user-named companies + research proposals (big companies AND local
+     companies that hire the user's skill set, from CV + location, via
+     WebSearch/Firecrawl) → user approves each → `companies.yaml` with
+     `careers_url` per entry. Revisit anytime via the companies command.
+- **Tests:** demo-candidate onboarding produces valid register+preferences+companies (YAML parse + schema check); interview control phrases honored (speed up / end / revisit resumes without re-asking); career review produces suggestions without auto-writes; template-inference on a demo PDF produces a compiling template.
+- **Acceptance:** demo onboarding end-to-end on Claude lane; register entries all carry `source:`; companies entries carry `source: user|researched <date>`.
 - **Rollback:** revert; user files gitignored anyway.
 
 ## P4 — Intake + apply overlay
@@ -44,11 +74,22 @@ and deleted at P9 end; Opus ports mechanisms from it, never personal content.
 - **Acceptance:** demo candidate `apply <fixture>` produces a complete, fact-gated, humanized package on Claude lane.
 - **Rollback:** revert; upstream `/apply` untouched throughout.
 
-## P5 — Discovery (modes + boards)
-- **Objective:** doc 01 §4 + §7.
-- **Create:** usage modes in `preferences.yaml` (`focused` default / `balanced` / `full` with `max_evaluations`, `max_packages_per_run`) + per-run overrides `--board/--limit/--mode` + **cost-posture line printed before every run** (qualitative, no fabricated token math); port `jobbank-ca-search`; location-aware step: user location → research ≤3 reputable local boards → propose → upstream `/add-portal` (which handles robots/ToS, scaffold, live-test); open-job validation (live fetch/closure text/expiry; unverifiable → `unverified`, archived at apply time); wire shortlist verdicts + run_log.
-- **Tests:** mode caps respected (fixture run); cost-posture line present; jobbank-ca CLI tests green (ported suite); closed-job fixture rejected.
-- **Acceptance:** `/scrape` in focused mode on one board yields ranked jobs + run-log row on Claude lane.
+## P5 — Discovery (modes + boards + search scopes + company search)
+- **Objective:** doc 01 §4 + §7 + owner-directed scopes.
+- **Create:** usage modes in `preferences.yaml` (`focused` default / `balanced` / `full` with `max_evaluations`, `max_packages_per_run`) + per-run overrides `--board/--limit/--mode` + **cost-posture line printed before every run** (qualitative, no fabricated token math); port `jobbank-ca-search`; location-aware step: user location + CV → research ≤3 reputable local/regional boards → propose → upstream `/add-portal` (which handles robots/ToS, scaffold, live-test) — the board roster, like the companies list, is user input + system research; open-job validation (live fetch/closure text/expiry; unverifiable → `unverified`, archived at apply time); wire shortlist verdicts + run_log.
+  **Search scopes (owner directive) — the scrape wrapper offers five:**
+  `--scope board <name(s)>` (specific board/s) · `--scope company <name(s)>`
+  (specific companies of interest) · `--scope companies` (all companies of
+  interest) · `--scope boards` (all configured boards) · `--scope all`
+  (everything). Default scope lives in `preferences.yaml`; every scope prints
+  its cost posture; mode caps apply within any scope.
+  **Company-of-interest search:** for each selected `companies.yaml` entry,
+  check its `careers_url` (fetch → Firecrawl/Playwright escalation per
+  RUNTIME-MAP; no custom scrapers) for openings matching the profile; results
+  flow into the same rank/shortlist/run-log path; JS-heavy or blocked career
+  pages → `unverified` + noted, per the ported board-intelligence guidance.
+- **Tests:** mode caps respected (fixture run); cost-posture line present; jobbank-ca CLI tests green (ported suite); closed-job fixture rejected; each of the five scopes selects the right sources (fixture companies.yaml + boards); company search on a fixture careers page yields ranked results with provenance.
+- **Acceptance:** `/scrape` in focused mode on one board AND a company-of-interest scope run both yield ranked jobs + run-log rows on Claude lane.
 - **Rollback:** revert; board CLIs independent.
 
 ## P6 — Tracking
@@ -80,7 +121,7 @@ and deleted at P9 end; Opus ports mechanisms from it, never personal content.
 
 ## P10 — Docs + release gate
 - **Objective:** README-quality manual, attribution, ship decision.
-- **Create:** README (attribution front-and-center), NOTICE.md (deliverable J text), owner guide update, board-intelligence + latex-gotchas docs.
+- **Create:** README (attribution front-and-center), **USER-GUIDE.md at repo root** (owner directive: explains ALL features and how to use the system — onboarding incl. interview controls and revisiting, career review, companies of interest, search scopes and modes, apply flow, tracker, continuity, both runtimes), NOTICE.md (deliverable J text), owner guide update, board-intelligence + latex-gotchas docs.
 - 👤 **Owner moments:** demo-candidate package eyeball ("package looks right"); release gate — privacy-sweep results shown, "flip public?" (default: stay private until yes).
 - **Acceptance:** doc 03 "How you know it's done" list satisfied; repo public (or private by choice).
 - **Rollback:** repo stays private.

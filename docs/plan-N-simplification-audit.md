@@ -36,7 +36,15 @@ this?* Items CUT here were removed from G/H before O was written.
 - **Statusline mirror script**: the only real telemetry channel (B.4). Kept.
 - **XLSX 4-tab workbook**: doc 01 §13 already adjudicated (CSV/HTML
   insufficient for the target user). Kept.
-- **Caveman**: owner directive. Kept (one config flag disables).
+- **Caveman**: owner directive, revised to OPTIONAL — setup explains it and
+  recommends lite mode; user decides. Kept as option.
+- **Owner-directed feature set (2026-08-03 mid-plan additions)**: CV-first
+  interview with speed-up/end/revisit controls · career review
+  (portfolio/website/GitHub → CV suggestions) · companies-of-interest list +
+  company search · five search scopes · root USER-GUIDE.md. All kept — each
+  is a direct owner requirement; implemented on existing mechanisms (upstream
+  /setup + /expand patterns, scrape wrapper, WebSearch/Firecrawl per
+  RUNTIME-MAP) with no new frameworks, schedulers, or scrapers.
 - **jobbank-ca port**: only proven non-Danish local-board example; ToS-clean.
   Kept.
 - **Demo candidate**: unshippable repo without it (fixtures, CI, screenshots,

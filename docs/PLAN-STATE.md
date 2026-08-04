@@ -12,6 +12,17 @@ every `[x]`, continue at the first `[~]`/`[ ]`. Approved plan (decisions + findi
 - Owner directives at plan review: install Caveman during Stage-3 build (both
   runtimes); Firecrawl is part of the harness (optional MCP, keyless-degraded,
   overrides doc 01 §11 omit).
+- Owner directives mid-execution (2026-08-03, baked into B/C/E/F/G/H/M/N + O):
+  Caveman OPTIONAL for users — setup explains it, recommends lite mode ·
+  root USER-GUIDE.md covering all features · CV-first onboarding interview
+  with built-in speed-up/end controls + revisit (`setup --interview`) ·
+  career review of portfolio/website/GitHub → CV improvement suggestions
+  (suggestions only, no auto-writes) · companies-of-interest list
+  (user input + researched: big + local companies hiring the user's skill
+  set, CV/location-driven, each entry user-approved) + company-of-interest
+  search of those companies' boards/career pages · five search scopes:
+  specific board(s) / specific company(ies) / all companies / all boards /
+  everything.
 - Plan approved by owner 2026-08-03.
 
 ## Checklist

@@ -38,6 +38,13 @@ P9. Lane: C = Claude, X = Codex, B = both.
 | 31 | Fresh install | deliverable L script | P9 | B |
 | 32 | Attribution presence | README first screen + NOTICE.md complete | P10 | — |
 | 33 | Upstream-update drill | fetch a future tag (or simulate) → ritual → guards/tests stay green | P9 | — |
+| 34 | Interview controls (owner directive) | "speed up" reduces question count; "that's enough" ends keeping data; `setup --interview` revisits without re-asking | P3 | B |
+| 35 | Career review (owner directive) | demo portfolio/GitHub links → CV improvement suggestions produced; NO auto-write to register/CV; accepted fact routes through `/fact` | P3 | C |
+| 36 | Companies-of-interest build (owner directive) | user-named + researched proposals (big + local, CV/location-driven) each user-approved into companies.yaml | P3 | C |
+| 37 | Company-of-interest search (owner directive) | fixture careers page → openings ranked with provenance; blocked page → `unverified` | P5 | C |
+| 38 | Search scopes (owner directive) | each of the 5 scopes (board/company/companies/boards/all) selects exactly the right sources | P5 | B |
+| 39 | Caveman optional prompt (owner directive) | setup explains Caveman + recommends lite; decline path leaves it uninstalled; accept path verifies install | P1 | B |
+| 40 | USER-GUIDE.md presence | root-level guide covers every shipped feature (checklist against C matrix) | P10 | — |
 
 Rule: a failing test is fixed in code or content, never by weakening the
 check (bounded repair). Results table lands in BUILD-STATE; waivers need

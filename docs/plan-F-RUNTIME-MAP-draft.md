@@ -50,7 +50,7 @@ implementations of a workflow — adapters map mechanics, not procedures.
 | Plugin | Claude Code | Codex |
 |---|---|---|
 | Ponytail | `claude plugin marketplace add DietrichGebert/ponytail` + `claude plugin install ponytail@ponytail` | `codex plugin marketplace add DietrichGebert/ponytail` + `codex plugin add ponytail@ponytail` |
-| Caveman | `claude plugin marketplace add JuliusBrussee/caveman` + `claude plugin install caveman@caveman` | `npx skills add JuliusBrussee/caveman -a codex` (per-session `/caveman`) |
+| Caveman (OPTIONAL — setup explains it and recommends lite mode; user decides) | `claude plugin marketplace add JuliusBrussee/caveman` + `claude plugin install caveman@caveman` | `npx skills add JuliusBrussee/caveman -a codex` (per-session `/caveman`) |
 | Humanizer | vendored skill (no install) | vendored skill via AGENTS.md pointer; if `@`-invocation fails → inline checklist fallback (attributed) — P8 verifies |
 | Playwright/Firecrawl MCP | `claude mcp add …` (offered) | `[mcp_servers.*]` entries (offered) |
 

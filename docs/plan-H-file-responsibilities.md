@@ -23,8 +23,12 @@ per harness file; phase = where it lands.
 | `.claude/commands/fact.md` | Sole register writeback path (backup → write with source → mirror → tests) | P2 |
 | `.claude/commands/tracker.md` | Regenerate workbook + run archiver (backup-first) | P6 |
 | `.claude/commands/continue.md` | Bootstrap ritual: AGENTS.md → HANDOFF.md → git/filesystem → resume | P7 |
-| `.claude/commands/scrape.md` | ONE wrapper: usage modes + cost posture + per-run overrides around upstream scraping (N-audit cut #1) | P5 |
-| `.claude/commands/setup-harness.md` | Onboarding wrapper: evidence bank build + conversational preference interview + hard-constraint/autonomy generalization + template choice (N-audit cut #2 — no separate skill) | P3 |
+| `.claude/commands/scrape.md` | ONE wrapper: usage modes + cost posture + per-run overrides + five search scopes (board/company/companies/boards/all) incl. company-of-interest search (N-audit cut #1) | P5 |
+| `.claude/commands/setup-harness.md` | Onboarding wrapper: CV-first flow → analyze → interview with built-in speed-up/end controls + `--interview` revisit (never re-asks) → register build → preference interview → template choice → companies-of-interest offer (N-audit cut #2 — no separate skill) | P3 |
+| `.claude/commands/career-review.md` | Optional: review user's portfolio/website/GitHub → suggest CV additions/changes for hire-ability; suggestions only, writes go through `/fact` / template edits with user confirmation | P3 |
+| `.claude/commands/companies.md` | Manage `companies.yaml`: add user-named companies, research proposals (big + local hiring the user's skill set, from CV + location), user approves each; revisit anytime | P3 |
+| `companies.example.yaml` | Documented companies-of-interest schema (`name, careers_url, source, location_scope, notes`) | P3 |
+| `USER-GUIDE.md` (repo root) | Top-level guide to every feature and how to use the system (owner directive) | P10 |
 | `.claude/skills/posting-intake/SKILL.md` | 6-rung intake ladder, provenance, quality gate, `unverified` marking | P4 |
 | `.claude/skills/humanizer/SKILL.md` | Vendored MIT skill + voice calibration + never-add-a-fact rule | P4 |
 | `.codex/prompts/*.md` | Thin per-workflow stubs pointing at shared command md + RUNTIME-MAP | P8 |

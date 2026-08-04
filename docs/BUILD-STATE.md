@@ -40,11 +40,14 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (+ commit) ·
 **P2 COMPLETE.**
 
 ### P3 — Onboarding (evidence bank + preferences + templates + career review)
-- [ ] P3.1 `.claude/commands/setup-harness.md` (CV-first → interview w/ speed-up/end/revisit → register build → preference interview → template choice → companies offer)
-- [ ] P3.2 `preferences.example.yaml`
-- [ ] P3.3 `.claude/commands/career-review.md`
-- [ ] P3.4 `.claude/commands/companies.md` + `companies.example.yaml`
-- [ ] P3.5 Gate: demo onboarding E2E; M-tests 1, 2, 3, 4, 34, 35, 36
+- [x] P3.1 `.claude/commands/setup-harness.md` — commit `54a1ffe`
+- [x] P3.2 `preferences.example.yaml` — commit `54a1ffe`
+- [x] P3.3 `.claude/commands/career-review.md` — commit `54a1ffe`
+- [x] P3.4 `.claude/commands/companies.md` + `companies.example.yaml` — commit `54a1ffe`
+- [x] P3.4b `documents/demo/` inputs (pulled forward from P9.1 — P3's own gate needs them) — commit `4e97a08`
+- [x] **P3.5 GATE GREEN (mechanical)** — 33 schema + contract tests; every register source resolves to a real file. Live conversational onboarding run deferred to P9 with reason (below).
+
+**P3 COMPLETE** (live conversational half runs at P9 with the rest of the E2E matrix).
 
 ### P4 — Intake + apply overlay
 - [ ] P4.1 `.claude/skills/posting-intake/SKILL.md` (6-rung ladder)
@@ -375,3 +378,66 @@ token (the one that had let a package pass spuriously).
 
 Next: P3 (onboarding — CV-first interview, preferences, templates, career
 review, companies of interest).
+
+### P3 — Onboarding
+
+**Ordering correction, made deliberately.** `plan-G` lists `documents/demo/` at
+P9, but `evidence/register.example.yaml` (P2) cites those files as its `source:`
+values and P3's own gate is "demo onboarding produces a valid register". The
+demo inputs were therefore built now. Nothing in the plan is contradicted — P9
+still re-runs the full matrix — but the ledger should show why a P9 item has a
+P3 commit.
+
+While doing it, a real hole appeared: the register's document sources pointed at
+files that **did not exist**. The provenance invariant would have been
+decorative — a `source:` path that does not resolve looks like evidence and
+provides none. Fixed, and pinned by
+`test_every_document_source_actually_exists`, which now fails the build if any
+non-`owner-confirmed` source stops resolving.
+
+**`/setup-harness` wraps upstream `/setup`, it does not replace it.** Upstream
+keeps ownership of the profile files (they are `[U]`). The wrapper owns the
+order things happen in (CV first, then questions), the interview controls, the
+evidence register, and the three capabilities upstream has no concept of:
+preference profile, career review, companies of interest.
+
+**Interview controls are a feature, not documentation** (owner directive,
+plan-M 34). The command must *announce* "speed up" and "that's enough" at
+interview start — a control the user is never told about does not exist — and
+must never discard already-gathered answers when the interview ends early.
+`--interview` resumes without re-asking. All four properties are asserted by
+tests rather than left to prose.
+
+**`/career-review` boundary.** Suggests, never writes. Accepted facts route
+through `/fact` so they arrive with a source; rewordings touch templates only.
+The report line `Register writes made by this command: 0` is asserted by a test.
+Fetched pages are treated as untrusted data — a README instructing the agent to
+rate the candidate as an expert is content to report, not an instruction to
+follow.
+
+**Two preference defaults that decide real outcomes**, both pinned by tests:
+
+- `missing_compensation: keep`. Most postings state no pay; discarding them
+  would throw away most of the market.
+- `hard_skips[].mandatory_only`. A posting listing a skipped skill under
+  "nice to have" must **not** be skipped, or transferable-fit candidates lose
+  jobs they would have got. This is the half of the filter that is easy to
+  implement wrongly and impossible to notice afterwards.
+
+**`/companies` is a living list** (owner directive): researched proposals need
+approval before landing, careers URLs are verified before recording, and a page
+the harness cannot read is `unverified` — never "no openings". Those two get
+confused constantly and they are different facts.
+
+**Deferred, with reason: the live conversational onboarding run.** Running
+`/setup-harness` for real writes candidate content into upstream's `[U]` profile
+files, which the never-edit rule forbids in this repo. Per the decision recorded
+in session 1, that run happens in a throwaway clone outside the repo, together
+with the plan-L fresh-install test at P9 — which is where plan-K already
+schedules the Onboarding E2E. Not a skip: mechanical halves are green now, and
+the conversational half has a scheduled home.
+
+Gate evidence: 33 onboarding tests, 81 harness tests total, 155 upstream tests,
+lint clean at 17 commands, guards OK.
+
+Next: P4 (intake + apply overlay).

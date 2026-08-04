@@ -135,4 +135,11 @@ documents/portfolio/**
 # tree (plan-A hygiene notes); ignored from the start here.
 .pytest_cache/
 build/
+
+# Playwright MCP working directory. Posting intake escalates to it at rungs 2
+# and 3, and it writes page snapshots and console logs into the repo root.
+# Those snapshots contain the page's own text - a posting, or whatever a
+# logged-in board rendered - so they are personal data, not build output.
+# Screenshots themselves are already covered by the `*.png` rule above.
+.playwright-mcp/
 # <!-- harness:end -->

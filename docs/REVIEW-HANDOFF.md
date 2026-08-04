@@ -183,10 +183,10 @@ Nothing is broken or half-finished. These are the honest gaps.
 ### A. Verification debt (highest value, do first)
 
 1. ~~**Timed stranger-run from a clean clone.**~~ **DONE — measured, see §5.**
-2. **Screenshot / PDF intake has never run live** (waivers W2, plan-M tests 11
-   and 12). It is a headline capability; a silent OCR misread of a company name
-   or date propagates into a submitted document. **Highest real user risk in
-   the system.**
+2. **Screenshot / PDF intake** (waivers W2, plan-M tests 11 and 12) — **run,
+   see §6.** Three gaps found and closed; one limitation of the exercise is
+   recorded there and is worth re-running with a posting nobody in the session
+   authored.
 3. **Cross-runtime drills** (plan-M 27, 28) — Claude→Codex and back, mid-flight.
    Needs a second terminal. Only affects dual-runtime users.
 4. **Live board runs** — `/add-portal` → new board → next `--scope boards` run
@@ -317,3 +317,60 @@ rest. `--quick` skips the compiles and is the only lever that exists.
   An agent that reaches for `python3` or `py` matches none of them and every
   seeded permission silently stops working. Not hit on Windows; would be worth
   a second pattern per entry if anyone runs this on Linux.
+
+Waiver **W4** (clean-clone install, plan-M test 31) in
+`docs/build-history/BUILD-STATE.md` is discharged by the above.
+
+---
+
+## 6. Screenshot / PDF intake, run live (outstanding item A2)
+
+A fictional posting — `tests_harness/fixtures/posting_intake/posting.html`, a
+Norwegian hydro operator that does not exist — was rendered two ways and put
+through the intake ladder for real: a full-page browser screenshot via the
+Playwright MCP (rung 3), and a PDF via `pandoc --pdf-engine=lualatex` (rung 4).
+Fields were chosen to be hostile to a careless read: a requisition ID of
+`REQ-0O1I7-2026` (digit zero, letter O, digit one, letter I), a closing date
+given both as `07/08/2026` and as `7 August 2026`, a posted date three weeks
+earlier, and a salary range with thousands separators. Expected values are
+pinned in `ground_truth.json` beside it.
+
+### What it found
+
+1. **A posting PDF's text layer is not always what the page says, and nothing
+   checked.** `pdftotext -layout` recovered 11 of 12 fields exactly — and
+   turned `NOK 780,000–860,000` into `NOK 780,000<U+FFFD>860,000`, because the
+   en dash was the one glyph the font had no mapping for. A range that loses
+   its separator reads as a single number. The Verification Checklist already
+   contains exactly this check (`(cid:` / replacement characters) — but it runs
+   on the **outgoing CV**, never on the **incoming posting**, so a corrupted
+   salary or date enters the fit evaluation unchallenged. **Fixed:** rung 4 now
+   checks the extraction and drops to a visual read when it is lossy.
+2. **Nothing confirms that a picture was read correctly.** The resolution
+   quality gate checks the identity fields are *present*; for a screenshot with
+   no canonical source there is no second version to disagree with, so a
+   misread `0` for `O` is invisible until an employer sees it. **Fixed:** when
+   the working text came from a picture and canonical acquisition failed,
+   intake now reads company, exact title, location, closing date and reference
+   number back and waits for a yes. One question, and it catches the whole
+   class.
+3. **Playwright intake wrote into the repo root.** The screenshot landed at
+   `./posting_full.png` and a `.playwright-mcp/` directory appeared holding
+   page snapshots and console logs. `*.png` and `*.pdf` were already ignored,
+   but `.playwright-mcp/` was not — and those snapshots contain the rendered
+   page's own text, which for a logged-in job board is personal data. **Fixed:**
+   added to the `.gitignore` harness block (negation-free).
+
+### The limitation, stated plainly
+
+The fixture was authored in the same session that read it back, so the visual
+read is **not a blind test** and no claim is made here about screenshot
+accuracy. What *is* uncontaminated is finding 1, which is mechanical
+(`pdftotext` output diffed against the ground-truth JSON), and finding 3, which
+is a file that either exists in the working tree or does not. Finding 2 is a
+gap in the written contract, visible by reading it.
+
+A genuine blind run needs a posting the reader has never seen — the natural
+next step is to keep the ladder changes and put one real screenshot through
+`/apply-any` the next time a live posting comes up, checking the read-back
+against the source by eye. That costs one application and settles it.

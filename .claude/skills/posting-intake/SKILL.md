@@ -57,6 +57,20 @@ Use it directly. Archive it verbatim as `posting_source/pasted.md`. No fetching 
 Read natively. Run the same canonical-acquisition attempt as rung 3. The supplied
 artifact is archived regardless of whether a live posting is found.
 
+**Check the text layer before trusting it.** Run `pdftotext -layout <file> -` and compare
+it with what the page looks like. A PDF's embedded text is not always what is printed on
+it: a posting produced by LaTeX, or by an exporter with an incomplete character map,
+extracts glyphs it cannot map as `(cid:NN)` or `U+FFFD`. Measured on the fixture in
+`tests_harness/fixtures/posting_intake/`: 11 of 12 fields extract intact, and the twelfth
+is the salary range — `NOK 780,000–860,000` comes out as `NOK 780,000<?>860,000`, because
+the en dash is the one glyph with no mapping. A range that loses its separator reads as a
+single number, and a single wrong number is exactly the kind of thing that survives into a
+cover letter unchallenged.
+
+So: if the extraction contains `(cid:` or `U+FFFD`, do not use it as the working text.
+Read the rendered page visually instead, treat it as rung 3, and note in `provenance.md`
+which fields came from the picture rather than the text layer.
+
 ### Rung 5 — Mixed input
 Resolve each input on its own rung, then reconcile. Prefer the **most authoritative**
 source (employer's own careers page > job board > screenshot > recollection) and, at
@@ -107,6 +121,21 @@ Before handing off, confirm the resolved text actually contains: **company · ex
 title · location or remote status · the responsibilities and requirements**. If any is
 missing, say which one and **ask the user rather than guessing** — a fit evaluation built
 on an inferred title is wrong in a way that is very hard to see later.
+
+**When the working text came from a picture and nothing canonical was found** (rung 3, or
+rung 4 dropped to rung 3 by the text-layer check), that gate is not enough: it proves the
+fields are *present*, not that they were read *correctly*, and there is no second source
+to disagree with. Before drafting, read the identity fields back and ask for a yes:
+
+> Read from your screenshot — **Fjordlys Kraftverk AS**, *Senior Data Analyst (Grid
+> Operations)*, Bergen, closes 7 August 2026, ref REQ-0O1I7-2026. Right?
+
+Keep it to company, exact title, location, closing date and any reference number — the
+fields that get quoted verbatim in a letter or an application form, where being wrong is
+visible to the employer. Characters that look alike carry this risk on their own: `0`/`O`
+and `1`/`I` are one glyph apart in most serif faces, and a reference number is precisely
+where nobody re-reads. One question, once, is cheaper than a letter addressed to a company
+whose name is subtly wrong.
 
 ## Handoff
 

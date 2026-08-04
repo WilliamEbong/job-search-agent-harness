@@ -102,6 +102,55 @@ class IntakeLadder(unittest.TestCase):
         self.assertIn("mandatory_only", self.text)
         self.assertIn("nice to have", self.text)
 
+    def test_pdf_text_layer_is_checked_before_it_is_trusted(self):
+        """A posting PDF's embedded text is not always what the page shows.
+
+        Measured on the fixture below: a LaTeX-produced posting extracts 11 of
+        12 fields intact and drops the en dash out of the salary range, so
+        `NOK 780,000-860,000` becomes one unreadable token. The Verification
+        Checklist already runs this check — but on the outgoing CV only, never
+        on the incoming posting.
+        """
+        self.assertIn("(cid:", self.text)
+        self.assertIn("u+fffd", self.text)
+        self.assertIn("do not use it as the working text", self.text)
+
+    def test_picture_only_intake_reads_the_identity_fields_back(self):
+        """The quality gate proves the fields are present, not that they were
+        read right, and a screenshot has no second source to disagree with."""
+        self.assertIn("read the identity fields back and ask for a yes", self.text)
+
+
+class PostingIntakeFixture(unittest.TestCase):
+    """The fixture the rung-4 guidance cites, kept honest.
+
+    Rendering it to PDF needs pandoc and a TeX engine, which CI does not have,
+    so the artifacts are generated on demand rather than shipped. What is
+    pinned here is that the source and its ground truth stay in step — a
+    fixture whose expected values have drifted from its content proves nothing.
+    """
+
+    FIXTURES = ROOT / "tests_harness" / "fixtures" / "posting_intake"
+
+    def setUp(self):
+        import json
+        self.html = (self.FIXTURES / "posting.html").read_text(encoding="utf-8")
+        self.truth = json.loads(
+            (self.FIXTURES / "ground_truth.json").read_text(encoding="utf-8"))
+
+    def test_every_ground_truth_value_appears_in_the_posting(self):
+        for key in ("company", "role_title", "location", "requisition_id",
+                    "posted_date", "reports_to"):
+            self.assertIn(self.truth[key], self.html, key)
+
+    def test_the_confusable_requisition_id_is_still_confusable(self):
+        """0/O and 1/I one glyph apart is the whole point of this field."""
+        self.assertEqual(self.truth["requisition_id"], "REQ-0O1I7-2026")
+
+    def test_the_closing_date_is_stated_both_ways(self):
+        self.assertIn("07/08/2026", self.html)
+        self.assertIn("7 August 2026", self.html)
+
 
 class ApplyOverlay(unittest.TestCase):
     def setUp(self):

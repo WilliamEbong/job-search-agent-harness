@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<!--
+  Fictional job posting used to exercise the posting-intake ladder's rung 3
+  (screenshot) and rung 4 (PDF) against a known ground truth.
+
+  Fields are chosen to be *hostile to a careless read*, because the failure this
+  fixture exists to catch is a silent misread that propagates into a submitted
+  document:
+    - the requisition ID mixes 0/O and 1/I
+    - the closing date is given twice, once in an ambiguous numeric form
+    - two dates appear near each other (posted vs closing)
+    - the company name carries a diacritic and a legal suffix
+    - the salary is a range with a thousands separator
+  Ground truth lives beside this file in ground_truth.json.
+
+  No real company, no real person, no real vacancy.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Senior Data Analyst (Grid Operations) — Fjordlys Kraftverk AS</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 46em; margin: 2em auto;
+           color: #1a1a1a; line-height: 1.5; }
+    header { border-bottom: 3px solid #0b5c63; padding-bottom: .6em; }
+    h1 { font-size: 1.6em; margin: .2em 0; }
+    .meta { font-size: .95em; color: #444; }
+    .meta dt { float: left; width: 11em; font-weight: bold; clear: left; }
+    .meta dd { margin-left: 11em; }
+    .chrome { background: #eef2f3; padding: .4em .8em; font-family: monospace;
+              font-size: .8em; color: #333; }
+    footer { margin-top: 2em; font-size: .85em; color: #555;
+             border-top: 1px solid #ccc; padding-top: .8em; }
+  </style>
+</head>
+<body>
+  <div class="chrome">https://careers.fjordlys-kraftverk.example/vacancy/REQ-0O1I7-2026</div>
+
+  <header>
+    <h1>Senior Data Analyst (Grid Operations)</h1>
+    <div class="meta"><strong>Fjordlys Kraftverk AS</strong> — Bergen, Norway</div>
+  </header>
+
+  <dl class="meta">
+    <dt>Requisition ID</dt><dd>REQ-0O1I7-2026</dd>
+    <dt>Employment type</dt><dd>Permanent, full-time</dd>
+    <dt>Working pattern</dt><dd>Hybrid — 2 days on site per week</dd>
+    <dt>Posted</dt><dd>3 July 2026</dd>
+    <dt>Applications close</dt><dd>07/08/2026 (7 August 2026, 23:59 CEST)</dd>
+    <dt>Salary</dt><dd>NOK 780,000–860,000 per year, depending on experience</dd>
+    <dt>Reports to</dt><dd>Head of Grid Analytics</dd>
+  </dl>
+
+  <h2>About the role</h2>
+  <p>Fjordlys Kraftverk AS operates 14 small hydroelectric plants along the western
+  fjords and sells the output into the Nordic day-ahead market. The Grid Operations
+  team forecasts generation, balances positions and reports on network losses. We are
+  hiring a senior analyst to own the forecasting pipeline end to end.</p>
+
+  <h2>What you will do</h2>
+  <ul>
+    <li>Own the day-ahead generation forecast and its accuracy reporting.</li>
+    <li>Build and maintain data pipelines over SCADA telemetry and market data.</li>
+    <li>Quantify network losses and produce the monthly regulatory return.</li>
+    <li>Work with plant engineers to turn operational questions into measurable ones.</li>
+    <li>Mentor two junior analysts.</li>
+  </ul>
+
+  <h2>Requirements</h2>
+  <ul>
+    <li>Five or more years in an analytical role working with time-series data.</li>
+    <li>Strong SQL and Python (pandas); comfortable owning a production pipeline.</li>
+    <li>A degree in a quantitative discipline, or equivalent demonstrated experience.</li>
+    <li>Working proficiency in English. Norwegian is <em>not</em> required.</li>
+    <li>Eligibility to work in Norway.</li>
+  </ul>
+
+  <h2>Nice to have</h2>
+  <ul>
+    <li>Exposure to power markets, Nord Pool, or grid balancing.</li>
+    <li>Experience with dbt or a comparable transformation framework.</li>
+    <li>Any Scandinavian language.</li>
+  </ul>
+
+  <footer>
+    Fjordlys Kraftverk AS is a fictional company. Questions about this vacancy:
+    careers@example.com. We review applications as they arrive.
+  </footer>
+</body>
+</html>

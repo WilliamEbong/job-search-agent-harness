@@ -1,0 +1,19 @@
+{
+  "_comment": "Ground truth for posting.html. A rung-3 (screenshot) or rung-4 (PDF) intake run must reproduce every value here exactly. Fields flagged trap are the ones a careless read gets wrong.",
+  "company": "Fjordlys Kraftverk AS",
+  "role_title": "Senior Data Analyst (Grid Operations)",
+  "location": "Bergen, Norway",
+  "working_pattern": "Hybrid - 2 days on site per week",
+  "employment_type": "Permanent, full-time",
+  "requisition_id": "REQ-0O1I7-2026",
+  "requisition_id_trap": "digit zero, letter O, digit one, letter I, digit seven",
+  "posted_date": "3 July 2026",
+  "closing_date": "7 August 2026",
+  "closing_date_trap": "also written 07/08/2026; day-first, not 8 July",
+  "salary": "NOK 780,000-860,000 per year",
+  "reports_to": "Head of Grid Analytics",
+  "language_requirement": "English; Norwegian explicitly not required",
+  "mandatory_skills": ["SQL", "Python (pandas)", "time-series analysis", "5+ years analytical experience"],
+  "nice_to_have": ["power markets / Nord Pool", "dbt", "Scandinavian language"],
+  "plant_count": 14
+}

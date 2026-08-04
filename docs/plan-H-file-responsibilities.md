@@ -23,10 +23,10 @@ per harness file; phase = where it lands.
 | `.claude/commands/fact.md` | Sole register writeback path (backup → write with source → mirror → tests) | P2 |
 | `.claude/commands/tracker.md` | Regenerate workbook + run archiver (backup-first) | P6 |
 | `.claude/commands/continue.md` | Bootstrap ritual: AGENTS.md → HANDOFF.md → git/filesystem → resume | P7 |
-| `.claude/commands/scrape-mode wrapper(s)` | Usage modes + cost posture + per-run overrides around upstream scraping | P5 |
+| `.claude/commands/scrape.md` | ONE wrapper: usage modes + cost posture + per-run overrides around upstream scraping (N-audit cut #1) | P5 |
+| `.claude/commands/setup-harness.md` | Onboarding wrapper: evidence bank build + conversational preference interview + hard-constraint/autonomy generalization + template choice (N-audit cut #2 — no separate skill) | P3 |
 | `.claude/skills/posting-intake/SKILL.md` | 6-rung intake ladder, provenance, quality gate, `unverified` marking | P4 |
 | `.claude/skills/humanizer/SKILL.md` | Vendored MIT skill + voice calibration + never-add-a-fact rule | P4 |
-| `.claude/skills/preference-engine/SKILL.md` | Conversational preference interview + hard-constraint/autonomy generalization | P3 |
 | `.codex/prompts/*.md` | Thin per-workflow stubs pointing at shared command md + RUNTIME-MAP | P8 |
 | `RUNTIME-MAP.md` | The only place adapters diverge (from deliverable F) | P8 |
 | `AGENTS.md` (harness block) | Thin pointers: workflows, RUNTIME-MAP, state/, evidence/ | P8 |

@@ -1,0 +1,75 @@
+# D — Final Repository Structure
+
+Legend: **[U]** upstream-owned (never edited; updated only via tag merges) ·
+**[H]** harness-owned (original contributions) · **[P]** upstream file
+personalized-by-design (managed blocks only) · **[G]** generated/local,
+gitignored, never ships.
+
+```
+job-search-agent-harness/
+├── AGENTS.md                      [P] upstream thin-pointer, completed: adds harness
+│                                      pointers (RUNTIME-MAP, state/, evidence/)
+├── CLAUDE.md                      [P] Claude adapter pointer (upstream's + harness block)
+├── RUNTIME-MAP.md                 [H] the ONLY place adapters may diverge (deliverable F)
+├── README.md                      [H] rewritten: product intro, quickstart, attribution up front
+├── SETUP.md                       [U] kept as manual fallback; setup.py is the path
+├── LICENSE                        [U] MIT (upstream's, retained)
+├── NOTICE.md                      [H] attribution: foundations vs original work (deliverable J)
+├── SECURITY.md / CONTRIBUTING.md / CHANGELOG.md   [U]
+├── setup.py                       [H] one-command installer + doctor
+├── requirements.txt               [H] pyyaml, openpyxl, pypdf (pinned)
+├── .gitignore                     [P] upstream model + harness families (evidence/,
+│                                      preferences.yaml, state/, shortlist, tracker outputs)
+├── .github/workflows/ci.yml      [P] upstream jobs + harness jobs (privacy guard, scout tests)
+├── .claude/
+│   ├── commands/                  [U] 12 upstream + [H] apply-any, verify-facts, tracker,
+│   │                                  fact, continue, scrape-mode wrappers
+│   ├── skills/                    [U] job-application-assistant, job-scraper, upskill
+│   │                              [H] posting-intake, humanizer (vendored), preference-engine
+│   └── settings.json              [U] frozen by security_guards allowlist
+├── .codex/
+│   └── prompts/                   [H] thin stubs: "execute workflow X per RUNTIME-MAP.md"
+├── .agents/skills/                [U] 6 stock portal CLIs (Danish demos + linkedin + freehire)
+│                                  [H] jobbank-ca-search (ported, sanitized)
+├── harness/                       [H] all original Python, runtime-neutral
+│   ├── fact_check.py              (ported, generalized: lexicon/patterns from config)
+│   ├── fact_check_config.yaml     (tech lexicon, constraint patterns — candidate-agnostic)
+│   ├── tracker_xlsx.py            (ported: 4-tab workbook)
+│   ├── archive_applications.py    (ported: applied/-move, 8-week zip, shared matcher)
+│   ├── run_log.py                 (ported)
+│   ├── tex_to_md.py               (ported)
+│   ├── telemetry_statusline.py    (new: statusline JSON → state/telemetry.json)
+│   └── privacy_sweep.py           (new: CI guard extension; also run at release gate)
+├── evidence/
+│   ├── register.example.yaml      [H] schema + demo-candidate entries (ships)
+│   └── register.yaml              [G] user's real register (gitignored)
+├── preferences.example.yaml       [H] documented schema (ships)
+├── preferences.yaml               [G]
+├── state/                         [G] session-log.md, HANDOFF.md, telemetry.json
+├── templates/                     [U] mechanism + [H] demo template; user templates [G]
+├── cv/ · cover_letters/           [U] stock LaTeX; generated per-application files [G]
+├── documents/                     [G] user career docs + applications/ archives
+│                                  [H] documents/demo/ — fictional demo candidate inputs (ships)
+├── examples/                      [H] example job posting, example tracker rows,
+│                                      example application package (demo candidate)
+├── scout-docs/ → docs/            [H] board-intelligence.md, latex-gotchas.md (ported knowledge)
+├── docs/                          [H] this planning set, owner guide, IMPLEMENTATION-PLAN.md,
+│                                      OPUS-KICKOFF.txt, BUILD-STATE.md (Stage-3)
+├── tools/                         [U] + [H] security_guards extension lands as new file
+│                                      tools/harness_guards.py, never edits upstream's
+├── tests/                         [U] untouched
+└── tests_harness/                 [H] fact_check, tracker, archiver, intake fixtures,
+                                       privacy-sweep tests (demo candidate only)
+```
+
+Rules the tree encodes:
+1. **Never-edit list:** everything [U]. Upstream changes arrive only via the
+   tag-merge ritual. Harness additions live in new files/dirs or managed
+   blocks inside [P] files (the private system's proven `scout:begin/end`
+   fence pattern, renamed `harness:begin/end`).
+2. **One truth store per family** (deliverable E); views regenerate.
+3. **Ships vs generated:** every [G] path is gitignored AND covered by
+   `tools/harness_guards.py` + CI, so personal data cannot be committed even
+   deliberately without removing the guard.
+4. `documents/demo/` + `examples/` + `evidence/register.example.yaml` are the
+   ONLY candidate-shaped content in the repo — all fictional.

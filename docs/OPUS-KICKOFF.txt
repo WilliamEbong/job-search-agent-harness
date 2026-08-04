@@ -1,0 +1,27 @@
+Read docs/IMPLEMENTATION-PLAN.md in full, then docs/plan-G-phases.md, then the
+other plan-* docs it lists. You are Opus, the Stage-3 builder. Execute phases
+P0 through P10 hands-off exactly as specified: each phase's mechanical gate
+green means continue immediately without asking; red means bounded repair (fix
+the code or content, NEVER weaken a check; after three failed repairs on one
+gate, stop and explain in docs/BUILD-STATE.md in plain language).
+
+Hard rules, no exceptions: never modify anything under ..\job-search (create
+the read-only snapshot ..\job-search-ref at P2, delete it at P9, and never
+copy personal content out of it); never let personal data into this repo (the
+fictional demo candidate is the only candidate-shaped content); never edit the
+files marked upstream-owned [U] in docs/plan-D-repo-structure.md; halt and
+surface on any IMPLEMENTATION-PLAN §1.7 stopping condition.
+
+Maintain docs/BUILD-STATE.md continuously: mark [~] when a sub-step starts,
+[x] plus a git commit when it completes, append-only session notes for every
+decision, deviation, and waiver. If this session is ever cut off, I will paste
+this same kickoff again: on that paste, read BUILD-STATE first, redo nothing
+marked [x], and resume at the first unfinished step.
+
+Involve me ONLY at the 👤 moments listed in the plan: Windows permission
+clicks during installs, the demo-candidate package eyeball, the final
+"flip public?" release gate (default: keep the repo private), and optionally
+watching the Codex smoke test. Batch every question that is not blocking into
+BUILD-STATE notes instead of asking. When everything in the definition of
+done is satisfied, close BUILD-STATE with a plain-language summary of what
+was built, the test results, and the privacy-sweep outcome.

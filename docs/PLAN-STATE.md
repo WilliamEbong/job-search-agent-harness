@@ -31,19 +31,24 @@ every `[x]`, continue at the first `[~]`/`[ ]`. Approved plan (decisions + findi
 - [x] PLAN-STATE.md (this file)
 - [x] A  plan-A-current-system-audit.md
 - [x] B  plan-B-capability-audit.md
-- [ ] C  plan-C-reuse-matrix.md
-- [ ] D  plan-D-repo-structure.md
-- [ ] E  plan-E-state-model.md
-- [ ] F  plan-F-RUNTIME-MAP-draft.md
-- [ ] G  plan-G-phases.md
-- [ ] H  plan-H-file-responsibilities.md
-- [ ] I  plan-I-dependency-pinning.md
-- [ ] J  plan-J-licensing-NOTICE.md
-- [ ] K  plan-K-test-matrix.md
-- [ ] L  plan-L-fresh-install-test.md
-- [ ] M  plan-M-e2e-tests.md
-- [ ] N  plan-N-simplification-audit.md (runs over C–M before O)
-- [ ] O  IMPLEMENTATION-PLAN.md + OPUS-KICKOFF.txt
-- [ ] Privacy sweep of all written docs (zero personal strings)
-- [ ] Delete ../job-search-ref
-- [ ] Plain-language owner summary
+- [x] C  plan-C-reuse-matrix.md
+- [x] D  plan-D-repo-structure.md
+- [x] E  plan-E-state-model.md
+- [x] F  plan-F-RUNTIME-MAP-draft.md
+- [x] G  plan-G-phases.md
+- [x] H  plan-H-file-responsibilities.md
+- [x] I  plan-I-dependency-pinning.md
+- [x] J  plan-J-licensing-NOTICE.md
+- [x] K  plan-K-test-matrix.md
+- [x] L  plan-L-fresh-install-test.md
+- [x] M  plan-M-e2e-tests.md (40 tests incl. owner-directive additions 34–40)
+- [x] N  plan-N-simplification-audit.md (cuts applied back to D/G/H)
+- [x] O  IMPLEMENTATION-PLAN.md + OPUS-KICKOFF.txt
+- [x] Privacy sweep of all written docs (grep for owner name/email/private
+      URL/location identifiers: zero hits)
+- [x] Delete ../job-search-ref
+- [x] Plain-language owner summary (delivered in chat at session close)
+
+**STAGE 2 COMPLETE 2026-08-03.** Next: owner runs Stage 3 per
+harness-03-owner-guide.md (switch model to Opus, Plan Mode OFF, paste
+docs/OPUS-KICKOFF.txt).

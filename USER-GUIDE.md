@@ -144,6 +144,12 @@ openings".
 **It is a living list.** Add or remove whenever; the next scoped run reflects it
 immediately. There is no re-onboarding.
 
+**People you know there.** Each employer can carry a short `contacts:` list — a name, how
+you know them, one line of context. When you go to apply, the system reminds you before
+drafting, so you can ask for a referral rather than remembering afterwards that you knew
+someone. It is a list, not a CRM: a referral is usually the highest-converting way in, and
+a name attached to an employer is enough to make that possible.
+
 ---
 
 ## Finding jobs
@@ -257,6 +263,14 @@ nothing — say "rejected by Acme" instead, and `/outcome` records it.
 
 Tell it you applied and the folder moves itself to `applied/` on the next run.
 
+**What converts.** The Summary tab shows response rate **by channel**, so you can see
+that (say) one board supplied half your applications and none of your replies. Counts
+alone hide that. The Shortlist tab records why jobs did *not* become applications, so a
+run of `gate-fail` on one skill tells you your filters are too tight.
+
+**Deadlines.** When a posting states a closing date it is stored, shown in the Shortlist
+tab, and surfaced by `/today` while there is still time to act.
+
 **Follow-ups.** An open application with no news for **10 days** shows up in
 `/today` as due; pick it and it drafts one from what you actually sent. It stops
 suggesting after two — past that, chasing is not the useful move. If you connect
@@ -276,6 +290,27 @@ python harness/rotate_backup.py job_search_tracker.csv --restore 1
 ```
 
 Restoring backs up the current file first, so it is itself reversible.
+
+---
+
+## Offers
+
+```
+/offer
+/offer Rivermouth
+```
+
+Puts the offer next to what you said you wanted — your minimum, your target, the
+arrangement you asked for — and says plainly where it lands, including when it clears
+both and there is nothing to push on.
+
+Then it asks whether you *want* to negotiate, which is a real question with a real "no".
+If you do, it drafts one message in your voice: enthusiastic in principle, one specific
+ask with a number, one line of reasoning. It **never invents a competing offer**, and
+every fact in it goes through the same truth gate as your CV.
+
+It is not financial or legal advice, and it will not pretend to have salary-survey data
+it does not have.
 
 ---
 

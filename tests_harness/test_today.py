@@ -230,3 +230,71 @@ class DailyBrief(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Wave4Capabilities(unittest.TestCase):
+    """Offer stage, referrals, deadlines, conversion analytics.
+
+    Each closes a gap the review named: the system surfaced "an offer needs
+    your decision" and then had nothing to say; it measured `channel: referral`
+    conversion while offering no way to get a referral; it extracted posting
+    deadlines and then discarded them; and it reported counts by source but
+    never conversion, leaving "which board actually works?" unanswerable.
+    """
+
+    @staticmethod
+    def _flat(path: Path) -> str:
+        import re as _re
+        return _re.sub(r"\s+", " ", path.read_text(encoding="utf-8").lower())
+
+    def test_offer_command_exists_with_a_codex_stub(self):
+        self.assertTrue((ROOT / ".claude" / "commands" / "offer.md").is_file())
+        self.assertTrue((ROOT / ".codex" / "prompts" / "offer.md").is_file())
+
+    def test_offer_never_invents_a_competing_offer(self):
+        text = self._flat(ROOT / ".claude" / "commands" / "offer.md")
+        self.assertIn("never invent a competing offer", text)
+
+    def test_offer_compares_against_stated_preferences(self):
+        text = self._flat(ROOT / ".claude" / "commands" / "offer.md")
+        self.assertIn("preferences.yaml", text)
+        self.assertIn("minimum", text)
+        self.assertIn("target", text)
+
+    def test_offer_disclaims_advice_and_invented_market_data(self):
+        text = self._flat(ROOT / ".claude" / "commands" / "offer.md")
+        self.assertIn("not a licensed financial or legal adviser", text)
+        self.assertIn("do not invent market data", text)
+
+    def test_offer_accepts_not_negotiating_as_an_answer(self):
+        text = self._flat(ROOT / ".claude" / "commands" / "offer.md")
+        self.assertIn("not everyone does", text)
+
+    def test_offer_draft_goes_through_the_fact_gate(self):
+        text = self._flat(ROOT / ".claude" / "commands" / "offer.md")
+        self.assertIn("harness/fact_check.py", text)
+
+    def test_contacts_are_modelled_and_surfaced_before_drafting(self):
+        example = self._flat(ROOT / "examples" / "companies.example.yaml")
+        self.assertIn("contacts:", example)
+        apply_any = self._flat(ROOT / ".claude" / "commands" / "apply-any.md")
+        self.assertIn("do they know anyone there", apply_any)
+        # A prompt, not a gate - it must not block the application.
+        self.assertIn("this is a prompt, not a gate", apply_any)
+
+    def test_deadline_is_persisted_not_just_displayed(self):
+        scrape = self._flat(ROOT / ".claude" / "commands" / "scrape.md")
+        self.assertIn("deadline", scrape)
+        self.assertIn("survives exactly one run", scrape)
+
+    def test_batch_close_out_requires_consent_and_spares_interviews(self):
+        text = self._flat(ROOT / ".claude" / "commands" / "today.md")
+        self.assertIn("never do this without asking", text)
+        self.assertIn("never for anything at `interview_only`", text)
+
+    def test_today_still_declares_what_it_writes(self):
+        """The command gained two write paths; the honesty note must match."""
+        text = self._flat(ROOT / ".claude" / "commands" / "today.md")
+        self.assertIn("reading is always safe", text)
+        self.assertIn("both need a yes", text.replace("both explicit and both need a yes",
+                                                      "both need a yes"))

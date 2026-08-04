@@ -85,6 +85,20 @@ approved is not recorded — not as a rejected entry, not as a note. Approved en
 Record what the research was based on under `meta.research_basis`, so a later run
 proposes genuinely new names instead of repeating itself.
 
+## Step 3b: Anyone they know there
+
+For each employer, ask once whether they know anybody there — a former colleague, someone
+from a conference, a friend of a friend. Record it under `contacts:` on that entry: a
+name, how they know them, and one line of context.
+
+This is a list, not a CRM, and that is deliberate. A referral is the highest-converting
+channel in most job searches, and the system has always *measured* `channel: referral`
+outcomes while offering nothing to help produce one. A name attached to an employer is
+enough to close that gap: `/apply-any` surfaces it before drafting, so the user can ask
+before applying cold rather than remembering afterwards.
+
+Do not press. "No" is a complete answer and is not asked again for that employer.
+
 ## Step 4: Removals and edits
 
 Removing is as ordinary as adding — say the name, it goes. Do not ask them to justify

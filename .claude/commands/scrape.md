@@ -154,7 +154,8 @@ job status. ATS keyword counting is never the primary signal.
 ## Step 6: Record the run
 
 Write a shortlist row per scored candidate to `shortlist.csv`
-(`date,company,role,location,source,url,score,verdict,rationale`), with verdict from:
+(`date,company,role,location,source,url,score,verdict,rationale,deadline`), with
+verdict from:
 
 | Verdict | Meaning |
 |---|---|
@@ -184,6 +185,11 @@ python harness/run_log.py --portal <source> --query "<query>" --found N --new M 
 A search that returned zero results is a fact worth keeping: a board that has gone quiet
 for a fortnight looks identical to a board whose CLI broke, unless the log shows the runs
 happened.
+
+**Record the closing date** in `deadline` (ISO `YYYY-MM-DD`) whenever the posting states
+one — the job-scraper skill already extracts it. Without this column the deadline
+survives exactly one run's output table and is then lost, which is what used to happen.
+`/today` reads it and warns while there is still time to act.
 
 Then regenerate the workbook: `python harness/tracker_xlsx.py`.
 

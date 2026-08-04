@@ -126,6 +126,7 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
 
     today = today or datetime.date.today()
     rows = read_csv(csv_path)
+    shortlist = shortlist_rows = read_csv(shortlist_path or SHORTLIST)
     rows.sort(key=lambda r: (parse_date(r.get("date")) or datetime.date.min),
               reverse=True)
 
@@ -242,6 +243,27 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
                 for s, n in sorted(by_status.items(), key=lambda kv: -kv[1])]
     summary += [["", ""], ["BY SOURCE / CHANNEL", ""]]
     summary += [[s, n] for s, n in sorted(by_source.items(), key=lambda kv: -kv[1])]
+
+    # Which channel actually converts. Counts alone cannot answer the most
+    # valuable question in a job search - a board can supply half the
+    # applications and none of the replies, and raw totals hide that entirely.
+    replies: dict[str, int] = {}
+    for row in rows:
+        key = (row.get("channel") or row.get("source") or "unknown").strip() or "unknown"
+        if status.responded(row.get("status")):
+            replies[key] = replies.get(key, 0) + 1
+    summary += [["", ""], ["RESPONSE RATE BY CHANNEL", "(replies / sent)"]]
+    for source, sent in sorted(by_source.items(), key=lambda kv: -kv[1]):
+        got = replies.get(source, 0)
+        summary.append([source, f"{pct(got, sent)}  ({got}/{sent})"])
+
+    if shortlist_rows:
+        verdicts: dict[str, int] = {}
+        for row in shortlist_rows:
+            verdicts[row.get("verdict", "") or "(blank)"] = verdicts.get(
+                row.get("verdict", "") or "(blank)", 0) + 1
+        summary += [["", ""], ["SHORTLIST VERDICTS", "(why jobs did not become applications)"]]
+        summary += [[v, n] for v, n in sorted(verdicts.items(), key=lambda kv: -kv[1])]
     summary += [["", ""], ["Generated", today.isoformat()],
                 ["Source of truth",
                  os.path.basename(csv_path) + " - never edit this workbook by hand"]]
@@ -272,13 +294,14 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
     applied = {_key(r) for r in rows}
     sheet = workbook.create_sheet("Shortlist")
     write_sheet(sheet, ["Date", "Company", "Role", "Location", "Score", "Verdict",
-                        "In pipeline?", "Source", "Rationale", "Posting"],
+                        "In pipeline?", "Closes", "Source", "Rationale", "Posting"],
                 [[r.get("date", ""), r.get("company", ""), r.get("role", ""),
                   r.get("location", ""),
                   int(r["score"]) if (r.get("score") or "").strip().isdigit()
                   else r.get("score", ""),
                   r.get("verdict", ""),
                   "yes" if _key(r) in applied else "no",
+                  r.get("deadline", ""),
                   r.get("source", ""), r.get("rationale", ""), r.get("url", "")]
                  for r in shortlist])
     for index, row in enumerate(shortlist, start=2):
@@ -287,7 +310,7 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
             for cell in sheet[index]:
                 cell.fill = PatternFill("solid", fgColor=fill)
         if row.get("url"):
-            cell = sheet.cell(row=index, column=10)
+            cell = sheet.cell(row=index, column=11)
             cell.hyperlink, cell.style = row["url"], "Hyperlink"
 
     # ------------------------------------------------------------ Search Runs

@@ -70,13 +70,43 @@ something new"). Either way, run the matching workflow:
 | a follow-up | `/outcome <company>` and go to its follow-up branch |
 | a closing-soon or shortlisted job | `/apply-any <url>` |
 | a new search | `/scrape` |
+| an offer to think about | `/offer <company>` |
 | set-up | `/setup-harness` |
 
 Confirm what you are about to do in one line, then do it. Do not re-print the dashboard
 afterwards.
 
+## Step 6: Offer to close out the stale ones
+
+When several open applications have been silent a long time (60+ days, two follow-ups
+already sent), offer to close them in one go rather than making the user run `/outcome`
+six times:
+
+> Six applications have been quiet for over two months with two follow-ups each.
+> Mark them all as no reply? They stay in your history and your funnel; they just
+> stop showing up here.
+
+Only on a yes, and only for the ones listed:
+
+```
+python harness/tracker_row.py --company "<Company>" --role "<Role>" --set status=no_response
+```
+
+`no_response` is a real outcome, not a deletion — the rows stay, the response-rate
+calculation stays honest, and the dashboard stops nagging about applications that are
+finished in practice.
+
+Never do this without asking, and never for anything at `interview_only`.
+
 ## What this command does not do
 
-It does not change the tracker, write state, or make decisions. If nothing needs
-attention it says so in one line rather than manufacturing a task — a daily brief that
-always invents something to do stops being worth reading.
+**Reading is always safe.** Steps 1–4 create nothing and change nothing, so `/today` can
+be run as often as you like.
+
+The two exceptions are both explicit and both need a yes: refreshing the workbook when
+it is stale (Step 3, a regenerated view, never a source of truth), and the batch
+close-out in Step 6. Nothing else writes.
+
+It makes no decisions on the user's behalf. And if nothing needs attention it says so in
+one line rather than manufacturing a task — a daily brief that always invents something
+to do stops being worth reading.

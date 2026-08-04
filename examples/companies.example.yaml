@@ -54,6 +54,14 @@ companies:
     source: user
     location_scope: local
     notes: Large local employer with an environmental compliance group.
+    # Anyone you know there. Optional, and deliberately just a list: a referral
+    # is the highest-converting channel in most job searches, and the system
+    # measured `channel: referral` outcomes long before it helped you get one.
+    # /apply-any surfaces these before drafting; /today reminds you.
+    contacts:
+      - name: Sam Alvarez
+        how: former colleague at Northwind
+        note: works in the compliance group; happy to be asked
 
   - name: Continental Environmental Group
     careers_url: https://example-ceg.com/careers

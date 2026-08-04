@@ -38,6 +38,17 @@ If the intake skill's resolution quality gate fails — no company, no exact tit
 location, no requirements — ask the user for the missing piece before continuing. Do not
 infer it.
 
+## Step 1b: Do they know anyone there?
+
+Check `companies.yaml` for a `contacts:` entry matching this employer. If there is one,
+say so **before** drafting, while it can still change what they do:
+
+> You noted that Sam Alvarez works at Prairie Grid (former colleague at Northwind).
+> A referral usually beats a cold application — want to ask them first? I can carry on
+> and have the documents ready either way.
+
+Then carry on unless they say otherwise. This is a prompt, not a gate.
+
 ## Step 2: Hard-constraint gate, then `/apply`
 
 **The hard-constraint gate runs before any scoring or drafting.** Read

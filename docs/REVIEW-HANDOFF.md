@@ -1,6 +1,7 @@
 # Review & Remediation — Handoff
 
-**Written:** 2026-08-04 · **Repo state:** clean, pushed, CI green at `7136225`
+**Written:** 2026-08-04 · **Last updated:** 2026-08-04, verification pass
+(§§5–7) · **Repo state:** clean, pushed at `967a0de`
 **Repository:** https://github.com/WilliamEbong/job-search-agent-harness (public)
 
 This picks up after a critical review of the completed Stage-3 build. Read this
@@ -133,11 +134,11 @@ All four waves are **complete, committed and pushed**. CI green.
 ## 3. Current state
 
 ```
-HEAD         7136225  Wave 4
-git status   clean, pushed, CI green
-tests        281 harness + 155 upstream + 157 Bun (portal CLIs)
+HEAD         967a0de  verification pass (was 7136225 at Wave 4)
+git status   clean, pushed
+tests        297 harness + 155 upstream + 157 Bun (portal CLIs; jobbank-ca offline suite now 6)
 guards       security_guards, harness_guards, lint_skills, privacy_sweep — all green
-harness/     12 scripts   .claude/commands/  23   tests_harness/  10 files
+harness/     12 scripts   .claude/commands/  23   .codex/prompts/  21
 ```
 
 **New files this session:** `harness/{status,tracker_row,rotate_backup,apply_package,today}.py`,

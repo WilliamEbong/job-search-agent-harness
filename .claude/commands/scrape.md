@@ -151,6 +151,23 @@ Then rank what remains on qualifications, actual responsibilities, transferable 
 compensation, location, remote arrangement, stated preferences, missing mandatories and
 job status. ATS keyword counting is never the primary signal.
 
+**Stated pay below the stated minimum demotes.** When a posting states compensation and
+it falls below `compensation.minimum` in `preferences.yaml`, cap the verdict at
+`not-drafted` and open the rationale with the numbers ("states NOK 540,000; your minimum
+is 620,000"). It is a demotion, not a gate: the row stays on the shortlist with its
+reasons visible, because the user may know something the posting does not (a negotiable
+band, equity, a four-day week). Three boundaries, each load-bearing:
+
+- **Only a *stated* number demotes.** Most postings state nothing, and
+  `missing_compensation: keep` already decides that case — silence is never treated as
+  a low offer.
+- **Compare like with like.** An hourly rate against a `basis: salary` minimum is
+  converted honestly or not compared at all; a guessed annualisation presented as the
+  posting's own number is a fabrication.
+- **Below-minimum is never `gate-fail`.** That verdict means a hard constraint the user
+  set; pay minimums live in preferences precisely because the user said they were
+  judgement, not law.
+
 ## Step 6: Record the run
 
 Write a shortlist row per scored candidate to `shortlist.csv`

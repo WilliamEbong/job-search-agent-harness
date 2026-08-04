@@ -215,14 +215,23 @@ Nothing is broken or half-finished. These are the honest gaps.
   `test_companies_sharing_a_first_word_do_not_share_a_folder`.
 - **No concurrency control anywhere.** Two overlapping `/tracker` runs race in
   `shutil.move`. Single-user tool; not worth a lockfile yet.
-- **`setup.py` is named `setup.py` at repo root**, so `pip install .` would run
-  an interactive installer. Rename to `harness_setup.py` was flagged for owner
-  sign-off and **not done** — it touches README, SETUP.md, USER-GUIDE and the
-  owner's muscle memory.
-- **Compensation has no weight in scoring** (upstream's five dimensions are
-  30/25/15/30). `/offer` and `/scrape` now *surface* pay against
-  minimum/target, but ranking still ignores it. Changing upstream's weights
-  needs an owner decision.
+- ~~**`setup.py` is named `setup.py` at repo root**~~ — **resolved** (owner
+  delegated the call, 2026-08-04). The installer is now `harness_setup.py`;
+  `setup.py` remains as a compatibility shim that delegates human invocations
+  (`python setup.py` still works, so no doc, habit or tutorial breaks) and
+  refuses setuptools command arguments (`egg_info`, `install`, …) with a
+  message naming the real entry point, so `pip install .` fails loudly instead
+  of running an installer inside a package build. Pinned by `SetupShim`.
+- ~~**Compensation has no weight in scoring**~~ — **resolved harness-side**
+  (owner delegated the call, 2026-08-04). Upstream's five dimensions are
+  untouched. `/scrape`'s own shortlist step now demotes a posting whose
+  *stated* pay is below `compensation.minimum`: verdict capped at
+  `not-drafted`, rationale opens with both numbers. Three boundaries are
+  load-bearing and pinned by `PayDemotion`: silence never demotes
+  (`missing_compensation: keep` already owns that case), no invented
+  annualisation, and below-minimum is never `gate-fail` because the minimum is
+  the user's judgement, not a law. Changing upstream's weights themselves
+  remains not done and would need a real reason.
 - **`salary_lookup.py`** needs a `salary_data.json` the user must build; it is
   documented as optional and remains effectively dormant.
 

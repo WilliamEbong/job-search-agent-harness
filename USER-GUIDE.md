@@ -32,7 +32,7 @@ jobs", "what should I do today", "remember that I finished my certificate".
 ```bash
 git clone https://github.com/<you>/job-search-agent-harness
 cd job-search-agent-harness
-python setup.py
+python harness_setup.py
 ```
 
 Choose **express** when it asks — one confirmation instead of a dozen questions.
@@ -92,6 +92,8 @@ you would rather not see jobs requiring. Two defaults worth knowing:
 
 - Postings with **no stated salary are kept**, not discarded. Most postings state nothing;
   discarding them throws away most of the market.
+- A posting that **states** pay below your minimum is demoted on the shortlist with the
+  numbers shown, never silently dropped — you may know something the posting does not.
 - A skill you listed as a hard skip only blocks a job when the posting makes it a
   **requirement**. Listed under "nice to have", it does not block anything.
 

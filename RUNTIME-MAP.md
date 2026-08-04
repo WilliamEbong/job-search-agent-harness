@@ -75,7 +75,7 @@ The one real per-runtime divergence.
 | Reporting | Percentages may be quoted, with their caveats | **Never print a percentage.** No number exists to print, and an invented one is worse than none because the user will plan around it. |
 | Caveats | `used_percentage` is input-tokens-only; null before the first call; resets after `/compact` | — |
 
-## 6. Plugin installs (handled by `setup.py`)
+## 6. Plugin installs (handled by `harness_setup.py`)
 
 | Plugin | Claude Code | Codex |
 |---|---|---|

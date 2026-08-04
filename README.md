@@ -72,10 +72,10 @@ just into this README.
 ```bash
 git clone https://github.com/<you>/job-search-agent-harness
 cd job-search-agent-harness
-python setup.py
+python harness_setup.py
 ```
 
-`setup.py` detects your runtimes and **checks** the prerequisites, printing the exact
+`harness_setup.py` detects your runtimes and **checks** the prerequisites, printing the exact
 install command for anything missing (Node, Bun, TeX and poppler are separate
 installers it cannot run for you). It **does** install the Python packages and the
 job-board tools, offers the optional plugins and MCP servers, and finishes with a doctor

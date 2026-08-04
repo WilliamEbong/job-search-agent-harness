@@ -110,6 +110,34 @@ class HardConstraintGate(unittest.TestCase):
                       SCRAPE.read_text(encoding="utf-8").lower())
 
 
+class PayDemotion(unittest.TestCase):
+    """Stated pay below the stated minimum demotes — with three boundaries.
+
+    The owner declined to touch upstream's scoring weights, so this lives in
+    the harness's own shortlist step. Each boundary guards a distinct failure:
+    treating silence as a low offer discards most of the market, an invented
+    annualisation is a fabricated number, and gate-fail would make a judgement
+    call irreversible.
+    """
+
+    def setUp(self):
+        self.text = flat(SCRAPE)
+
+    def test_below_minimum_caps_the_verdict_not_the_shortlist(self):
+        self.assertIn("cap the verdict at `not-drafted`", self.text)
+        self.assertIn("demotion, not a gate", self.text)
+
+    def test_only_a_stated_number_demotes(self):
+        self.assertIn("only a *stated* number demotes", self.text)
+        self.assertIn("silence is never treated as a low offer", self.text)
+
+    def test_no_invented_annualisation(self):
+        self.assertIn("converted honestly or not compared at all", self.text)
+
+    def test_below_minimum_is_never_gate_fail(self):
+        self.assertIn("below-minimum is never `gate-fail`", self.text)
+
+
 class DiscoveryIsNotSplitBrained(unittest.TestCase):
     """REGRESSION: the documented /scrape never wrote seen_jobs.json.
 

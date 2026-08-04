@@ -41,7 +41,7 @@ directory still has to be the template's.
 ### First compile on a fresh MiKTeX is slow and may look hung
 
 MiKTeX downloads packages on demand. The first `lualatex` run against the stock CV can
-take minutes and produce no output while it fetches. That is not a hang. `setup.py`'s
+take minutes and produce no output while it fetches. That is not a hang. `harness_setup.py`'s
 doctor allows a long timeout for exactly this reason and reports a timeout honestly
 rather than as a compile failure.
 

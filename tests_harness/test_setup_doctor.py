@@ -27,7 +27,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import setup  # noqa: E402  (the path shim above must run first)
+import harness_setup as setup  # noqa: E402  (the path shim above must run first)
 
 
 def fake_which(available: dict[str, str]):
@@ -358,6 +358,34 @@ class PortalInstallRetry(unittest.TestCase):
         self.assertEqual(checks[0].status, setup.DEGRADED)
         self.assertIn("2 of 2 failed", checks[0].detail)
         self.assertEqual(len(calls), 4)  # never more than one retry each
+
+
+class SetupShim(unittest.TestCase):
+    """setup.py is a compatibility shim over harness_setup.py.
+
+    A root setup.py is a contract with pip: `pip install .` executes it with
+    setuptools command arguments, which here used to mean an interactive
+    installer running inside a package build. The shim keeps `python setup.py`
+    working for humans and refuses the packaging invocations.
+    """
+
+    def _run(self, *args: str):
+        import subprocess
+        return subprocess.run(
+            [sys.executable, str(Path(setup.__file__).parent / "setup.py"),
+             *args],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=120,
+        )
+
+    def test_pip_style_invocation_is_refused(self):
+        result = self._run("egg_info")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("harness_setup.py", result.stderr)
+
+    def test_human_invocation_still_reaches_the_installer(self):
+        result = self._run("--doctor", "--quick")
+        self.assertIn("Doctor", result.stdout)
 
 
 class SeededPermissions(unittest.TestCase):

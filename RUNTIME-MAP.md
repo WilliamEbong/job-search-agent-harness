@@ -24,6 +24,13 @@ Entries exist only where inspection proved a real difference.
 | Orientation load | `CLAUDE.md` (automatic) | `AGENTS.md` (automatic; global → project walk-down, 32 KiB combined cap — keep `AGENTS.md` thin-pointer style) |
 | Skills format | `.claude/skills/*/SKILL.md`. `allowed-tools:` is Claude-only | `.agents/skills/*/SKILL.md` works as-is. **`.claude/skills/` is not auto-discovered** — `posting-intake`, `humanizer`, `job-application-assistant`, `job-scraper` and `upskill` all live there, and two of them (`posting-intake`, `humanizer`) are mandatory in `/apply-any`. On Codex, read the SKILL.md directly by path and follow it; the `AGENTS.md` pointer names where they are |
 
+Every command has a stub except two, and the omissions are deliberate rather
+than an oversight: **`apply`**, because `CLAUDE.md` and `AGENTS.md` both
+redirect a bare `/apply` to `/apply-any` (it skips posting intake, the
+hard-constraint gate, the humanizer pass, the fact gate and the tracker row),
+and **`setup`**, which `/setup-harness` invokes and which asks the wrong
+questions when run on its own.
+
 ## 2. Subagent spawning
 
 Two workflows genuinely need this: upstream `apply.md` and `rank.md`.

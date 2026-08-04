@@ -390,7 +390,7 @@ right one runs. The list is here for when you want it.
 | `/tracker` | Rebuild the spreadsheet and move submitted applications. `/today` does this for you when it is stale |
 | `/verify-facts` | Run the truth gate by hand (it runs automatically on every application) |
 | `/upskill` | Turn the gaps in jobs you looked at into a learning plan |
-| `/html-report` | A browsable dashboard. Heavier than `/tracker` — it rebuilds the whole page each run |
+| `/html-report` | A browsable dashboard. **The most expensive routine command here** — there is no template: the model writes the whole page, charts and all, from scratch on every run, so a rebuild costs many times what `/tracker` does and produces a slightly different layout each time. `/tracker` gives you the same numbers in a spreadsheet for a fraction of it. Run this when you want something to look at, not as a daily habit |
 
 ### Rarely
 

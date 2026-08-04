@@ -118,6 +118,28 @@ class FolderMatcher(unittest.TestCase):
         hit = archiver.match_folder("Acme", "Environmental Data Analyst", folders)
         self.assertEqual("", hit)
 
+    def test_companies_sharing_a_first_word_do_not_share_a_folder(self):
+        """The first word is a filter, not an identity.
+
+        Both companies key on "canadian". With the right folder missing, the
+        role score alone put this row in the wrong company's folder:
+        {tire, data, analyst} against a role of {data, analyst} is 2/3 = 0.67,
+        over the threshold. Landing a row in another employer's folder is worse
+        than not matching, because the workbook then links to it and the
+        applied/ move carries it there.
+        """
+        folders = ["Canadian_Tire_Data_Analyst"]
+        hit = archiver.match_folder("Canadian Nuclear Laboratories",
+                                    "Data Analyst", folders)
+        self.assertEqual("", hit)
+
+    def test_the_right_folder_still_wins_when_both_are_present(self):
+        folders = ["Canadian_Tire_Data_Analyst",
+                   "Canadian_Nuclear_Laboratories_Data_Analyst"]
+        hit = archiver.match_folder("Canadian Nuclear Laboratories",
+                                    "Data Analyst", folders)
+        self.assertEqual("Canadian_Nuclear_Laboratories_Data_Analyst", hit)
+
 
 class WorkbookGeneration(unittest.TestCase):
     def setUp(self):

@@ -46,7 +46,7 @@ bun run .agents/skills/jobbank-ca-search/cli/src/cli.ts search -q "<keywords>" [
 | Flag | Meaning |
 |---|---|
 | `--query`, `-q <text>` | Keywords (title, skill, NOC). Required. |
-| `--location`, `-l <text>` | City/province, e.g. `"Winnipeg, MB"`, `"Manitoba"`. Optional - omit for all of Canada. |
+| `--location`, `-l <text>` | City/province, e.g. `"Winnipeg, MB"`, `"Manitoba"`. Optional - omit for all of Canada. **Always include the province.** Job Bank's `locationstring` only biases ordering; the province facet is what filters, and a bare city name (`"Winnipeg"`) derives none, so the search silently covers the whole country. Verified live: `-l "Winnipeg"` returned Montreal and Brossard postings. `meta.location_filter` in the payload reports which of the two happened. |
 | `--jobage <days>` | Posted within N days. **Client-side filter** on the card date - Job Bank's own age filter is not URL-stable, so the CLI filters after parsing. |
 | `--page <n>` | 1-indexed page (25 results/page). Default 1. |
 | `--limit <n>` | Cap results emitted (client-side). |

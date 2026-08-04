@@ -2,6 +2,7 @@
 // helpers.ts makes these deliberately slow; the package test timeout is 60s.
 import { describe, expect, test } from "bun:test";
 import { runCLI, parseJSON } from "./helpers";
+import { provinceCode } from "../src/commands/search";
 
 interface SearchPayload {
   meta: { count: number; page: number };
@@ -43,6 +44,21 @@ describe("flag validation (no network)", () => {
     expect(r.exitCode).toBe(1);
     const err = JSON.parse(r.stderr) as { code: string };
     expect(err.code).toBe("BAD_CMD");
+  });
+
+  // Job Bank's locationstring biases ordering and does not filter, so only a
+  // derived province code narrows anything. A bare city name derives none —
+  // asking the live board for "Winnipeg" returned Montreal and Brossard
+  // postings. That is why the payload reports what the location flag achieved.
+  test("a bare city name derives no province, so nothing is narrowed", () => {
+    expect(provinceCode("Winnipeg")).toBeNull();
+    expect(provinceCode("Toronto")).toBeNull();
+  });
+
+  test("a province name or a trailing code does narrow", () => {
+    expect(provinceCode("Manitoba")).toBe("MB");
+    expect(provinceCode("Winnipeg, MB")).toBe("MB");
+    expect(provinceCode("British Columbia")).toBe("BC");
   });
 });
 

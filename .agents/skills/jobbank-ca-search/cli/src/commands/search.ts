@@ -48,10 +48,21 @@ function withinAge(card: JobCard, days: number): boolean {
 export async function runSearch(opts: SearchOpts): Promise<number> {
   const params = new URLSearchParams()
   params.set("searchstring", opts.query)
+  // What the location flag actually achieved, so the caller is never told a
+  // filter applied when none did. `locationstring` only biases ordering, so a
+  // location that yields no province code searches the whole country: asking
+  // for "Winnipeg" returns Montreal and Brossard postings that look local
+  // until you read the location column. Measured against the live board.
+  let locationFilter = "none supplied"
   if (opts.location) {
     params.set("locationstring", opts.location)
     const prov = provinceCode(opts.location)
-    if (prov) params.set("fprov", prov)
+    if (prov) {
+      params.set("fprov", prov)
+      locationFilter = `province:${prov}`
+    } else {
+      locationFilter = "none - nationwide; add a province (\"Winnipeg, MB\") to narrow"
+    }
   }
   params.set("sort", opts.sort)
   params.set("page", String(opts.page))
@@ -74,7 +85,9 @@ export async function runSearch(opts: SearchOpts): Promise<number> {
           `${(r.company ?? "").slice(0, 30).padEnd(30)}  ${r.location ?? ""}\n`,
       )
     }
-    process.stdout.write(`\n${results.length} result(s), page ${opts.page}\n`)
+    process.stdout.write(
+      `\n${results.length} result(s), page ${opts.page}, location filter: ${locationFilter}\n`,
+    )
   } else if (opts.format === "plain") {
     for (const r of results) {
       process.stdout.write(
@@ -83,7 +96,11 @@ export async function runSearch(opts: SearchOpts): Promise<number> {
     }
   } else {
     process.stdout.write(
-      JSON.stringify({ meta: { count: results.length, page: opts.page }, results }, null, 2) + "\n",
+      JSON.stringify(
+        { meta: { count: results.length, page: opts.page, location_filter: locationFilter }, results },
+        null,
+        2,
+      ) + "\n",
     )
   }
   return 0

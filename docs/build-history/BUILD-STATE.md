@@ -631,3 +631,27 @@ are invisible to git, which is the design working as intended.
 
 Repository is now **public** at
 https://github.com/WilliamEbong/job-search-agent-harness
+
+---
+
+## Post-review remediation (2026-08-04)
+
+This file records the Stage-3 build and stops there. Everything after it — a
+critical review, four remediation waves, and the verification the waves were
+missing — lives in **`docs/REVIEW-HANDOFF.md`**, which is the file to read
+next. In outline:
+
+- **Waves 1–4** (`f1217d0`, `569e016`, `97ec275`, `2bdac2c`, `dcdb803`,
+  `7136225`): data-loss and silent-corruption fixes in the archiver, tracker
+  and fact checker; determinism via `harness/apply_package.py` and
+  `harness/tracker_row.py`; `/today` as the daily driver; `/offer`, referrals,
+  deadlines and conversion analytics.
+- **W4 is discharged.** The clean-clone install (plan-M test 31) was run and
+  timed; see `REVIEW-HANDOFF.md` §5. It found that a stranger's first
+  `python setup.py` ended in failure, and that is fixed.
+- **W2 is partly discharged.** Screenshot and PDF intake (tests 11 and 12) were
+  run against a fixture; see §6. Live board runs (tests 6 and 8) were exercised
+  against the public Canadian board only, which surfaced a silent
+  location-filter fallback. LinkedIn stays unexercised by its own ToS.
+- **W3 remains open.** The cross-runtime drills still need a human at a second
+  terminal.

@@ -202,13 +202,28 @@ def match_folder(company: str, role: str, names: list[str]) -> str:
     """
     company_key = _company_key(company)
     role_words = set(_tokens(role))
+    company_words = set(_tokens(company))
     if not company_key or not role_words:
         return ""
     best, best_score, best_size = "", 0.0, -1
     for name in names:
         if company_key not in _norm(name):
             continue
-        folder_words = [t for t in _tokens(name) if t not in _tokens(company)]
+        # The first-word key is a filter, not an identity: "Canadian Tire" and
+        # "Canadian Nuclear Laboratories" share it. Left to the role score
+        # alone, a row for one could land in the other's folder whenever the
+        # correct folder is absent — "Canadian_Tire_Data_Analyst" scores 2/3
+        # for a Canadian Nuclear Laboratories data analyst, over the threshold.
+        # So the folder's leading segment, everything before its first role
+        # word, must be words this company actually has. That still allows the
+        # divergence folder names are built on, where the segment is a *subset*
+        # of the tracker's name ("Acme, Baker & Clark LLP" -> "Acme_...").
+        folder_tokens = _tokens(name)
+        role_starts = next((i for i, t in enumerate(folder_tokens)
+                            if t in role_words), len(folder_tokens))
+        if any(t not in company_words for t in folder_tokens[:role_starts]):
+            continue
+        folder_words = [t for t in folder_tokens if t not in company_words]
         if not folder_words:
             continue
         score = sum(1 for t in folder_words if t in role_words) / len(folder_words)

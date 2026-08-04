@@ -188,9 +188,13 @@ Nothing is broken or half-finished. These are the honest gaps.
    recorded there and is worth re-running with a posting nobody in the session
    authored.
 3. **Cross-runtime drills** (plan-M 27, 28) — Claude→Codex and back, mid-flight.
-   Needs a second terminal. Only affects dual-runtime users.
-4. **Live board runs** — `/add-portal` → new board → next `--scope boards` run
-   (plan-M 6, 8). Excluded from CI by upstream's own design.
+   **Still open, and it is now the largest remaining gap.** The mechanical half
+   was closed (see §7); the drill itself needs a human at a second terminal and
+   cannot be faked from here.
+4. **Live board runs** — **run against the public Canadian board, see §7.** It
+   found a silent location-filter fallback. LinkedIn stays unexercised: its
+   skill is personal-use-only by its own ToS, and `/add-portal` → new board
+   still needs a board nobody here has added.
 
 ### B. Known-but-unfixed (deliberate, recorded)
 
@@ -199,9 +203,16 @@ Nothing is broken or half-finished. These are the honest gaps.
   current behaviour. Now less critical: `apply_package.slugify()` is the forward
   function, so new folders are deterministic and the fuzzy matcher only serves
   legacy folders.
-- **`_company_key` is the first word only** — "Canadian Tire" and "Canadian
-  Nuclear Laboratories" share a key. Two similarly-named rows could resolve to
-  one folder.
+- ~~**`_company_key` is the first word only**~~ — **fixed.** The collision was
+  real and worse than "could": with the correct folder absent, a Canadian
+  Nuclear Laboratories row scored 2/3 against `Canadian_Tire_Data_Analyst` and
+  matched it, so the workbook linked to another employer's folder and the
+  `applied/` move would have carried the row there. The first word is still the
+  filter, but a folder's leading segment — everything before its first role
+  word — must now consist of words the row's company actually has. That keeps
+  the divergence folder names are built on (`Acme, Baker & Clark LLP` →
+  `Acme_...`, a *subset*) and rejects a different company's name. Pinned by
+  `test_companies_sharing_a_first_word_do_not_share_a_folder`.
 - **No concurrency control anywhere.** Two overlapping `/tracker` runs race in
   `shutil.move`. Single-user tool; not worth a lockfile yet.
 - **`setup.py` is named `setup.py` at repo root**, so `pip install .` would run
@@ -218,8 +229,9 @@ Nothing is broken or half-finished. These are the honest gaps.
 ### C. Not started (proposed, never approved)
 
 - `/html-report` regenerates a hand-written SVG dashboard by LLM every run —
-  the most expensive routine operation in the repo, with no cost warning. It is
-  `[U]`, so a fix means a harness-side wrapper or a note in USER-GUIDE.
+  the most expensive routine operation in the repo. The **note in USER-GUIDE is
+  written** (it now says so plainly and points at `/tracker` for the same
+  numbers). The harness-side wrapper is still unbuilt and still unapproved.
 - Interview **scheduling** — dates are asked conversationally and never
   persisted; no upcoming-interviews view. The Calendar MCP is available and
   unused.
@@ -374,3 +386,61 @@ A genuine blind run needs a posting the reader has never seen — the natural
 next step is to keep the ladder changes and put one real screenshot through
 `/apply-any` the next time a live posting comes up, checking the read-back
 against the source by eye. That costs one application and settles it.
+
+---
+
+## 7. Live boards and cross-runtime (outstanding items A3, A4)
+
+### A4 — live board run
+
+`jobbank-ca-search` is the only board that can be exercised without a ToS
+problem: public pages, no authentication, no key, and it honours the site's
+`Crawl-delay: 5`. `search -q "data analyst" --limit 3` returned three real,
+correctly parsed postings — id, title, company, location, date, salary and URL
+all populated. The CLI works end to end.
+
+**What the run found: `--location` fails open.** Asking for `Winnipeg` returned
+postings in Brossard and Montréal. The cause is in the code, not the network:
+Job Bank's `locationstring` only biases ordering, and the parameter that
+actually filters is the province facet `fprov`. `provinceCode()` derives one
+from a full province name or a trailing two-letter code — so `"Manitoba"` and
+`"Winnipeg, MB"` narrow, and a bare city name, which is the most natural thing
+to type and matches the flag's own help text, derives nothing and searches the
+whole country. Nothing said so. A shortlist quietly filling with jobs 2,000 km
+away is the kind of error that looks like the board being unhelpful.
+
+**Fixed** by reporting what the flag achieved rather than guessing: the payload
+carries `meta.location_filter` (`province:MB`, or `none - nationwide; add a
+province ("Winnipeg, MB") to narrow`), the table footer prints it, and the help
+text and SKILL.md both say to include the province. `provinceCode` is pinned by
+two offline tests. A city→province table would let a bare city work, but it is
+data that rots and it was not needed to stop the silent part.
+
+**Still not run:** `/add-portal` → brand-new board → `--scope boards` (plan-M 8)
+needs a board nobody here has added, and LinkedIn stays untouched — its own
+skill says personal use only. Also unresolved: `-l "Winnipeg, MB"` returned
+zero results where `fprov=MB` was set correctly. That may be honest (Job Bank
+had no matching Winnipeg posting that day) or `locationstring` may fight the
+facet. The board began refusing connections after four requests, so this was
+left alone rather than hammering a public government site to find out. Worth
+one probe next time someone is searching Canada for real.
+
+### A3 — cross-runtime
+
+The interactive drill is genuinely blocked: it needs a second terminal running
+Codex and a human moving an application mid-flight between the two. Nothing
+here can stand in for that, and it stays open.
+
+What could be checked was checked, and one gap turned up: **only 13 of the 23
+commands had a `.codex/prompts/` stub.** The missing ten were all upstream
+`[U]` commands, `/rank` among them — which sits in the daily loop right between
+`/scrape` and `/apply-any`. `RUNTIME-MAP.md` does describe the fallback (read
+`.claude/commands/<name>.md` and execute it), so this was awkwardness rather
+than breakage, but the split was arbitrary and undocumented.
+
+Eight stubs added, from the same template as the existing ones. `apply` and
+`setup` are deliberately still absent, and `RUNTIME-MAP.md` now says why: a
+bare `/apply` is redirected to `/apply-any` everywhere else in the repo, and
+`/setup` is invoked by `/setup-harness` rather than on its own. Adding stubs
+for those two would advertise exactly the two entry points the harness steers
+people away from.

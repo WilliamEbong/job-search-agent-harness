@@ -44,6 +44,9 @@ USAGE
 SEARCH FLAGS
   --query, -q <text>      Keywords (job title, skill, NOC). REQUIRED.
   --location, -l <text>   City/province, e.g. "Winnipeg, MB", "Manitoba". Optional.
+                          Include the province: a bare city ("Winnipeg") cannot
+                          be narrowed and searches all of Canada. The payload's
+                          meta.location_filter says which happened.
   --jobage <days>         Posted within N days (client-side filter on card dates).
   --page <n>              1-indexed page (25 results/page). Default 1.
   --limit, -n <n>         Cap results emitted (client-side).

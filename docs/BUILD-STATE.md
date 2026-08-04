@@ -23,9 +23,11 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (+ commit) ·
 **P0 COMPLETE.**
 
 ### P1 — setup.py installer + doctor
-- [ ] P1.1 `setup.py` (stdlib only): runtime detection, prereq checks, per-runtime plugin installs (Ponytail; Caveman optional w/ lite recommendation; optional Playwright + Firecrawl MCP), portal CLI deps, verify-every-step, doctor table
-- [ ] P1.2 `tests_harness/test_setup_doctor.py` (mocked PATH probes)
-- [ ] P1.3 Gate: fresh-clone `python setup.py` completes with honest doctor table on this machine
+- [x] P1.1 `setup.py` (stdlib only): runtime detection, prereq checks, per-runtime plugin installs (Ponytail; Caveman optional w/ lite recommendation; optional Playwright + Firecrawl MCP), portal CLI deps, verify-every-step, doctor table — commit `3c6b5a7`
+- [x] P1.2 `tests_harness/test_setup_doctor.py` (mocked PATH probes) — 26 tests — commit `3c6b5a7`
+- [x] **P1.3 GATE GREEN** — `python setup.py --doctor` all-green on this machine incl. both stock-template compiles; full `--yes` run idempotent
+
+**P1 COMPLETE.**
 
 ### P2 — Evidence layer (truth tier)
 - [ ] P2.1 Read-only snapshot `../job-search-ref` created (`git clone --local`)
@@ -230,3 +232,63 @@ in RUNTIME-MAP as the fallback if a future Codex drops plugin support.
 | CI green on private repo | run `30879303030`, success, 2m17s |
 
 Next: P1 (`setup.py` + doctor).
+
+### P1 — setup.py + doctor
+
+**Verified endpoints before writing any install code.** The owner's live
+Firecrawl MCP entry is a URL with a **personal API key embedded in the path**.
+That key was deliberately NOT copied into the repo, and no part of it is
+recorded here. Instead the documented endpoint was fetched from Firecrawl's
+own docs: `https://mcp.firecrawl.dev/v2/mcp`, which works keyless
+(rate-limited search/scrape/parse) and takes a key via an
+`Authorization: Bearer` header when one exists. `setup.py` therefore passes the
+key **by env-var name** (`FIRECRAWL_API_KEY`) to each runtime's own config and
+never reads, stores, or echoes the value. Two tests pin this: one asserts a
+keyless add sends no `Authorization`, the other plants a fake secret in the
+environment and asserts the secret string never appears in any command.
+
+Both runtimes' MCP syntaxes were read from `--help` rather than assumed:
+Claude `claude mcp add --transport http <name> <url> [--header ...]`;
+Codex `codex mcp add <name> --url <url> [--bearer-token-env-var VAR]`.
+
+**Three honesty rules are enforced in code, not documented as intentions:**
+
+1. **Bun is executed, not located.** From the P0 finding — the stock build
+   installs cleanly on a no-AVX2 CPU and panics on every call. `check_bun()`
+   runs `bun --version` and maps a panic to DEGRADED with the Baseline install
+   command as the fix.
+2. **poppler requires both binaries.** From the session-1 deviation —
+   `check_poppler()` fails if `pdfinfo` is absent even when `pdftotext` is
+   present, and says why ("Git for Windows ships it").
+3. **Stale PATH is its own status.** A tool found only on the registry PATH
+   reports `RESTART SHELL`, never `MISSING`, so a user who just installed
+   something is not told to install it again.
+
+**TeX is verified by compiling the real stock templates** (`cv/main_example.tex`
+with lualatex, `cover_letters/cover_example.tex` with xelatex), each from
+inside its own directory because `cover.cls` resolves its bundled Raleway
+fonts relative to the working directory. `--version` succeeding is not
+evidence a CV will build. `--quick` skips the compiles and reports them
+`UNVERIFIED` — never `OK`.
+
+**Plugin installs are proved by re-listing.** `install_plugin()` treats "exit 0
+but absent from `plugin list`" as UNVERIFIED, not success.
+
+**P1.3 gate — live on this machine:**
+
+```
+Python OK 3.14.3 · Node OK v24.14.1 · Bun OK 1.3.14
+lualatex OK (LuaHBTeX 1.24.0) · lualatex compile OK — CV template built (45 KB)
+xelatex  OK (MiKTeX-XeTeX 4.16) · xelatex compile  OK — cover letter built (12 KB)
+poppler OK (pdftotext + pdfinfo) · pandoc OK 3.10
+Python packages OK · Portal CLIs OK (6 CLIs) · runtimes: claude, codex
+ponytail/caveman/playwright/firecrawl: OK on both runtimes
+→ All required prerequisites are in place.
+```
+
+Full `--yes` run re-ran cleanly with everything already present (idempotent).
+26 harness tests + 155 upstream tests + guards + lint all green.
+
+Next: P2 (evidence layer / truth tier). P2.1 creates the read-only snapshot
+`../job-search-ref` — the first and only time the private system is touched,
+and it is a `git clone --local` read, never a write.

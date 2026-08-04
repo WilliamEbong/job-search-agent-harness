@@ -114,6 +114,29 @@ class RegisterExample(unittest.TestCase):
         # register would never exercise check 6.
         self.assertTrue(declared & families, f"declared={declared} families={families}")
 
+    def test_every_document_source_actually_exists(self):
+        """A `source:` pointing at a missing file is an unverifiable claim.
+
+        The whole point of the invariant is that a reader can go and check. A
+        path that does not resolve looks like provenance and provides none.
+        """
+        missing = []
+        for section, value in self.reg.items():
+            if section == "meta" or not isinstance(value, list):
+                continue
+            for entry in value:
+                source = str(entry.get("source", ""))
+                if source.startswith("owner-confirmed"):
+                    continue
+                if not (ROOT / source).is_file():
+                    missing.append(f"{section}: {source}")
+        self.assertEqual([], missing)
+
+    def test_meta_sources_resolve_too(self):
+        missing = [s["path"] for s in self.reg["meta"]["sources"]
+                   if not (ROOT / s["path"]).is_file()]
+        self.assertEqual([], missing)
+
     def test_demo_contact_details_cannot_reach_a_real_person(self):
         meta = self.reg["meta"]
         self.assertIn("@example.com", meta["email"])

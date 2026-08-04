@@ -462,15 +462,22 @@ def main(argv=None) -> int:
         print("OK - %d file(s) checked, no red lines." % len(args.files))
         return 0
 
-    print(
-        "%d RED LINE(S). This package may not be presented until every one is resolved."
-        % len(red)
-    )
-    print("Resolve by correcting the draft, or by adding the true fact to the register "
-          "with /fact.")
-    print("Never edit the register just to make a check pass.\n")
+    # Wording matters here. "FABRICATION-RISK", aimed at a job seeker reading
+    # about their own life, accuses them of lying when the usual cause is that
+    # a true fact is simply not recorded yet — and it buried that resolution
+    # third. The gate is exactly as strict; it just leads with the likely cause.
+    print("%d unsupported claim(s). This package is on hold until each one is "
+          "resolved." % len(red))
+    print()
+    print("Usually this means the fact is true and just is not recorded yet.")
+    print("  1. True? Confirm it:  /fact <the fact, in your own words>")
+    print("  2. Overstated? Fix the draft and re-run.")
+    print("  3. Checker wrong about this whole class of text? Fix")
+    print("     harness/fact_check.py and add a fixture pinning the correction.")
+    print()
+    print("Editing the register to silence a line is not on that list.\n")
     for index, (where, text, reason) in enumerate(red, 1):
-        print('%2d. FABRICATION-RISK: "%s" - %s  [%s]' % (index, text, reason, where))
+        print('%2d. UNSUPPORTED: "%s" - %s  [%s]' % (index, text, reason, where))
     return min(len(red), 100)
 
 

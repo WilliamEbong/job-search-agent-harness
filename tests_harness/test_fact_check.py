@@ -86,7 +86,26 @@ class BadFixture(unittest.TestCase):
 
     def test_bad_fixture_is_blocked(self):
         self.assertNotEqual(self.code, 0, self.out)
-        self.assertIn("RED LINE", self.out)
+        self.assertIn("unsupported claim", self.out)
+        self.assertIn("on hold", self.out)
+
+    def test_the_report_leads_with_the_likely_cause(self):
+        """Wording, not strictness.
+
+        The old header called every finding a FABRICATION-RISK — accusing a job
+        seeker of lying about their own life when the usual cause is that a true
+        fact is not recorded yet — and buried that resolution third.
+        """
+        self.assertIn("just is not recorded yet", self.out)
+        confirm_at = self.out.index("/fact")
+        fix_draft_at = self.out.index("Overstated?")
+        self.assertLess(confirm_at, fix_draft_at)
+        self.assertNotIn("FABRICATION", self.out)
+
+    def test_editing_the_register_is_still_ruled_out(self):
+        """The gate is exactly as strict as before."""
+        self.assertIn("Editing the register to silence a line is not on that list",
+                      self.out)
 
     def test_every_planted_class_is_named(self):
         expected = {

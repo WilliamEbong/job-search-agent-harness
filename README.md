@@ -75,17 +75,24 @@ cd job-search-agent-harness
 python setup.py
 ```
 
-`setup.py` detects your runtimes, checks prerequisites, installs what is missing, offers
-the optional plugins and MCP servers, and finishes with a doctor table that tells you the
-truth — including when something is installed but broken.
+`setup.py` detects your runtimes and **checks** the prerequisites, printing the exact
+install command for anything missing (Node, Bun, TeX and poppler are separate
+installers it cannot run for you). It **does** install the Python packages and the
+job-board tools, offers the optional plugins and MCP servers, and finishes with a doctor
+table that tells you the truth — including when something is installed but broken.
+
+Choose **express** when it asks: one confirmation instead of a dozen questions.
 
 Then, in Claude Code or Codex:
 
 ```
 /setup-harness      # onboarding: your CV first, then a short interview
-/scrape             # find jobs
+/today              # every morning: what needs doing, as a numbered list
 apply <a posting>   # URL, screenshot, PDF, or pasted text
 ```
+
+Or just say what you want — "find me jobs", "apply to this", "I got rejected by
+Acme". Slash commands are optional.
 
 **Prerequisites:** Python 3.10+, Node, Bun, a TeX distribution providing `lualatex` and
 `xelatex`, and poppler (`pdftotext` **and** `pdfinfo`). pandoc is optional and affects

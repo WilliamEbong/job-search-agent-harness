@@ -22,7 +22,7 @@ Entries exist only where inspection proved a real difference.
 |---|---|---|
 | Run a workflow | `/name` (`.claude/commands/name.md`) | `@`-invoke the skill, or paste the stub from `.codex/prompts/name.md`: "Execute workflow `name` as specified in `.claude/commands/name.md`, applying RUNTIME-MAP.md" |
 | Orientation load | `CLAUDE.md` (automatic) | `AGENTS.md` (automatic; global → project walk-down, 32 KiB combined cap — keep `AGENTS.md` thin-pointer style) |
-| Skills format | `.claude/skills/*/SKILL.md`. `allowed-tools:` is Claude-only | `.agents/skills/*/SKILL.md` works as-is; Claude-only frontmatter keys are ignored, treat them as advisory |
+| Skills format | `.claude/skills/*/SKILL.md`. `allowed-tools:` is Claude-only | `.agents/skills/*/SKILL.md` works as-is. **`.claude/skills/` is not auto-discovered** — `posting-intake`, `humanizer`, `job-application-assistant`, `job-scraper` and `upskill` all live there, and two of them (`posting-intake`, `humanizer`) are mandatory in `/apply-any`. On Codex, read the SKILL.md directly by path and follow it; the `AGENTS.md` pointer names where they are |
 
 ## 2. Subagent spawning
 

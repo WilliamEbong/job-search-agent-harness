@@ -32,7 +32,7 @@ If they say yes, run `/setup-harness` and come back here afterwards.
 
 ## Step 1: Show what is there
 
-Read `companies.yaml` (schema in `companies.example.yaml`). Show the current list
+Read `companies.yaml` (schema in `examples/companies.example.yaml`). Show the current list
 compactly — name, scope, where it came from, and any access problem recorded by the last
 scrape run. If the file does not exist yet, say so and go to Step 2.
 

@@ -49,13 +49,15 @@ Exit code is the number of red lines. `0` means OK.
 
 **Exit 0** — print the `OK` line and continue to the presentation step.
 
-**Non-zero** — **the package is blocked.** Do not present it. For each red line,
-exactly one of three things is true:
+**Non-zero** — **the package is on hold.** Do not present it. Say so without
+accusation: an unsupported claim usually means a true fact is not recorded yet,
+not that anyone invented anything. For each one, exactly one of three things is
+true:
 
 | Situation | Correct resolution |
 |---|---|
+| The claim is genuinely true and the register is simply missing it — **the usual case** | Ask the user to confirm it, record it with `/fact` (which writes it with an `owner-confirmed <date>` source), then re-run. |
 | The draft overstates, invents, or drops a required qualifier | **Fix the draft**, then re-run. |
-| The claim is genuinely true and the register is simply missing it | Ask the user to confirm it, record it with `/fact` (which writes it with an `owner-confirmed <date>` source), then re-run. |
 | The checker is wrong about a whole class of text | Fix `harness/fact_check.py` **and** add a fixture to `tests_harness/` pinning the corrected behaviour, so the defect cannot return. |
 
 **Never** edit `evidence/register.yaml` by hand to make a red line disappear. Never
@@ -79,10 +81,10 @@ python harness/fact_check.py ... -> OK (N files checked, 0 red lines)
 or, when blocked:
 
 ```
-### Tier-1 fact check - BLOCKED (N red lines)
- 1. FABRICATION-RISK: "<text>" - <reason>  [<file>]
+### Tier-1 fact check - ON HOLD (N unsupported claims)
+ 1. UNSUPPORTED: "<text>" - <reason>  [<file>]
  ...
-Resolution taken: <draft corrected | fact confirmed and registered | checker corrected>
+Resolution taken: <fact confirmed and registered | draft corrected | checker corrected>
 Re-run: OK
 ```
 

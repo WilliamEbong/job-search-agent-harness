@@ -21,10 +21,31 @@ stops trusting the system with anything.
 
 ---
 
-## Step 0: Orient, briefly
+## Step 0: Offer a short path and a thorough one
 
-Say what is about to happen and roughly how long it takes. Then check what already
-exists:
+Say what is about to happen, then let them choose — with the time cost stated, because
+"onboarding" with no end in sight is where people give up:
+
+> Two ways to do this:
+>
+> **Quick start (about 5 minutes)** — I read your CV, ask a handful of questions about
+> the things a CV leaves out, and you can start searching. I'll ask about pay, location
+> and dealbreakers the first time you search, when they actually matter.
+>
+> **Full setup (15–20 minutes)** — the above plus preferences, a look at your public
+> work, a template choice, and a list of employers to watch.
+>
+> You can switch to the full version any time with `/setup-harness --interview`.
+
+**Quick start** runs Steps 1–3 only, then stops and says what was skipped and how to add
+it later. Everything skipped keeps a documented default (`focused` mode, boards scope,
+keep postings with no stated salary). The first `/scrape` then asks only the three
+questions it genuinely needs — location, role families, and anything they refuse
+outright — and writes them to `preferences.yaml`.
+
+**Full setup** runs every step below.
+
+Either way, check what already exists first:
 
 - `evidence/register.yaml` — if present, this is a returning user. Read it. Everything
   in it is answered; do not ask again.
@@ -103,6 +124,13 @@ python -m unittest tests_harness.test_fact_check
 Then hand the profile-file work to upstream `/setup` (Path A if documents exist, Path B
 for a single CV). Upstream owns those files; do not write them yourself.
 
+**Do not let it start over.** `/setup` opens with its own welcome and a three-path menu,
+and its interview mode re-asks identity, education, experience, skills and salary — all
+of which are already answered above. Tell it, in your own framing, to skip the welcome
+and the path menu, and to skip every question the register already answers. A user who
+is asked their job title twice stops trusting the system with anything, and this is the
+one place in the flow where that nearly happens.
+
 **The rule of separation, which matters most at the next step:** career evidence decides
 what may be claimed; templates decide how claims are presented. Facts never enter the
 register from a template.
@@ -121,7 +149,7 @@ conditional — **skip anything the documents or the register already answer**, 
 whole branches that do not apply (do not ask a remote data analyst about a driving
 licence).
 
-Cover, in `preferences.example.yaml`'s shape:
+Cover, in `examples/preferences.example.yaml`'s shape:
 
 - **Compensation** — minimum, target, currency, salary or hourly, and what would make
   them flex. Postings that state no compensation are **kept** by default; only discard

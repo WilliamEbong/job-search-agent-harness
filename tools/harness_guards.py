@@ -77,8 +77,8 @@ FORBIDDEN_TRACKED_PREFIXES = [
 # The only candidate-shaped content allowed to ship (plan-D rule 4).
 ALLOWED_CANDIDATE_CONTENT = [
     "evidence/register.example.yaml",
-    "preferences.example.yaml",
-    "companies.example.yaml",
+    "examples/preferences.example.yaml",
+    "examples/companies.example.yaml",
     "documents/demo/",
     "examples/",
 ]
@@ -166,8 +166,8 @@ def check_nothing_personal_is_tracked() -> None:
 
 def check_shipped_examples_exist() -> None:
     """The documented schemas have to ship, or onboarding has nothing to copy."""
-    for path in ("evidence/register.example.yaml", "preferences.example.yaml",
-                 "companies.example.yaml"):
+    for path in ("evidence/register.example.yaml", "examples/preferences.example.yaml",
+                 "examples/companies.example.yaml"):
         if not (ROOT / path).is_file():
             errors.append(f"{path} is missing — it documents a schema users depend on")
 

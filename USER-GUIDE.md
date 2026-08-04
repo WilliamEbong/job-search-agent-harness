@@ -12,6 +12,21 @@ why; this is the manual.
 
 ---
 
+## The short version
+
+Three things to remember, and only the first one really:
+
+```
+/today              every morning - it tells you what to do and you pick a number
+apply <a link>      when you find a job you want
+"I got rejected"    or interviewed, or offered - just say it
+```
+
+Everything below is detail for when you want it. You can also just talk: "find me
+jobs", "what should I do today", "remember that I finished my certificate".
+
+---
+
 ## Install
 
 ```bash
@@ -19,6 +34,8 @@ git clone https://github.com/<you>/job-search-agent-harness
 cd job-search-agent-harness
 python setup.py
 ```
+
+Choose **express** when it asks — one confirmation instead of a dozen questions.
 
 Setup finishes with a doctor table. Read it — it is written to be honest rather than
 green:
@@ -185,6 +202,12 @@ combined cover-letter-then-resume file, named so they make sense in a file picke
 
 **Nothing is submitted.** You send it, then tell the system you did.
 
+**On pace, honestly.** Each application runs a dozen careful steps and two LaTeX
+compiles, so a session produces **one to three strong applications, not twenty**.
+That is the trade this system makes: every claim in every document is checked
+against your own evidence. If you need volume over rigour, this is the wrong tool
+and it is better to know that now.
+
 ---
 
 ## Truth checking
@@ -232,8 +255,27 @@ become applications, and why), and Search Runs.
 like: it can never hold the only copy of a note. So editing a status in Excel does
 nothing — say "rejected by Acme" instead, and `/outcome` records it.
 
-Tell it you applied and the folder moves itself to `applied/` on the next run. After eight
-weeks, applications zip themselves into `archive/`.
+Tell it you applied and the folder moves itself to `applied/` on the next run.
+
+**Follow-ups.** An open application with no news for **10 days** shows up in
+`/today` as due; pick it and it drafts one from what you actually sent. It stops
+suggesting after two — past that, chasing is not the useful move. If you connect
+Gmail, its own staleness alarm is longer (30 days) because it is looking for
+replies you may have missed rather than prompting you to chase.
+
+**Archiving is opt-in.** Applications older than eight weeks are *reported* as
+ready to archive; nothing is deleted unless you ask
+(`python harness/archive_applications.py --archive`). Anything still open is
+skipped regardless — an interview in progress is never archived.
+
+**Undo.** The tracker is backed up before every change, five deep:
+
+```
+python harness/rotate_backup.py job_search_tracker.csv --list
+python harness/rotate_backup.py job_search_tracker.csv --restore 1
+```
+
+Restoring backs up the current file first, so it is itself reversible.
 
 ---
 
@@ -282,21 +324,56 @@ does not. Decisions, files and the next step survive; the feel of the discussion
 
 ## Command reference
 
+**You do not need to learn these.** Say what you want in plain language — "find me
+jobs", "apply to this", "I got rejected by Acme", "what should I do today" — and the
+right one runs. The list is here for when you want it.
+
+### Every day
+
 | Command | Does |
 |---|---|
-| `/setup-harness` | Onboarding: CV, interview, register, preferences, template |
-| `/setup-harness --interview` | Resume or extend the interview |
-| `/career-review` | Review public presence, suggest CV improvements |
-| `/companies` | Manage the companies-of-interest list |
-| `/scrape` | Find jobs (five scopes, three modes) |
-| `/apply-any` | Apply from any input form |
-| `/verify-facts` | Run the truth gate on a package |
-| `/fact` | Record a confirmed career fact |
-| `/tracker` | Regenerate the workbook, run the archiver |
-| `/outcome` | Record what happened to an application |
-| `/interview` | Build an interview prep pack |
-| `/continue` | Resume interrupted work |
-| `/rank`, `/add-portal`, `/add-template`, `/expand`, `/html-report` | Upstream commands, unchanged |
+| `/today` | **Start here.** What needs doing, ending in a numbered list you pick from |
+| `apply <anything>` | Apply from a link, screenshot, PDF or pasted text |
+| `/outcome <company>` | Record what happened — rejection, interview, offer, or a follow-up |
+
+### Now and then
+
+| Command | Does |
+|---|---|
+| `/scrape` | Find jobs. A bare run reuses your last scope and mode |
+| `/companies` | Manage the employers you watch directly |
+| `/fact <something true>` | Record a career fact so it becomes claimable |
+| `/interview <company>` | Build a prep pack from what you actually submitted |
+| `/continue` | Resume work that got interrupted |
+
+### Occasionally
+
+| Command | Does |
+|---|---|
+| `/setup-harness` | Onboarding. `--interview` resumes or extends it |
+| `/career-review` | Review your public work, suggest CV improvements |
+| `/tracker` | Rebuild the spreadsheet and move submitted applications. `/today` does this for you when it is stale |
+| `/verify-facts` | Run the truth gate by hand (it runs automatically on every application) |
+| `/upskill` | Turn the gaps in jobs you looked at into a learning plan |
+| `/html-report` | A browsable dashboard. Heavier than `/tracker` — it rebuilds the whole page each run |
+
+### Rarely
+
+| Command | Does |
+|---|---|
+| `/add-portal <url>` | Teach it a new job board |
+| `/add-template` | Register your own CV or cover-letter design |
+| `/rank` | Re-score what the last search found |
+| `/expand` | Upstream's competency miner. Prefer `/career-review`, which suggests rather than writes |
+| `/gmail-sync` | Read application updates from Gmail. Needs a Gmail connection |
+| `/notion-sync` | Push the tracker to a Notion database |
+| `/reset` | Clear the profile and start again |
+
+### One to avoid
+
+`/apply` is upstream's inner drafting workflow. Run it directly and you skip posting
+intake, the constraint gate, the humanizer, the fact gate, the packaged output and the
+tracker row — everything this harness adds. **Use `apply <url>` or `/apply-any`.**
 
 ---
 

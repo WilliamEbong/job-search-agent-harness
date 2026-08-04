@@ -145,7 +145,7 @@ class RegisterExample(unittest.TestCase):
 
 class PreferencesExample(unittest.TestCase):
     def setUp(self):
-        self.prefs = load_example("preferences.example.yaml")
+        self.prefs = load_example("examples/preferences.example.yaml")
 
     def test_has_the_sections_scrape_and_apply_depend_on(self):
         expected = {
@@ -189,7 +189,7 @@ class PreferencesExample(unittest.TestCase):
 
 class CompaniesExample(unittest.TestCase):
     def setUp(self):
-        self.data = load_example("companies.example.yaml")
+        self.data = load_example("examples/companies.example.yaml")
 
     def test_entries_carry_name_url_source_and_scope(self):
         for entry in self.data["companies"]:

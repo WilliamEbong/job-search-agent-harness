@@ -12,7 +12,7 @@ P9. Lane: C = Claude, X = Codex, B = both.
 | 5 | One-board focused search | mode caps + cost posture + run-log row | P5 | B |
 | 6 | All-board search | balanced mode dedupes + ranks across boards | P5 | C |
 | 7 | Remote + location boards | freehire (remote) + jobbank-ca (local) both return; location-aware research step proposes ≤3 boards | P5 | C |
-| 8 | User-added board | "Add this job board: URL" → /add-portal path → live-tested integration | P5 | C |
+| 8 | User-added board | "Add this job board: URL" → /add-portal path → live-tested integration; **added AFTER onboarding (not during) to prove the roster grows later**; next `--scope boards` run includes it | P5 | C |
 | 9 | Closed-job rejection | closed/expired fixture → not recommended; `unverified` marking on unverifiable | P5 | C |
 | 10 | URL application | intake rung 2 → package | P4 | B |
 | 11 | Screenshot application | rung 3: vision extract → canonical re-acquisition → both archived | P4 | C |
@@ -40,7 +40,7 @@ P9. Lane: C = Claude, X = Codex, B = both.
 | 33 | Upstream-update drill | fetch a future tag (or simulate) → ritual → guards/tests stay green | P9 | — |
 | 34 | Interview controls (owner directive) | "speed up" reduces question count; "that's enough" ends keeping data; `setup --interview` revisits without re-asking | P3 | B |
 | 35 | Career review (owner directive) | demo portfolio/GitHub links → CV improvement suggestions produced; NO auto-write to register/CV; accepted fact routes through `/fact` | P3 | C |
-| 36 | Companies-of-interest build (owner directive) | user-named + researched proposals (big + local, CV/location-driven) each user-approved into companies.yaml | P3 | C |
+| 36 | Companies-of-interest build (owner directive) | user-named + researched proposals (big + local, CV/location-driven) each user-approved into companies.yaml; **then, in a LATER session, add another company and remove one — next `--scope companies` run reflects both changes** | P3 | C |
 | 37 | Company-of-interest search (owner directive) | fixture careers page → openings ranked with provenance; blocked page → `unverified` | P5 | C |
 | 38 | Search scopes (owner directive) | each of the 5 scopes (board/company/companies/boards/all) selects exactly the right sources | P5 | B |
 | 39 | Caveman optional prompt (owner directive) | setup explains Caveman + recommends lite; decline path leaves it uninstalled; accept path verifies install | P1 | B |

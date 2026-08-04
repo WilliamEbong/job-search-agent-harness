@@ -1,0 +1,23 @@
+Riley Chen - Senior Data Engineer
+
+This fixture plants one instance of every class the Tier-1 checker exists to
+catch. It is the fabrication test: if any planted claim stops being reported,
+the checker has been weakened and the gate no longer protects anyone.
+
+Every line below is FALSE with respect to evidence/register.example.yaml.
+
+Experience
+
+Prairie Water Stewardship Alliance, 2019 - 2026. Managed the analytics
+function and supported a platform used by 12,000 users.
+
+Northwind Analytical Services. 7 years of laboratory operations experience,
+including containerised deployments with Docker.
+
+I am a software engineer by background and proficient in Python, and I coded
+the reporting service that the alliance still runs today.
+
+Credentials
+
+AWS Certified Solutions Architect. Google Data Analytics Professional
+Certificate.

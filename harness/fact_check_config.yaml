@@ -1,0 +1,168 @@
+# Candidate-agnostic configuration for harness/fact_check.py.
+#
+# Nothing here describes a person. It describes two things the checker cannot
+# derive from an evidence register:
+#
+#   1. `tech_lexicon` — technologies job postings commonly ask for. The checker
+#      flags any of these that appear in a draft but NOT in the register, which
+#      is what posting-keyword leakage looks like.
+#
+#   2. `constraint_patterns` — the machine-checkable form of a positioning
+#      constraint. A register entry under `positioning_constraints` states the
+#      rule in prose ("never self-describe as a software developer"); prose is
+#      not checkable, so the regexes live here, keyed by the constraint's `id`.
+#
+# The gate that keeps this candidate-agnostic: **a pattern family only runs if
+# the user's own register declares a positioning_constraint with that id.** A
+# candidate who really is a software engineer simply has no `programming_claims`
+# constraint, and none of these patterns ever fire for them.
+#
+# Extending this file is how the checker gets stronger. Weakening it to make a
+# specific draft pass is forbidden — see the resolution table in
+# .claude/commands/verify-facts.md.
+
+# ---------------------------------------------------------------------------
+# Technologies a posting commonly asks for.
+#
+# Known ceiling, stated rather than hidden: this is a lexicon, so it cannot
+# flag a technology nobody listed here. Broaden it when a real draft slips one
+# through, and pin the new case with a fixture — never speculatively.
+tech_lexicon:
+  # Cloud and infrastructure
+  - AWS
+  - Amazon Web Services
+  - Azure
+  - Google Cloud
+  - GCP
+  - Docker
+  - Kubernetes
+  - Terraform
+  - Jenkins
+  # Data platforms
+  - Databricks
+  - Snowflake
+  - Tableau
+  - Power BI
+  - Looker
+  - SAS
+  - SPSS
+  - MATLAB
+  # Languages
+  - Java
+  - C++
+  - C#
+  - .NET
+  - Ruby
+  - PHP
+  - Go
+  - Rust
+  - Kotlin
+  - Swift
+  - Scala
+  - Perl
+  # Web frameworks
+  - React
+  - Angular
+  - Vue
+  - Django
+  - Flask
+  - FastAPI
+  - Spring
+  - Node.js
+  # Stores and pipelines
+  - MongoDB
+  - MySQL
+  - Oracle
+  - Redis
+  - Kafka
+  - Spark
+  - Hadoop
+  - Airflow
+  - dbt
+  # Enterprise systems
+  - Salesforce
+  - SAP
+  - Workday
+  - ServiceNow
+  - Jira
+  - Confluence
+  # Design and engineering
+  - Figma
+  - AutoCAD
+  - SolidWorks
+  - LabVIEW
+  # Laboratory and scientific
+  - LIMS
+  - Benchling
+  # Machine learning
+  - TensorFlow
+  - PyTorch
+  - scikit-learn
+  - pandas
+  - NumPy
+  - Kaggle
+  - Hugging Face
+
+# Lexicon entries that are also ordinary English words. These are matched
+# CASE-SENSITIVELY against the original text instead of the lowercased copy.
+#
+# Why this exists: the check lowercases everything before matching, so a CV
+# saying "the spring sampling programme", "go further than the brief" or
+# "react to the results" was reported as claiming the Spring framework, the Go
+# language and React. That is a false red line, and false red lines are
+# corrosive — they train the operator to wave the checker through.
+#
+# This does not weaken the check. Genuine keyword stuffing capitalises the
+# technology ("experience with Go and Rust", "Spring Boot"), which still
+# matches. Pinned by test_common_english_words_are_not_technology_claims.
+case_sensitive_lexicon:
+  - Go
+  - Spring
+  - Swift
+  - Rust
+  - React
+  - Angular
+  - Oracle
+  - Spark
+  - Ruby
+
+# ---------------------------------------------------------------------------
+# Machine-checkable positioning constraints, keyed by register constraint id.
+constraint_patterns:
+
+  # For a candidate who directs AI coding tools but is not a programmer by
+  # trade. The failure this prevents is real and specific: a drafter reaching
+  # for flattering verbs turns "used Claude Code to build a workflow" into
+  # "engineered a data pipeline", which reads to an interviewer as a claim of
+  # software-engineering experience the candidate cannot back in a technical
+  # screen.
+  #
+  # `exemption_markers` are the honest framings. When one appears near the
+  # match, the sentence is already truthful and the pattern stands down.
+  programming_claims:
+    description: >-
+      Blocks self-descriptions as a professional developer, claims of
+      programming-language fluency, and bare build verbs about software, unless
+      the surrounding sentence carries the AI-assisted framing.
+    exemption_markers:
+      - ai-assisted
+      - ai assisted
+      - claude code
+      - ai coding
+      - ai-directed
+      - ai tools
+      - with ai
+    # Each regex is ONE single-quoted line on purpose. A YAML folded scalar
+    # (`>-`) replaces every line break with a space, which would silently turn
+    # `(python|typescript|\n javascript)` into an alternative that only matches
+    # " javascript" with a leading space — a pattern that still compiles and
+    # still looks right, but no longer catches what it was written to catch.
+    patterns:
+      - regex: '\b(software (developer|engineer)|programmer|full[- ]stack developer|web developer|backend developer|frontend developer|data engineer)\b'
+        description: self-describes as a developer/engineer
+      - regex: '\b(proficient|fluent|expert|experienced|skilled|strong)\s+(in|with|at)\s+(python|typescript|javascript|java\b|c\+\+|c#|sql\s+development|programming|coding)'
+        description: claims programming-language fluency
+      - regex: '\b(i|who)?\s*\b(coded|programmed)\b'
+        description: uses the bare verb coded/programmed
+      - regex: '\b(developed|engineered|built)\s+(a|an|the)\s+[^.,;]{0,40}(application|app|software|platform|website|web app|pipeline|api|codebase)\b'
+        description: bare developed/engineered/built about a software project (needs the AI-assisted framing)

@@ -1,0 +1,43 @@
+Riley Chen - Environmental Programs Coordinator
+
+Every claim in this fixture is supported by evidence/register.example.yaml.
+If this file ever produces a red line, the checker has developed a false
+positive and the checker is what needs fixing - not this fixture, and not the
+register.
+
+Experience
+
+Prairie Water Stewardship Alliance, Environmental Programs Coordinator
+2024 - present. Coordinates the volunteer sampling programme across 6
+monitoring sites and produces the monthly watershed report for the board.
+Volunteer retention rose 35 percent year over year after the onboarding
+changes, and the spring sampling programme now runs with 12 volunteers.
+
+Northwind Analytical Services, Laboratory Technician
+2020 - 2022. Received, logged and batched environmental samples in the LIMS,
+ran routine water-chemistry analyses, and maintained chain-of-custody
+documentation for regulatory submissions. Processed 1,400 samples in the 2023
+monitoring season.
+
+The sample intake redesign cut average turnaround time by 22 percent. The same
+figure written as 22% and as 22 % must read identically to the checker.
+
+Education
+
+University of Northern Lakes, 2016 - 2020. Bachelor of Science in
+Environmental Science with a minor in Statistics.
+
+Credentials
+
+WHMIS 2015, completed 2020. The Google Data Analytics Professional Certificate
+is in progress and is always described that way.
+
+Tools
+
+Excel, R, LIMS and QGIS in daily use. Built a reporting pipeline with Claude
+Code that turns field sample data into the monthly board report; the workflow
+is AI-assisted throughout.
+
+Notes that must not trip the technology check: the spring sampling programme
+runs every year, volunteers are asked to go further than the minimum protocol,
+and the board tends to react to the trend lines rather than the raw numbers.

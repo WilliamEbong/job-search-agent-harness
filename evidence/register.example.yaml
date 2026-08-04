@@ -1,0 +1,323 @@
+# Evidence register — documented schema, filled with a FICTIONAL demo candidate.
+#
+# ---------------------------------------------------------------------------
+# EVERYTHING IN THIS FILE IS INVENTED. Riley Chen does not exist. The employers,
+# schools, metrics and repositories are fabricated for testing, screenshots and
+# the fresh-install walkthrough. Contact details use the reserved example.com
+# domain and the 555-01xx phone range precisely so they cannot reach a real
+# person. Do not treat any line here as a real career fact.
+# ---------------------------------------------------------------------------
+#
+# WHAT THIS FILE IS FOR
+#
+# The register is the answer to one question: *what may this candidate claim?*
+# `/apply` may rephrase, reorder, translate into an employer's vocabulary and
+# argue for transferable relevance — but it may not assert a fact that is not
+# here. `harness/fact_check.py` enforces that mechanically and blocks delivery
+# of any package containing an unsupported hard fact.
+#
+# THE ONE INVARIANT: every entry carries a `source:`.
+#
+# A source is either a path to a document the fact came from, or
+# `owner-confirmed <YYYY-MM-DD>` for something the candidate stated directly.
+# An entry without a source is a rumour, and a register full of rumours is
+# indistinguishable from a language model's imagination.
+#
+# HOW ENTRIES GET HERE
+#
+# Two sanctioned routes, and no others: `/setup` reads your documents during
+# onboarding, and `/fact` records something you confirm in conversation. Never
+# hand-edit this file to clear a fact-check red line — that inverts the whole
+# point. A red line means the draft claims something unevidenced; either the
+# claim is false (fix the draft) or it is true (confirm it via `/fact`).
+#
+# TO USE IT: copy to `evidence/register.yaml` (gitignored) and let `/setup`
+# fill it from your own documents.
+
+meta:
+  owner: Riley Chen
+  updated: 2026-08-04
+  location: Winnipeg, Manitoba, Canada
+  employment_status: employed, open to new roles
+  work_sought: environmental data / laboratory operations, hybrid or remote
+  email: riley.chen@example.com
+  phone: "+1 555-0142"
+  links:
+    linkedin: https://www.linkedin.com/in/example-riley-chen
+    github: https://github.com/example-rileychen
+  # Which documents this register was built from. `/setup` writes these; the
+  # paths double as the `source:` values used throughout the file.
+  sources:
+    - path: documents/demo/cv_riley_chen.md
+      label: Master CV
+      note: Richest source; longer than any CV actually submitted.
+    - path: documents/demo/certificates.md
+      label: Certificates and credentials
+      note: Includes one credential that is still in progress.
+    - path: documents/demo/portfolio_notes.md
+      label: Portfolio and public repositories
+      note: Used by /career-review; provenance kept per item.
+
+# Where the candidate has worked. `aliases` matter: a draft may legitimately
+# write "Northwind" for "Northwind Analytical Services", and without the alias
+# the checker cannot tell that shorthand from an invented employer.
+employers:
+  - name: Northwind Analytical Services
+    aliases:
+      - Northwind
+      - Northwind Analytical
+    org_context: Independent environmental testing laboratory, ~40 staff.
+    location: Winnipeg, Manitoba
+    titles:
+      - title: Laboratory Technician
+        start: "2020-08"
+        end: "2022-09"
+      - title: Senior Laboratory Technician
+        start: "2022-10"
+        end: "2024-02"
+    source: documents/demo/cv_riley_chen.md
+
+  - name: Prairie Water Stewardship Alliance
+    aliases:
+      - PWSA
+      - Prairie Water
+    org_context: Regional non-profit monitoring watershed health.
+    location: Winnipeg, Manitoba (hybrid)
+    titles:
+      - title: Environmental Programs Coordinator
+        start: "2024-03"
+        end: present
+    source: documents/demo/cv_riley_chen.md
+
+education:
+  - degree: Bachelor of Science, Environmental Science
+    institution: University of Northern Lakes
+    minor: Statistics
+    start: "2016-09"
+    end: "2020-05"
+    status: completed
+    source: documents/demo/cv_riley_chen.md
+
+# `status` and `qualifier_required` are the load-bearing fields. A credential
+# that is in progress may NEVER render without its qualifier — "Google Data
+# Analytics Certificate" on a CV reads as earned, and that is a lie the
+# candidate would have to defend in an interview. Check 4 in fact_check.py
+# blocks exactly this.
+credentials:
+  - name: WHMIS 2015 Certification
+    aliases:
+      - WHMIS
+    issuer: Government of Canada
+    status: completed
+    earned: "2020-09"
+    source: documents/demo/certificates.md
+
+  - name: Google Data Analytics Professional Certificate
+    aliases:
+      - Google Data Analytics Certificate
+      - Google Data Analytics
+    issuer: Google / Coursera
+    status: in-progress
+    qualifier_required: in progress
+    source: documents/demo/certificates.md
+
+# Rules about how this candidate may be positioned. The `id` is the hinge:
+# harness/fact_check_config.yaml holds the machine-checkable regexes for each
+# id, and a family runs ONLY when the id appears here. Delete a constraint and
+# its patterns stop firing; that is how the same checker serves a lab
+# technician and a software engineer without either one being mis-policed.
+positioning_constraints:
+  - id: programming_claims
+    rule: >-
+      Riley automates work by directing AI coding tools, not by writing
+      production software. Never self-describe as a developer, engineer or
+      programmer, and never claim fluency in a programming language.
+    banned_phrasings:
+      - software developer
+      - proficient in Python
+      - built a data pipeline
+    sanctioned_phrasings:
+      - built an AI-assisted reporting workflow using Claude Code
+      - automated the monthly summary with AI coding tools
+      - directed AI tooling to replace a manual reporting step
+    rationale: >-
+      A technical screen would expose an unsupported engineering claim
+      immediately, and the honest version is a genuine strength: the work
+      shipped and the results are real.
+    source: owner-confirmed 2026-08-04
+
+  - id: management_claims
+    rule: >-
+      Riley has coordinated volunteers and led projects, but has never held
+      direct reports. Do not imply people-management authority.
+    banned_phrasings:
+      - managed a team of
+      - direct reports
+    sanctioned_phrasings:
+      - coordinated a volunteer team of
+      - led the sampling project end to end
+    rationale: >-
+      "Managed a team" invites a question about headcount and performance
+      reviews that the evidence cannot support.
+    source: owner-confirmed 2026-08-04
+
+# Tiered technology claims. The tier decides the strongest honest verb, so this
+# section is what keeps "used" from drifting into "engineered".
+technology_claim_rules:
+  direct:
+    - Excel
+    - R
+    - LIMS
+    - QGIS
+  ai-assisted:
+    - Python
+    - SQL
+  familiarity_only:
+    - Power BI
+  note: >-
+    `direct` may be claimed as hands-on use. `ai-assisted` must carry the
+    AI-assisted framing. `familiarity_only` may be described as exposure, never
+    as a working skill.
+  source: owner-confirmed 2026-08-04
+
+technologies:
+  - name: Excel
+    aliases:
+      - Microsoft Excel
+    context: Daily use for sample logs, QC charts and reporting.
+    claim_ceiling: advanced — pivot tables, lookups, control charts
+    source: documents/demo/cv_riley_chen.md
+
+  - name: R
+    aliases:
+      - R statistical software
+    context: Coursework and water-quality trend analysis.
+    claim_ceiling: working — descriptive statistics and plotting
+    source: documents/demo/cv_riley_chen.md
+
+  - name: LIMS
+    context: Laboratory information management system, daily operator.
+    claim_ceiling: advanced — sample lifecycle, batching, chain of custody
+    source: documents/demo/cv_riley_chen.md
+
+  - name: QGIS
+    context: Mapped sampling sites for the watershed programme.
+    claim_ceiling: working — layers, joins, thematic maps
+    source: documents/demo/cv_riley_chen.md
+
+  - name: Python
+    context: AI-assisted scripts for report generation, written with Claude Code.
+    claim_ceiling: AI-assisted only — never claim fluency
+    source: owner-confirmed 2026-08-04
+
+  - name: SQL
+    context: AI-assisted queries against the sample database.
+    claim_ceiling: AI-assisted only
+    source: owner-confirmed 2026-08-04
+
+  - name: Power BI
+    context: Viewed dashboards built by a colleague; did not author them.
+    claim_ceiling: familiarity only
+    source: documents/demo/cv_riley_chen.md
+
+# Every number a document may state. `aliases` cover the other legitimate
+# spellings. Percentages are stored in the "%" form; the checker folds "22
+# percent" and the "22 \%" that LaTeX extracts onto it, so all three spellings
+# of a registered figure pass.
+metrics:
+  - value: "22%"
+    claim: reduction in average sample turnaround time after the intake redesign
+    aliases:
+      - 22 percent
+    source: documents/demo/cv_riley_chen.md
+
+  - value: "1,400"
+    claim: samples processed in the 2023 monitoring season
+    aliases:
+      - 1400 samples
+      - "~1,400"
+    source: documents/demo/cv_riley_chen.md
+
+  - value: "12"
+    claim: volunteers coordinated for the spring sampling programme
+    source: documents/demo/cv_riley_chen.md
+
+  - value: "35%"
+    claim: increase in volunteer retention year over year
+    aliases:
+      - 35 percent
+    source: owner-confirmed 2026-08-04
+
+  - value: "6"
+    claim: monitoring sites maintained across the watershed
+    source: documents/demo/cv_riley_chen.md
+
+projects:
+  - name: Sample Intake Redesign
+    year_completed: "2023"
+    employer: Northwind Analytical Services
+    technologies:
+      - LIMS
+      - Excel
+    summary: >-
+      Reworked the sample intake and batching process, cutting average
+      turnaround time.
+    source: documents/demo/cv_riley_chen.md
+
+  - name: Watershed Monitoring Dashboard
+    year_completed: "2025"
+    employer: Prairie Water Stewardship Alliance
+    technologies:
+      - Python
+      - QGIS
+    summary: >-
+      AI-assisted reporting workflow, built with Claude Code, that turns field
+      sample data into the monthly board report.
+    source: owner-confirmed 2026-08-04
+
+public_repositories:
+  - name: watershed-report-helper
+    description: Scripts that assemble the monthly watershed summary.
+    repository: https://github.com/example-rileychen/watershed-report-helper
+    status: public, AI-assisted
+    source: documents/demo/portfolio_notes.md
+
+research:
+  - name: Undergraduate thesis — nutrient loading in prairie streams
+    institution: University of Northern Lakes
+    start: "2019-09"
+    end: "2020-04"
+    summary: Field sampling and statistical analysis of nutrient concentrations.
+    source: documents/demo/cv_riley_chen.md
+
+leadership:
+  - name: Volunteer coordinator, spring sampling programme
+    start: "2024-03"
+    end: present
+    source: documents/demo/cv_riley_chen.md
+
+languages:
+  - name: English
+    level: native
+    source: documents/demo/cv_riley_chen.md
+  - name: French
+    level: B1 (intermediate)
+    source: documents/demo/cv_riley_chen.md
+
+# What the candidate actually did, per employer. Keyed by a slug rather than by
+# a display name so a rename does not orphan the entry.
+responsibilities:
+  northwind_analytical_services:
+    source: documents/demo/cv_riley_chen.md
+    held:
+      - Received, logged and batched environmental samples in the LIMS.
+      - Ran routine water-chemistry analyses and recorded QC results.
+      - Maintained chain-of-custody documentation for regulatory submissions.
+      - Trained new technicians on intake procedure.
+  prairie_water_stewardship_alliance:
+    source: documents/demo/cv_riley_chen.md
+    held:
+      - Coordinates the volunteer sampling programme across six sites.
+      - Produces the monthly watershed report for the board.
+      - Liaises with municipal partners on data sharing.
+      - Maintains the sampling site map and field protocols.

@@ -30,12 +30,14 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (+ commit) ·
 **P1 COMPLETE.**
 
 ### P2 — Evidence layer (truth tier)
-- [ ] P2.1 Read-only snapshot `../job-search-ref` created (`git clone --local`)
-- [ ] P2.2 `evidence/register.example.yaml` (schema + demo-candidate entries)
-- [ ] P2.3 `harness/fact_check.py` + `harness/fact_check_config.yaml`
-- [ ] P2.4 Commands `fact.md`, `verify-facts.md`
-- [ ] P2.5 `tests_harness/test_fact_check.py` (6 checks + 2 regression cases)
-- [ ] P2.6 Gate: exit codes correct on fixtures; M-tests 16, 17 green
+- [x] P2.1 Read-only snapshot `../job-search-ref` created (`git clone --local --branch personal`)
+- [x] P2.2 `evidence/register.example.yaml` (schema + demo-candidate entries) — commit `84c8311`
+- [x] P2.3 `harness/fact_check.py` + `harness/fact_check_config.yaml` — commit `84c8311`
+- [x] P2.4 Commands `fact.md`, `verify-facts.md` — commit `84c8311`
+- [x] P2.5 `tests_harness/test_fact_check.py` — 22 tests (6 check classes + 3 regressions) — commit `84c8311`
+- [x] **P2.6 GATE GREEN** — bad fixture → 11 red lines with every planted class named; clean fixture → exit 0; M-tests 16 and 17 pass
+
+**P2 COMPLETE.**
 
 ### P3 — Onboarding (evidence bank + preferences + templates + career review)
 - [ ] P3.1 `.claude/commands/setup-harness.md` (CV-first → interview w/ speed-up/end/revisit → register build → preference interview → template choice → companies offer)
@@ -102,7 +104,10 @@ Filled in as tests run. Status: `pass` / `fail→fixed` / `waived (reason)`.
 
 | # | Test | Status | Evidence |
 |---|---|---|---|
-| 1–40 | see `docs/plan-M-e2e-tests.md` | not yet run | — |
+| 16 | Unsupported metric rejection | **pass** | `fixture_bad.txt` red line 1; `UnsupportedMetric` tests |
+| 17 | Unsupported credential rejection | **pass** | red lines 6–7; in-progress credential blocked without qualifier, passes with it |
+| 39 | Caveman optional prompt | **pass** (P1 half) | `CavemanOffer` tests: explanation names lite + protects letters; decline leaves it uninstalled; accept verifies via `plugin list`. Live both-runtime half re-run at P9. |
+| others | see `docs/plan-M-e2e-tests.md` | not yet run | — |
 
 ---
 
@@ -292,3 +297,81 @@ Full `--yes` run re-ran cleanly with everything already present (idempotent).
 Next: P2 (evidence layer / truth tier). P2.1 creates the read-only snapshot
 `../job-search-ref` — the first and only time the private system is touched,
 and it is a `git clone --local` read, never a write.
+
+### P2 — Evidence layer (truth tier)
+
+**Snapshot, and a pre-existing condition in the private system.**
+`git clone --local --branch personal ../job-search ../job-search-ref`. Verified
+immediately afterwards that the private system is untouched: HEAD still
+`e8c3e51`, reflog's newest entry is still the pre-existing commit (a clone
+writes nothing to its source).
+
+Its `git status` does show one modification: ` D ~$Job_Search_Tracker.xlsx`.
+**This predates this build and was not caused by the clone.** It is the Excel
+lock file that plan-A §hygiene already flagged as committed by mistake; Excel
+deletes it when the workbook closes, leaving a tracked-but-absent file. Per the
+never-edit rule the private system was left exactly as found — not tidied, not
+committed. Recorded here only so a future reader does not attribute it to
+Stage 3.
+
+**What was ported, and what deliberately was not.** Only mechanisms: the
+checker's six check classes, the register's 14-section schema, and the
+resolution protocol from the two commands. No career fact, employer, metric or
+document from the private register was read into this repo — the schema was
+extracted programmatically as *key names and value types only*.
+
+**The generalization that makes the checker candidate-agnostic.** The private
+checker hardcoded a `TECH_LEXICON` and a `CODER_PATTERNS` list encoding one
+person's "not-a-coder" rule. Both now live in
+`harness/fact_check_config.yaml`, and a constraint family runs **only when the
+user's own register declares a `positioning_constraint` with that id**. A
+candidate who genuinely is a software engineer has no `programming_claims`
+entry, so none of those patterns can fire for them. Pinned by
+`test_constraint_patterns_do_not_fire_without_a_declared_constraint`.
+
+Noted, not a defect: the demo register also declares a `management_claims`
+constraint that has no regex family in the config. It is therefore Tier-2 only
+(the reviewer enforces it in prose). A declared constraint without patterns is
+a legitimate state, not a silent failure.
+
+**Three defects found and fixed during the port — each by fixing the check and
+pinning a fixture, never by loosening anything:**
+
+1. *Caught before shipping.* The config's constraint regexes were first written
+   as YAML folded scalars (`>-`), which replace each line break with a space.
+   That turned `(python|typescript|\n javascript)` into an alternative matching
+   only `" javascript"` with a leading space — a pattern that still compiles,
+   still reads correctly, and no longer catches what it was written to catch.
+   Every regex is now a single-line quoted scalar, with a comment saying why.
+2. *False positives.* The lexicon contains ordinary English words — `Go`,
+   `Spring`, `React`, `Rust`, `Oracle`, `Spark`, `Ruby`. Matched against
+   lowercased text, "the spring sampling programme" and "volunteers go further"
+   became technology claims. Fixed with a `case_sensitive_lexicon` matched
+   against the original text. This does **not** weaken detection: real keyword
+   stuffing capitalises the name ("experience with Go and Rust"), and a test
+   asserts that case is still caught.
+3. *Silent gap.* The numeral check fires only for units in a whitelist, which
+   omitted `records`, `sites`, `volunteers`, `households`, `participants`,
+   `reports`, `applications` — so those claims were never checked at all.
+   Whitelist broadened (a strengthening). The remaining ceiling is now asserted
+   by an explicit test, `test_numeral_with_an_unlisted_unit_is_a_known_ceiling`,
+   so the limit is visible rather than implied away.
+
+Both inherited regressions carried over intact and still pinned: percentage
+spellings folding onto `%`, and the posting whitelist requiring a whole-number
+token (the one that had let a package pass spuriously).
+
+**P2.6 gate:**
+
+| Evidence | Result |
+|---|---|
+| `fixture_bad.txt` | **11 red lines**, exit 11 — every planted class named |
+| `fixture_clean.txt` | exit 0 |
+| plan-M 16 (unsupported metric) | pass |
+| plan-M 17 (credential, both halves) | pass |
+| harness tests | 48 pass |
+| upstream tests | 155 pass |
+| lint / security guards | OK (9 skills, 14 commands) |
+
+Next: P3 (onboarding — CV-first interview, preferences, templates, career
+review, companies of interest).

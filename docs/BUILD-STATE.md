@@ -14,11 +14,13 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (+ commit) ·
 ### P0 — Bootstrap (repo + build machine)
 - [x] P0.1 Upstream `MadsLorentzen/ai-job-search` @ tag v1.3.0 merged into this git history; `upstream` remote added with push URL `DISABLED-never-push-to-upstream` — commit `7dff125`
 - [x] P0.2 Hardened `.gitignore` (upstream model + harness families) — commit `8d9c107`
-- [ ] P0.3 Private GitHub repo `job-search-agent-harness` created and pushed
+- [x] P0.3 Private GitHub repo `WilliamEbong/job-search-agent-harness` created and pushed — commit `1319828`
 - [x] P0.4 Prereq installs: MiKTeX (lualatex+xelatex), poppler (pdftotext+pdfinfo), Bun, pandoc — all verified running (versions in session notes)
-- [ ] P0.5 Caveman installed on both runtimes (build machine, owner directive); LICENCE verified MIT (plan-J J.1 row)
+- [x] P0.5 Caveman installed on both runtimes; LICENCE verified **MIT** (plan-J J.1 UNVERIFIED resolved)
 - [x] P0.6 `requirements.txt` pinned (pyyaml, openpyxl, pypdf) — commit `8d9c107`
-- [ ] P0.7 Gate: upstream `tests/` green ✅ (155 pass); portal CLI `bun test` green; all engine `--version` probes resolve ✅; `claude plugin list` + `codex plugin list` show caveman; CI green on private repo
+- [x] **P0.7 GATE GREEN** — upstream `tests/` 155 pass · portal CLI 157 Bun tests pass across 6 CLIs, typecheck clean · all engine probes resolve · `claude plugin list` + `codex plugin list` both show caveman · CI green on the private repo (run 30879303030, 2m17s)
+
+**P0 COMPLETE.**
 
 ### P1 — setup.py installer + doctor
 - [ ] P1.1 `setup.py` (stdlib only): runtime detection, prereq checks, per-runtime plugin installs (Ponytail; Caveman optional w/ lite recommendation; optional Playwright + Firecrawl MCP), portal CLI deps, verify-every-step, doctor table
@@ -169,7 +171,62 @@ already specifies.
 (9 skills, 12 commands, settings.json) · `python -m unittest discover -s tests`
 → **155 tests, OK**.
 
-**Open at the end of session 1:** P0.3 (private repo + push), P0.5 (Caveman on
-both runtimes + MIT licence verification), P0.7 (portal CLI `bun test`,
-plugin-list verification, CI green). Nothing is half-written — every `[x]`
-above is committed. A fresh session resumes at P0.3.
+**P0.3 repo.** `gh repo create job-search-agent-harness --private` →
+`https://github.com/WilliamEbong/job-search-agent-harness`, pushed. Upstream's
+CI triggers on `master` only, so a one-line `[P]` personalization adds `main`
+to `on.push.branches`; without it no CI run fires on this fork and the P0.7
+"CI green" gate could not be evidenced. Both branch names are listed so
+upstream tag merges never fight the edit. Also ran `gh repo set-default` —
+with two remotes, `gh run list` was resolving to **upstream's** runs and
+showing green results that were not ours. Worth knowing: any later `gh` call
+in this repo must be read as ours only because of that pin.
+
+**P0.4 bounded repair — Bun crashed, and this changes what the doctor must
+do.** `winget install Oven-sh.Bun` (the default build) installed cleanly and
+then panicked on every invocation:
+
+```
+Features: no_avx2
+panic: Illegal instruction at address 0x7FF7EC26F82C
+```
+
+This machine's CPU has no AVX2, and the stock Bun build requires it. Repair:
+uninstalled it and installed `Oven-sh.Bun.Baseline` instead — same version
+1.3.14, works. **Carried into P1 as a real requirement:** a doctor that only
+checks "is `bun` on PATH" reports green on a machine where every portal CLI
+crashes. The doctor must *execute* `bun --version` and, on an illegal-
+instruction/panic exit, tell the user to install the Baseline build. This is a
+check being strengthened, not weakened.
+
+**P0.5 Caveman — installed both runtimes, licence verified.**
+Claude: `claude plugin marketplace add JuliusBrussee/caveman` +
+`claude plugin install caveman@caveman` → shows in `claude plugin list`
+(version `7066cc815414`, enabled).
+Codex: **`codex plugin marketplace add JuliusBrussee/caveman` +
+`codex plugin add caveman@caveman` both succeed** and Caveman shows in
+`codex plugin list`.
+Licence: `LICENSE` in the plugin cache reads "MIT License / Copyright (c) 2026
+Julius Brussee" with the standard grant clause. plan-J J.1's
+"verify at P0, stop if not MIT-compatible" is **resolved: MIT, no conflict**.
+
+*Finding that simplifies plan-F §6:* that table routes Codex Caveman through
+`npx skills add JuliusBrussee/caveman -a codex` (a per-session `/caveman`
+skill) and flags `codex plugin marketplace add` as UNVERIFIED-thin. The plugin
+route is now verified working on codex-cli 0.144.6, so `setup.py` will use the
+**same two-command marketplace mechanism for both Ponytail and Caveman on both
+runtimes** — one mechanism instead of two, and it is the one whose result
+`plugin list` can actually confirm. The `npx skills add` path stays documented
+in RUNTIME-MAP as the fallback if a future Codex drops plugin support.
+
+**P0.7 gate — GREEN, every item evidenced:**
+
+| Gate item | Result |
+|---|---|
+| upstream `tests/` | 155 tests, OK |
+| portal CLI `bun test` | 6 CLIs, typecheck clean, **157 tests, 0 fail** |
+| engine `--version` probes | lualatex, xelatex, pdftotext, pdfinfo, bun, pandoc all resolve |
+| `claude plugin list` shows caveman | yes |
+| `codex plugin list` shows caveman | yes |
+| CI green on private repo | run `30879303030`, success, 2m17s |
+
+Next: P1 (`setup.py` + doctor).

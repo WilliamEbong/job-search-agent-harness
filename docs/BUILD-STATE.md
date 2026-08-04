@@ -12,13 +12,13 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (+ commit) ·
 ## Phase checklist
 
 ### P0 — Bootstrap (repo + build machine)
-- [ ] P0.1 Upstream `MadsLorentzen/ai-job-search` @ tag v1.3.0 merged into this git history; `upstream` remote added with push URL `DISABLED-never-push-to-upstream`
-- [ ] P0.2 Hardened `.gitignore` (upstream model + harness families)
+- [x] P0.1 Upstream `MadsLorentzen/ai-job-search` @ tag v1.3.0 merged into this git history; `upstream` remote added with push URL `DISABLED-never-push-to-upstream` — commit `7dff125`
+- [x] P0.2 Hardened `.gitignore` (upstream model + harness families) — commit `8d9c107`
 - [ ] P0.3 Private GitHub repo `job-search-agent-harness` created and pushed
-- [ ] P0.4 Prereq installs: MiKTeX (lualatex+xelatex), poppler (pdftotext+pdfinfo), Bun, pandoc 👤
+- [x] P0.4 Prereq installs: MiKTeX (lualatex+xelatex), poppler (pdftotext+pdfinfo), Bun, pandoc — all verified running (versions in session notes)
 - [ ] P0.5 Caveman installed on both runtimes (build machine, owner directive); LICENCE verified MIT (plan-J J.1 row)
-- [ ] P0.6 `requirements.txt` pinned (pyyaml, openpyxl, pypdf)
-- [ ] P0.7 Gate: upstream `tests/` green; portal CLI `bun test` green; all engine `--version` probes resolve; `claude plugin list` + `codex plugin list` show caveman; CI green on private repo
+- [x] P0.6 `requirements.txt` pinned (pyyaml, openpyxl, pypdf) — commit `8d9c107`
+- [ ] P0.7 Gate: upstream `tests/` green ✅ (155 pass); portal CLI `bun test` green; all engine `--version` probes resolve ✅; `claude plugin list` + `codex plugin list` show caveman; CI green on private repo
 
 ### P1 — setup.py installer + doctor
 - [ ] P1.1 `setup.py` (stdlib only): runtime detection, prereq checks, per-runtime plugin installs (Ponytail; Caveman optional w/ lite recommendation; optional Playwright + Firecrawl MCP), portal CLI deps, verify-every-step, doctor table
@@ -118,3 +118,58 @@ Filled in as tests run. Status: `pass` / `fail→fixed` / `waived (reason)`.
   not. Consequence carried into P0/P1: the doctor probes **both** binaries;
   treating `pdftotext` alone as proof of poppler would give a false green to
   any user who has only Git for Windows.
+
+**P0.4 installs — done, and no owner clicks were needed.** `winget install`
+for Bun succeeded; pandoc, poppler, and MiKTeX reported *already installed*
+(winget exit `-1978335189` = no upgrade applicable). They were missing from
+the shell only because this session inherited a stale PATH — all four sit on
+the persistent user PATH. Verified by running each binary with a refreshed
+PATH:
+
+| Tool | Result |
+|---|---|
+| lualatex | LuaHBTeX 1.24.0 (MiKTeX 25.12) |
+| xelatex | MiKTeX-XeTeX 4.16 (MiKTeX 25.12) |
+| pdftotext / pdfinfo | poppler 25.07.0 (winget) + MiKTeX copies — both resolve |
+| bun | 1.3.14 (newly installed) |
+| pandoc | 3.10 |
+
+Note carried to P1: a freshly installed tool is on the *persistent* PATH but
+not in an already-running shell. The doctor must report "installed — restart
+your shell" rather than "missing", or it lies to every user who installs and
+re-runs in the same terminal.
+
+**P0.1 upstream merge.** `git merge v1.3.0 --allow-unrelated-histories`, clean,
+zero conflicts — our tree held only `docs/`, upstream's tree has no `docs/`.
+Upstream history is retained so the plan-I tag-merge ritual works. The push URL
+for `upstream` is the literal `DISABLED-never-push-to-upstream`.
+
+**P0.2 gitignore — a design constraint found while writing it.**
+`tools/security_guards.py` is upstream-owned `[U]` (never edited; plan-D:59-60
+routes our extension to a new `tools/harness_guards.py`). Its
+`check_gitignore()` fails **any** `!negation` outside its own hardcoded
+allowlist. So the harness block cannot use negations to carve out exceptions.
+Resolution: enumerate the ignore families positively and *name every shipped
+file so it never matches* — `*.example.yaml` for the register/preferences/
+companies schemas, `documents/demo/` for the fictional candidate. No check was
+weakened; the constraint shaped the naming instead.
+
+**Consequence to honour at P3 and P9 (decided now, logged so it is not
+re-litigated later):** the demo candidate must NOT be onboarded *inside this
+repo*. Upstream's profile files
+(`.claude/skills/job-application-assistant/0*.md`) are `[U]` and ship with
+placeholder tokens; a real onboarding run writes candidate content into them,
+which would both edit `[U]` files and put candidate-shaped content outside the
+three sanctioned locations (plan-D:75-76). The demo E2E therefore runs in a
+throwaway clone outside the repo — exactly as the plan-L fresh-install test
+already specifies.
+
+**Verification run after P0.2/P0.6, on the merged tree:**
+`python tools/security_guards.py` → OK · `python tools/lint_skills.py` → OK
+(9 skills, 12 commands, settings.json) · `python -m unittest discover -s tests`
+→ **155 tests, OK**.
+
+**Open at the end of session 1:** P0.3 (private repo + push), P0.5 (Caveman on
+both runtimes + MIT licence verification), P0.7 (portal CLI `bun test`,
+plugin-list verification, CI green). Nothing is half-written — every `[x]`
+above is committed. A fresh session resumes at P0.3.

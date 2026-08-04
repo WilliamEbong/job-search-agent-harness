@@ -1,0 +1,86 @@
+# Companies of interest — documented schema, FICTIONAL demo entries.
+#
+# Everything here is invented, including the URLs. See
+# evidence/register.example.yaml.
+#
+# WHAT THIS FILE IS FOR
+#
+# Job boards find jobs that were advertised on job boards. This file covers the
+# other route: employers worth watching directly, whose openings often appear on
+# their own careers page days before a board picks them up — and sometimes never
+# reach a board at all.
+#
+# `/scrape --scope companies` checks every entry's `careers_url`.
+# `/scrape --scope company "<name>"` checks one.
+#
+# THIS IS A LIVING LIST. Onboarding is only the first run of `/companies`. Add,
+# update and remove entries whenever — the next scoped run reflects the change
+# immediately. Nothing here is frozen at setup time.
+#
+# WHERE ENTRIES COME FROM — two routes, and the difference is recorded in
+# `source` because it matters later:
+#   * `user`             — the user named this employer.
+#   * `researched <date>` — the system proposed it from the CV and location
+#                           (large employers in the field, plus local employers
+#                           that hire this skill set) and the USER APPROVED IT.
+#
+# No entry is ever added without approval. A researched proposal that was not
+# approved simply does not appear.
+#
+# TO USE: copy to `companies.yaml` (gitignored), or just run `/companies`.
+
+meta:
+  updated: 2026-08-04
+  # Inputs the research step used, so a later run can propose genuinely new
+  # names instead of repeating itself.
+  research_basis:
+    location: Winnipeg, Manitoba, Canada
+    role_families:
+      - environmental data analysis
+      - laboratory operations
+    last_research_run: 2026-08-04
+
+companies:
+  - name: Northwind Analytical Services
+    careers_url: https://careers.example.com/northwind
+    source: user
+    location_scope: local
+    notes: >-
+      Former employer. Worth watching for senior technician postings; would
+      return for the right role.
+
+  - name: Prairie Grid Utilities
+    careers_url: https://jobs.example.com/prairie-grid/environment
+    source: user
+    location_scope: local
+    notes: Large local employer with an environmental compliance group.
+
+  - name: Continental Environmental Group
+    careers_url: https://example-ceg.com/careers
+    source: researched 2026-08-04
+    location_scope: national
+    notes: >-
+      Proposed from the CV's consulting-adjacent experience; hires water quality
+      analysts across Canada, several roles listed remote. Approved by the user.
+
+  - name: Lakeshore Municipal Water Authority
+    careers_url: https://example-lakeshore.ca/employment
+    source: researched 2026-08-04
+    location_scope: regional
+    notes: >-
+      Proposed as a local public-sector employer hiring this skill set. Posts to
+      its own site only — never appears on the configured boards, which is
+      precisely why it is worth a direct check. Approved by the user.
+
+  # A careers page the harness cannot read is recorded honestly rather than
+  # dropped. `access` is set by the scrape run, not by the user.
+  - name: Boreal Water Sciences
+    careers_url: https://example-boreal.com/join-us
+    source: researched 2026-08-04
+    location_scope: national
+    access: unverified
+    access_note: >-
+      JavaScript-rendered listing behind a bot wall; last run could not confirm
+      openings. Results from this employer are marked `unverified` rather than
+      reported as "no openings", because those are very different facts.
+    notes: Approved by the user despite the access limitation.

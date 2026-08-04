@@ -1,0 +1,200 @@
+# Preferences — documented schema, filled with the FICTIONAL demo candidate.
+#
+# Everything here is invented. Riley Chen does not exist; see
+# evidence/register.example.yaml.
+#
+# WHAT THIS FILE IS FOR
+#
+# The register answers "what may this candidate claim?". This file answers
+# "which jobs are worth their attention at all?". `/scrape` reads it to decide
+# what to search and what to discard; `/apply-any` reads it to refuse work that
+# breaks a hard constraint before any tokens are spent on drafting.
+#
+# The distinction that does the most work here is **hard vs soft**. A hard
+# constraint is checked BEFORE scoring and quotes the posting's own wording when
+# it fails — those jobs are never drafted. Everything else is a weight.
+#
+# HOW IT GETS FILLED: `/setup` conducts a conversational interview, skipping
+# every question the documents already answer. It is never presented as a form.
+# Re-run `/setup --interview` any time to extend or change answers.
+#
+# TO USE: copy to `preferences.yaml` (gitignored) and let `/setup` fill it.
+
+meta:
+  updated: 2026-08-04
+  # Where each answer came from, so a later interview knows what to skip.
+  # `document` = inferred from a career document. `interview` = stated directly.
+  source: interview 2026-08-04
+
+# ---------------------------------------------------------------------------
+# Compensation.
+#
+# `missing_compensation` deserves a note: most postings do not state pay, and
+# discarding them is usually a mistake — it would throw away most of the market.
+# The default keeps them and flags the unknown. Change to `discard` only if the
+# user explicitly says so.
+compensation:
+  currency: CAD
+  basis: salary            # salary | hourly
+  minimum: 62000
+  target: 72000
+  missing_compensation: keep   # keep | discard
+  flexible_if:
+    - fully remote
+    - meaningful environmental mandate
+  notes: >-
+    Would consider the lower end for a role with a strong field component.
+
+# ---------------------------------------------------------------------------
+# Location and mobility.
+location:
+  home: Winnipeg, Manitoba, Canada
+  commute_radius_km: 30
+  arrangements:            # in preference order
+    - hybrid
+    - remote
+    - onsite
+  relocation:
+    willing: false
+    destinations: []
+  notes: Hybrid preferred; onsite acceptable within the commute radius.
+
+# Asked ONLY when plausibly relevant to the user's role families — for a remote
+# analyst it is noise. When it does apply, `exclude_licence_required` is a hard
+# filter.
+driving:
+  relevant: true
+  licence: full
+  vehicle_access: true
+  willing_to_drive: true
+  exclude_licence_required: false
+
+# ---------------------------------------------------------------------------
+# Exclusions — collected as free description, then structured. These are HARD:
+# a posting matching one is never drafted.
+exclusions:
+  occupations:
+    - door-to-door sales
+  industries:
+    - tobacco
+    - gambling
+  schedules:
+    - overnight shifts
+  shifts:
+    - rotating 12-hour
+  travel:
+    max_percent: 25
+  physical:
+    - regular lifting above 20 kg
+  sales_commission_only: true
+  management_required: false
+  customer_facing: acceptable
+  contract_types_excluded:
+    - unpaid internship
+  notes: >-
+    Fieldwork is welcome; overnight and rotating shifts are not.
+
+# ---------------------------------------------------------------------------
+# Remote trade-offs. ASKED, NEVER ASSUMED — a system that quietly decides
+# someone will take less money for remote work will fill their shortlist with
+# jobs they resent.
+remote_tradeoffs:
+  asked: true
+  would_trade:
+    compensation: true       # would accept ~10% less for fully remote
+    location: false
+    industry: false
+    title: true
+    seniority: false
+    contract: false
+  notes: Fully remote is worth a lower salary band, but not a step down in level.
+
+# ---------------------------------------------------------------------------
+# Hard skill-skips: things the candidate genuinely lacks, where a posting
+# REQUIRING them should be skipped rather than stretched toward.
+#
+# `mandatory_only: true` is the field that prevents the most damage. A posting
+# listing a skill under "nice to have" must NOT be skipped — that is how a
+# transferable-fit candidate loses jobs they would have got. Only a genuine
+# requirement triggers the skip. plan-M test 15 pins both halves.
+hard_skips:
+  - skill: professional software engineering experience
+    mandatory_only: true
+    reason: Directs AI coding tools; would not pass a technical screen.
+  - skill: P.Eng designation
+    mandatory_only: true
+    reason: Not an engineer; the licence cannot be acquired quickly.
+  - skill: French fluency (C1+)
+    mandatory_only: true
+    reason: B1 only; a bilingual-designated role would not work out.
+
+# ---------------------------------------------------------------------------
+# What to look for.
+role_families:
+  - environmental data analysis
+  - laboratory operations
+  - programme coordination
+  - water quality monitoring
+
+seniority:
+  current: intermediate
+  targets:
+    - intermediate
+    - senior
+  open_to_lateral: true
+
+employment_type:
+  - permanent full-time
+  - contract 12 months or longer
+
+work_authorization:
+  status: Canadian citizen
+  sponsorship_required: false
+
+industries:
+  preferred:
+    - environmental consulting
+    - public sector / municipal
+    - non-profit / conservation
+  acceptable:
+    - agriculture technology
+    - utilities
+  # `exclusions.industries` above is the hard list; this is only a weighting.
+
+direction: >-
+  Moving from hands-on laboratory work toward data-led environmental
+  programme work, keeping enough fieldwork to stay close to the source data.
+
+# ---------------------------------------------------------------------------
+# Usage modes — how much a single run is allowed to cost.
+#
+# Every run prints its cost posture BEFORE starting, in qualitative terms. The
+# harness never invents token arithmetic it cannot actually measure; it states
+# what will be searched and how many packages may be produced.
+usage:
+  mode: focused            # focused | balanced | full
+  modes:
+    focused:
+      description: >-
+        One board per run, shallow fit screen, no documents generated until the
+        user picks a job. Minimum spend, maximum control. Default for new users.
+      max_evaluations: 15
+      max_packages_per_run: 0
+    balanced:
+      description: >-
+        All configured boards, deduplicated and ranked; deeper evaluation only
+        for promising jobs; documents only on selection.
+      max_evaluations: 40
+      max_packages_per_run: 1
+    full:
+      description: >-
+        All boards, deep evaluation and research, automatic packages for every
+        job above the threshold. Heaviest mode — on a standard subscription this
+        can consume a large share of a session window.
+      max_evaluations: 60
+      max_packages_per_run: 3
+  auto_package_threshold: 80   # `full` only: match score at or above which a package is drafted
+
+# Which sources a bare `/scrape` searches. Overridable per run with
+# `--scope`. One of: board <name> | company <name> | companies | boards | all.
+default_search_scope: boards

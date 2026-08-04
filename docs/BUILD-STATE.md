@@ -86,7 +86,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (+ commit) ·
 - [x] P9.1 `documents/demo/` fictional candidate + `examples/` posting fixture
 - [x] P9.2 `tools/harness_guards.py` + `harness/privacy_sweep.py` + CI jobs
 - [x] P9.3 Full plan-M matrix (tests 1–40) run
-- [~] P9.4 Fresh-install test (plan-L) — steps 2, 5–7, 10 done in place; clean-clone run waived as W4
+- [x] P9.4 Fresh-install test (plan-L) — steps 2, 5–7, 10 done in place incl. the full application lifecycle; clean-clone run remains waived as W4
 - [x] P9.5 `../job-search-ref` deleted — private system verified intact at `e8c3e51` afterwards
 - [x] **P9.6 GATE GREEN** — all 40 M tests pass or carry a written waiver; privacy sweep 0 blocking hits; guards + lint green; `git status` clean
 
@@ -95,8 +95,8 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done (+ commit) ·
 - [x] P10.2 `USER-GUIDE.md` (repo root, all features)
 - [x] P10.3 `NOTICE.md` (plan-J J.2 text)
 - [x] P10.4 Owner guide update — `docs/harness-03-owner-guide.md` gains a Stage-3 outcome note
-- [~] P10.5 👤 Demo-candidate package eyeball — package built and presented to the owner; awaiting their look
-- [~] P10.6 👤 Release gate — sweep results presented; **repo stays PRIVATE until the owner says otherwise** (the recorded default)
+- [x] P10.5 👤 Demo-candidate package eyeball — **owner reviewed 2026-08-04**; asked for confirmation of the folder lifecycle, which surfaced one real gap (see below) now fixed
+- [x] P10.6 👤 Release gate — **owner chose PUBLIC 2026-08-04**. Repo is now public at https://github.com/WilliamEbong/job-search-agent-harness
 - [x] **P10.7 GATE GREEN** — doc 03's "how you know it's done" list satisfied; M-tests 32 and 40 pass
 
 ---
@@ -586,3 +586,48 @@ recorded, and it stays that way until you say otherwise.
   equivalents: the author's name, phone, email and profile URLs hardcoded in
   `tex_to_md.py`; real employer names in the archiver's docstrings; the owner's
   city throughout the Canadian board CLI's examples.
+
+---
+
+## Post-review addendum — 2026-08-04
+
+**Owner reviewed the demo package and asked a direct question: does it come with
+the spreadsheet, does each job get its own folder, does that folder move to
+`applied/` on confirmation, and does it hold the posting plus resume, cover
+letter and combined document in Word, Markdown and PDF each?**
+
+Checking honestly rather than answering from the design intent found **one real
+gap**: the combined cover-letter-plus-resume document existed only as a merged
+**PDF**. Its `.md` and `.docx` were never generated — `apply-any.md` specifies
+all three, and the demo package had two. Fixed: the combined `.md` is now built
+by concatenating the two mirrors with a raw-openxml page break, so pandoc emits
+a genuine Word page break and the resume starts on its own page in the `.docx`
+exactly as it does in the PDF.
+
+Worth noting how this was missed: the packaging step had been *specified* and
+*tested at the contract level* (a test asserts the command names all four
+formats), but the combined document's non-PDF outputs had never been produced
+end to end. A contract test that reads a document cannot notice a file that was
+never written.
+
+**The whole lifecycle was then run live rather than asserted:**
+
+| Step | Result |
+|---|---|
+| Application folder created per job | `documents/applications/Rivermouth_Environmental_Data_Analyst/` |
+| Tracker row written at draft time | `status=in_progress`, fit 82, empty `submitted_date` |
+| Spreadsheet generated | `Job_Search_Tracker.xlsx`, 4 tabs, folder hyperlink resolved automatically |
+| Shortlist populated | 3 rows: `qualified`, `gate-fail` (P.Eng, posting's own wording quoted), `not-resolved` (bot-walled page — *unverified*, not "no openings") |
+| Search run logged | `run_log.csv` → Search Runs tab |
+| `submitted_date` filled in | as if the user said "I applied" |
+| Archiver run | folder **moved to `documents/applications/applied/`** |
+| Final folder contents | posting (with link) + provenance + posting_source/ + resume, cover letter and combined document in **md, docx and pdf each** |
+
+**Release gate: the owner chose to make the repository public.** Pre-flight
+before flipping: `git status` clean, privacy sweep zero blocking hits, harness
+guards green. The tracker CSV, the spreadsheet, the shortlist, the run log and
+the entire `applied/` folder are all gitignored — they exist on this machine and
+are invisible to git, which is the design working as intended.
+
+Repository is now **public** at
+https://github.com/WilliamEbong/job-search-agent-harness

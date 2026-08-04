@@ -114,7 +114,8 @@ def application_folder(row):
     return ""
 
 
-def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None):
+def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
+          shortlist_path=None, runlog_path=None):
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Alignment, Font, PatternFill
@@ -177,7 +178,10 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None):
                      row.get("source", ""), application_folder(row)])
     write_sheet(sheet, headers, body)
 
-    source_col, folder_col = 18, 19
+    # Derived from the header, never hardcoded: inserting a column used to
+    # silently hyperlink the wrong cell, and no test would have caught it.
+    source_col = headers.index("Source") + 1
+    folder_col = headers.index("Application folder") + 1
     for index, row in enumerate(rows, start=2):
         fill = FILLS.get(status.normalize(row.get("status")))
         if fill:
@@ -247,9 +251,20 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None):
     # Scored candidates that did NOT become applications, so the reasoning is
     # readable here instead of buried in a session transcript. Highest score
     # first; gate failures last.
-    shortlist = read_csv(SHORTLIST)
-    shortlist.sort(key=lambda r: (r.get("verdict") == "gate-fail",
-                                  -int(r.get("score") or 0)))
+    shortlist = read_csv(shortlist_path or SHORTLIST)
+    def _score(row):
+        """Sort key that tolerates "8.5", "n/a" or a stray space.
+
+        `int(...)` here used to raise ValueError and take the whole workbook
+        down, while the rendering three lines later carefully checked
+        .isdigit() first.
+        """
+        try:
+            return -float(str(row.get("score") or 0).strip())
+        except ValueError:
+            return 0.0
+
+    shortlist.sort(key=lambda r: (r.get("verdict") == "gate-fail", _score(r)))
     # "In pipeline?" asks whether this candidate became an application, so it is
     # answered from the tracker itself. The folder-name matcher is too fuzzy
     # here: a legal name like "Acme, Baker & Clark LLP" never matches the folder
@@ -276,7 +291,7 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None):
             cell.hyperlink, cell.style = row["url"], "Hyperlink"
 
     # ------------------------------------------------------------ Search Runs
-    runs = read_csv(RUN_LOG)
+    runs = read_csv(runlog_path or RUN_LOG)
     write_sheet(workbook.create_sheet("Search Runs"),
                 ["Date", "Portal", "Query", "Found", "New", "Notes"],
                 [[r.get("date", ""), r.get("portal", ""), r.get("query", ""),
@@ -293,11 +308,15 @@ if __name__ == "__main__":
     )
     parser.add_argument("--csv", default=DEFAULT_CSV)
     parser.add_argument("--out", default=DEFAULT_OUT)
+    parser.add_argument("--shortlist", default=SHORTLIST)
+    parser.add_argument("--runlog", default=RUN_LOG)
     args = parser.parse_args()
     if not os.path.exists(args.csv):
         print("tracker_xlsx: %s does not exist yet - nothing to view." % args.csv)
         print("It is created by /apply-any or /outcome when you record your first "
               "application.")
         sys.exit(0)
-    path, total, follow_ups = build(args.csv, args.out)
+    path, total, follow_ups = build(args.csv, args.out,
+                                    shortlist_path=args.shortlist,
+                                    runlog_path=args.runlog)
     print("Wrote %s - %d application(s), %d follow-up(s) due." % (path, total, follow_ups))

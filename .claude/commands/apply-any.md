@@ -86,47 +86,47 @@ rewriting is exactly the operation that strengthens a claim past its evidence �
 nobody catches it by eye. The fact gate always runs on the text that will actually be
 sent.
 
-## Step 4: Archive, present, record
+## Step 4: Assemble the package — one command
 
 `documents/applications/<Company>_<Role>/` is the **single home for everything about the
-application**. By presentation time it holds:
+application**. One script builds it, so nothing is improvised per run:
 
-1. The posting artifacts: `posting_source/`, `provenance.md`, `job_posting.md`.
-2. **All final documents in four formats**, named for a human reading a file picker:
-   - `resume <Role> <Company> - <Name>.{tex,pdf,md,docx}`
-   - `cover letter <Role> <Company> - <Name>.{tex,pdf,md,docx}`
-   - `Resume & Cover Letter <Role> <Company> - <Name>.{pdf,md,docx}`
+```
+python harness/apply_package.py \
+    --company "<Company>" --role "<Role>" \
+    --cv cv/main_<slug>.tex --letter cover_letters/cover_<slug>.tex \
+    --build build \
+    --url "<posting URL>" --score <fit> --location "<location>" \
+    --channel "<where you found it>" --rationale "<one line on why>"
+```
 
-   Truncate a long role or company so the name stays readable, and keep it unambiguous.
-   The `.md` is a faithful mirror generated with `python harness/tex_to_md.py` — **never
-   hand-written**, because two copies of the same prose drift the first time a fact is
-   corrected in one and not the other. The `.docx` comes from the `.md` via
-   `pandoc <file>.md -o <file>.docx`; if pandoc is absent, say so and ship the other
-   three. The PDF is the submission format of record.
-3. **The combined document**: cover letter first, resume starting on a new page. Merge
-   the two final PDFs with pypdf (the cover is one page, so the resume starts on page 2
-   by construction); the `.md` concatenates the two mirrors with a raw-openxml page break
-   so pandoc breaks the page in Word too.
-4. Copy the `.tex` from `cv/` and `cover_letters/` and the `.pdf` from `build/` into the
-   folder under the names above. **Build sources keep their slug names**
-   (`cv/main_<slug>.tex`, `cover_letters/cover_<slug>.tex`) because `fact_check.py`, the
-   compile loop and the tracker's `cv_file`/`cover_letter_file` columns all reference
-   them — only the folder copies get friendly names.
+That single call: creates the folder and its `posting_source/`, stamps `.created` (which
+is what stops the archiver mis-aging a new folder), copies the `.tex` and compiled
+`.pdf` under human-readable names, generates each `.md` mirror with `tex_to_md`, converts
+each to `.docx` via pandoc, builds the **combined** cover-letter-then-resume document in
+all three formats — with a real Word page break, not just a PDF merge — writes the
+`cv_draft.tex` / `cover_letter.tex` copies that `/interview` and `/outcome` look for, and
+appends the tracker row with `status=in_progress` and an empty `submitted_date`.
+
+Read its output. It names every file it wrote, and says so plainly when pandoc is absent
+and the `.docx` files were skipped.
+
+**Build sources keep their slug names** (`cv/main_<slug>.tex`,
+`cover_letters/cover_<slug>.tex`) because `fact_check.py`, the compile loop and the
+tracker's `cv_file`/`cover_letter_file` columns all reference them — only the folder
+copies get friendly names.
+
+The posting artifacts (`provenance.md`, `job_posting.md`, the raw files in
+`posting_source/`) are written by the intake step in Step 1, not by this script.
 
 Then, still before presenting:
 
-5. **Tracker row, at draft time, for every application.** Append to
-   `job_search_tracker.csv` (create with the upstream header if missing):
-   `status=in_progress`, the fit score, the posting URL as `source`, the **build-source**
-   paths in `cv_file`/`cover_letter_file`, plus `location`, `rationale`, and an **empty
-   `submitted_date`**. Note "drafted, not yet submitted" in `notes`. Regenerate the
-   workbook: `python harness/tracker_xlsx.py`.
-6. **Run the archiver:** `python harness/archive_applications.py`. One call does two
-   things; never skip it.
-   - Moves submitted applications into `documents/applications/applied/`, triggered by a
-     filled `submitted_date` (ISO `YYYY-MM-DD`; empty means drafted but not sent).
-   - Archives anything 8+ weeks past creation into `documents/applications/archive/` as a
-     zip, removing the live folder.
+5. **Refresh the workbook:** `python harness/tracker_xlsx.py`.
+6. **Move anything submitted:** `python harness/archive_applications.py`. This moves
+   applications with a filled `submitted_date` into `documents/applications/applied/`.
+   It no longer deletes anything by default — old folders are only *reported*, and
+   zipping them requires an explicit `--archive`, because it used to delete folders in
+   active interview processes unattended.
 
 Present in upstream `/apply`'s output format, then add:
 

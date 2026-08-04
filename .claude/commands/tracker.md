@@ -29,8 +29,13 @@ lossless view into a second, competing truth store.
 
 ## Step 1: Back up before rewriting
 
-Copy `job_search_tracker.csv` into `backups/`, keeping the five most recent. The workbook
-needs no backup — it is regenerated from the CSV by definition.
+```
+python harness/rotate_backup.py job_search_tracker.csv
+```
+
+Keeps the five most recent. The workbook needs no backup — it is regenerated from
+the CSV by definition. To undo a bad change:
+`python harness/rotate_backup.py job_search_tracker.csv --list` then `--restore 1`.
 
 ## Step 2: Regenerate the workbook
 

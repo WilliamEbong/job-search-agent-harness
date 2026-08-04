@@ -123,17 +123,27 @@ class ApplyOverlay(unittest.TestCase):
         for band in ("80+", "60–79", "below 60", "gate-fail"):
             self.assertIn(band.lower(), self.text)
 
-    def test_quad_format_package_is_specified(self):
-        for fmt in ("tex", "pdf", "md", "docx"):
-            self.assertIn(fmt, self.text)
-        self.assertIn("harness/tex_to_md.py", self.text)
-        # Emphasis markers stripped: the promise is what matters, not whether
-        # the author bolded "never".
-        self.assertIn("never hand-written", self.text.replace("*", ""))
+    def test_packaging_delegates_to_the_script(self):
+        """Packaging is no longer prose for the model to re-derive each run.
 
-    def test_tracker_row_is_written_at_draft_time_with_empty_submitted_date(self):
-        self.assertIn("at draft time", self.text)
+        The formats themselves are asserted by test_apply_package.py against a
+        real output directory. That split is deliberate: this file can only
+        check what the command *says*, and the combined document's missing .md
+        and .docx proved that a document-reading test cannot notice a file
+        nobody wrote.
+        """
+        self.assertIn("harness/apply_package.py", self.text)
+        self.assertIn("--company", self.text)
+        self.assertIn("--cv", self.text)
+
+    def test_tracker_row_is_written_with_an_empty_submitted_date(self):
         self.assertIn("empty `submitted_date`", self.text)
+        self.assertIn("status=in_progress", self.text)
+
+    def test_archiving_is_no_longer_unattended(self):
+        """It used to zip and delete folders mid-interview from a routine run."""
+        self.assertIn("--archive", self.text)
+        self.assertIn("no longer deletes anything by default", self.text)
 
     def test_system_never_submits(self):
         self.assertIn("the system never submits anything", self.text)

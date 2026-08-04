@@ -81,17 +81,29 @@ def write_telemetry(record: dict) -> None:
     os.replace(temporary, TELEMETRY)
 
 
-def render(record: dict) -> str:
+def _pct(value) -> str | None:
+    """Format a percentage, or None if it is not actually a number.
+
+    The only guard here used to be `is not None`, so a payload delivering "42"
+    or "42%" as a string raised on the format spec and took the status bar down
+    with it.
+    """
+    try:
+        return f"{float(value):.0f}%"
+    except (TypeError, ValueError):
+        return None
+
+
+def render(record: dict, separator: str = " · ") -> str:
     parts = []
     if record.get("model"):
         parts.append(str(record["model"]))
-    if record.get("context_pct") is not None:
-        parts.append(f"ctx {record['context_pct']:.0f}%")
-    if record.get("five_hour_pct") is not None:
-        parts.append(f"5h {record['five_hour_pct']:.0f}%")
-    if record.get("seven_day_pct") is not None:
-        parts.append(f"7d {record['seven_day_pct']:.0f}%")
-    return " · ".join(parts) if parts else "harness"
+    for label, key in (("ctx", "context_pct"), ("5h", "five_hour_pct"),
+                       ("7d", "seven_day_pct")):
+        formatted = _pct(record.get(key))
+        if formatted:
+            parts.append(f"{label} {formatted}")
+    return separator.join(parts) if parts else "harness"
 
 
 def main() -> int:
@@ -109,7 +121,13 @@ def main() -> int:
         # down with it. No telemetry is a degraded state, not a broken one.
         pass
 
-    print(render(record))
+    # This script promises never to fail the status bar. A middle dot is not
+    # encodable on a legacy console codepage, and statusline output is a pipe,
+    # so Python uses the locale encoding rather than the console's Unicode path.
+    try:
+        print(render(record))
+    except UnicodeEncodeError:
+        print(render(record, separator=" | "))
     return 0
 
 

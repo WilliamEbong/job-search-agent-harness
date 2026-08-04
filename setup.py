@@ -251,7 +251,8 @@ def check_bun() -> Check:
         )
     if code != 0:
         return Check("Bun", DEGRADED, f"exited {code}", out.strip()[:200])
-    return Check("Bun", OK, out.strip().splitlines()[0][:40])
+    first = next((ln.strip() for ln in out.splitlines() if ln.strip()), "present")
+    return Check("Bun", OK, first[:40])
 
 
 def check_poppler() -> Check:
@@ -309,7 +310,9 @@ def check_tex(quick: bool = False) -> list[Check]:
         if code != 0:
             checks.append(Check(engine, DEGRADED, f"exited {code}", out.strip()[:200]))
             continue
-        checks.append(Check(engine, OK, out.strip().splitlines()[0][:50]))
+        banner = next((ln.strip() for ln in out.splitlines() if ln.strip()),
+                      "present")
+        checks.append(Check(engine, OK, banner[:50]))
         if quick:
             checks.append(Check(
                 f"{engine} compile", UNVERIFIED, "skipped (--quick)",

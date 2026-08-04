@@ -47,8 +47,13 @@ Never delete an entry to resolve a conflict. Correct it, and keep the trail.
 
 ## Step 3: Write it to the register
 
-Back up first: copy `evidence/register.yaml` into `evidence/backups/`, keeping the five
-most recent. Then add the entry. **Every entry carries a `source`.** For a fact the user
+Back up first — one command, which keeps the five most recent copies:
+
+```
+python harness/rotate_backup.py evidence/register.yaml
+```
+
+Then add the entry. **Every entry carries a `source`.** For a fact the user
 states themselves:
 
 ```yaml

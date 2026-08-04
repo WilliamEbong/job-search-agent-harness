@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="assets/mascot/pip_flight_loop.gif" alt="Pip, the courier bird" width="180">
+  <br>
+  <sub><i>Pip, inherited from <a href="https://github.com/MadsLorentzen/ai-job-search">ai-job-search</a> along with most of what makes this work.</i></sub>
+</p>
+
 # Job Search Agent Harness
 
 A truthful job-application system that runs inside the AI coding agent you already have —

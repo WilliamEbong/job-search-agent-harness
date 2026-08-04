@@ -110,6 +110,40 @@ class HardConstraintGate(unittest.TestCase):
                       SCRAPE.read_text(encoding="utf-8").lower())
 
 
+class DiscoveryIsNotSplitBrained(unittest.TestCase):
+    """REGRESSION: the documented /scrape never wrote seen_jobs.json.
+
+    Two /scrape implementations existed — this command and the upstream
+    job-scraper skill — with disjoint state. Upstream `/rank` reads *only*
+    `job_scraper/seen_jobs.json` and stops with "run /scrape first" when it is
+    empty, which is what a user saw immediately after running /scrape. The same
+    file is the only cross-run dedup store, so a second run re-surfaced every
+    posting the user had already dismissed.
+    """
+
+    def setUp(self):
+        self.text = flat(SCRAPE)
+
+    def test_delegates_fetching_to_the_job_scraper_skill(self):
+        self.assertIn("job-scraper", self.text)
+        self.assertIn(".claude/skills/job-scraper/skill.md", self.text)
+
+    def test_names_the_dedup_store_that_rank_depends_on(self):
+        self.assertIn("seen_jobs.json", self.text)
+
+    def test_explains_why_skipping_it_breaks_downstream_commands(self):
+        self.assertIn("/rank", self.text)
+        self.assertIn("/upskill", self.text)
+
+    def test_company_results_join_the_same_memory(self):
+        self.assertIn("company:<name>", self.text.replace(" ", ""))
+
+    def test_verdicts_are_mapped_to_ranks_bands(self):
+        """Two vocabularies for one judgement look like disagreement."""
+        for band in ("strong fit", "good fit", "moderate fit"):
+            self.assertIn(band, self.text)
+
+
 class RunLogging(unittest.TestCase):
     def test_empty_runs_are_still_logged(self):
         text = flat(SCRAPE)

@@ -68,15 +68,28 @@ Two rules about that block:
   mode is minimal ceremony. Confirm before `full`, and before any run that will generate
   documents.
 
-## Step 3: Search
+## Step 3: Search — delegate the fetch, own the selection
 
-**Boards** — run each board's own CLI. Never write scraping code here; a board that has
-no CLI gets one through upstream `/add-portal`, which handles robots/ToS checking,
-scaffolding and a live test.
+**This command decides *what* to search and *how hard*. The `job-scraper` skill does the
+fetching and owns the memory of what has already been seen.** That split matters: the
+skill writes `job_scraper/seen_jobs.json`, and upstream `/rank` and `/upskill` read only
+that file. A search that skips it leaves both of them with nothing to work on and
+re-surfaces yesterday's postings as though they were new.
+
+**Boards** — invoke the **`job-scraper` skill** (`.claude/skills/job-scraper/SKILL.md`)
+for the boards in scope and let it run each board's CLI, deduplicate against
+`seen_jobs.json`, extract deadlines, flag mass-postings, and check portal health. Never
+write scraping code here; a board with no CLI gets one through upstream `/add-portal`,
+which handles robots/ToS checking, scaffolding and a live test.
 
 **Companies of interest** — for each selected entry, fetch its `careers_url` and look for
 openings matching the profile. Escalate per `RUNTIME-MAP.md`: plain fetch → Firecrawl
 structured extraction → Playwright. **No custom scrapers.**
+
+Record company-sourced results in `seen_jobs.json` too, with `source: company:<name>`, so
+a role found on an employer's own page is deduplicated against the same memory as a board
+hit and is visible to `/rank`. The entry fields are additive — adding a source tag does
+not disturb anything upstream reads.
 
 If a careers page cannot be read — JavaScript shell, bot wall, login — record
 `access: unverified` with a note on that entry in `companies.yaml` and report it as
@@ -126,6 +139,17 @@ Write a shortlist row per scored candidate to `shortlist.csv`
 | `not-drafted` | Gates passed but a stated requirement is unmet |
 | `not-resolved` | Title-level triage only, or the posting could not be confirmed |
 | `gate-fail` | Failed a hard constraint — do not revisit |
+
+These are the shortlist's vocabulary. Upstream `/rank` scores the same jobs on its own
+five-band scale, so the two are mapped here rather than left to look like disagreement:
+
+| `/rank` band | score | shortlist verdict |
+|---|---|---|
+| Strong Fit | 75+ | `qualified` |
+| Good Fit | 60–74 | `qualified` if drafted, else `not-drafted` |
+| Moderate Fit | 45–59 | `not-drafted` |
+| Weak / Poor Fit | below 45 | `not-drafted` |
+| any band | — | `gate-fail` overrides everything: a hard constraint failed |
 
 Log the run, including runs that found nothing:
 

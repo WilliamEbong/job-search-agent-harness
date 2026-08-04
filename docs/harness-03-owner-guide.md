@@ -48,3 +48,24 @@ The harness is for the public; **your** job search stays in your private `job-se
 | Anything else | Paste the message and ask: "explain in plain language and tell me what to do." |
 
 **Plain-language recap:** two pastes start everything — one for the planner, one for the builder. You answer one question batch, click a few permission boxes, eyeball one fake-person application, and approve going public. Your own system and your personal data stay completely out of it.
+
+---
+
+## Stage 3 outcome (added 2026-08-04, after the build)
+
+Stage 3 is built. The repository exists at
+`github.com/WilliamEbong/job-search-agent-harness` and is **private**.
+
+- **Where the detail lives:** `docs/BUILD-STATE.md` — the phase ledger, the
+  40-test results table with its seven written waivers, and a plain-language
+  close-out at the end. Read that file's close-out section if you read nothing
+  else.
+- **The demo package** is at
+  `documents/applications/Rivermouth_Environmental_Data_Analyst/`. It is the
+  fictional Riley Chen applying to a fictional employer. Open the two PDFs.
+- **The fabrication test passed live.** Seven fake claims planted into the demo
+  CV were all caught and blocked; the honest version passes cleanly.
+- **Your private system is untouched.** The throwaway copy used to port
+  mechanisms has been deleted.
+- **Still yours to decide:** whether the demo package looks right, and whether
+  to make the repository public. It stays private until you say otherwise.

@@ -1,9 +1,5 @@
 # Job Search Agent Harness
 
-<p align="center">
-  <img src="assets/evidence-gate.svg" alt="Your evidence passes through the fact gate before it becomes your application" width="560">
-</p>
-
 An **evidence-gated, human-reviewed application assistant** — an agent harness that runs
 inside the AI coding agent you already have (**Claude Code or Codex, on an ordinary
 subscription**) and treats your career as something to be *evaluated*, not embellished.

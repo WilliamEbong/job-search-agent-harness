@@ -136,7 +136,7 @@ All four waves are **complete, committed and pushed**. CI green.
 ```
 HEAD         967a0de  verification pass (was 7136225 at Wave 4)
 git status   clean, pushed
-tests        297 harness + 155 upstream + 157 Bun (portal CLIs; jobbank-ca offline suite now 6)
+tests        297 harness + 154 upstream + 157 Bun (portal CLIs; jobbank-ca offline suite now 6)
 guards       security_guards, harness_guards, lint_skills, privacy_sweep — all green
 harness/     12 scripts   .claude/commands/  23   .codex/prompts/  21
 ```
@@ -155,8 +155,14 @@ harness/     12 scripts   .claude/commands/  23   .codex/prompts/  21
    `.claude/skills/{job-application-assistant,job-scraper,upskill}/`,
    `tools/{security_guards,lint_skills,verify_pdf,check_*}.py`, `tests/`,
    `SETUP.md`, `LICENSE`, `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`.
-   **The 155 upstream tests passing is the proof.** Ownership map:
+   **The upstream tests passing is the proof (154 since 2026-08-04; see the
+   one documented exception below).** Ownership map:
    `docs/build-history/plan-D-repo-structure.md`.
+   *One owner-approved exception exists*: `tests/test_readme_assets.py` no
+   longer asserts the README contains an image — that assertion encoded
+   upstream's mascot header, which the owner removed as borrowed identity.
+   The broken-reference half of the test is unchanged, and NOTICE.md
+   records the divergence. Every other `[U]` file remains byte-identical.
    *This is why fixes look indirect*: the filename bridge writes what
    `interview.md` expects rather than teaching it new names; the status helper
    normalises on read rather than correcting `outcome.md`.

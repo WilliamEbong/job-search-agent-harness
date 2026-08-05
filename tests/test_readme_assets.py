@@ -2,6 +2,13 @@
 
 A broken header image on the repo landing page is a silent, high-visibility
 failure; this guard turns it into a red CI run instead.
+
+Harness divergence (owner-approved, 2026-08-04): upstream also asserted the
+README references *at least one* local image, which encoded its mascot header.
+This repository removed the mascot deliberately — it is upstream's identity,
+not this project's — and the owner chose a text-only README, so that assertion
+is gone. The useful half, that any referenced image must exist, is unchanged.
+This is the only edited upstream-owned file; see NOTICE.md.
 """
 import re
 import unittest
@@ -19,10 +26,6 @@ class ReadmeImageReferences(unittest.TestCase):
         text = README.read_text(encoding="utf-8")
         refs = IMG_SRC.findall(text) + MD_IMG.findall(text)
         return [r for r in refs if not r.startswith(("http://", "https://"))]
-
-    def test_readme_exists_and_references_at_least_one_local_image(self):
-        refs = self._local_refs()
-        self.assertGreaterEqual(len(refs), 1, "README lost its mascot header image")
 
     def test_all_local_image_references_resolve(self):
         for ref in self._local_refs():

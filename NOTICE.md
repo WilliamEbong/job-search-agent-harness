@@ -52,5 +52,11 @@ reimplementing it: `/apply`, `/rank`, `/add-portal`, `/add-template`, `/outcome`
 `/interview`, the templates, the guards and the tests are upstream's files, run
 unchanged. The harness adds wrappers and new files alongside them.
 
+One documented exception: `tests/test_readme_assets.py` no longer asserts the
+README contains an image. That assertion encoded upstream's mascot header,
+which this repository deliberately does not carry — the mascot is upstream's
+identity. The test's other half, that any image the README references must
+exist, is unchanged. Upstream's mascot assets are not redistributed here.
+
 That is deliberate, and it is also the honest description: the hardest and most
 valuable part of this system was written by someone else.

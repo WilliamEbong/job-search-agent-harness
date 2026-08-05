@@ -219,6 +219,29 @@ def build_package(company: str, role: str, cv_tex: Path, letter_tex: Path,
     return folder, written
 
 
+def posting_archive_gaps(folder: Path) -> list[str]:
+    """What is missing from the archived posting, or [] if it is complete.
+
+    The intake step is supposed to write these before packaging, and for the
+    entire original build nothing checked that it had: the demo package
+    shipped with an empty posting_source/ and no job_posting.md at all. A
+    posting archived at apply time is the only record of what was applied to
+    once the posting goes offline — which is what interview prep reads weeks
+    later, and by then it cannot be re-fetched.
+    """
+    gaps: list[str] = []
+    for doc in ("job_posting.md", "provenance.md"):
+        path = folder / doc
+        if not path.is_file():
+            gaps.append(f"{doc} missing")
+        elif not path.read_text(encoding="utf-8", errors="replace").strip():
+            gaps.append(f"{doc} empty")
+    source_dir = folder / "posting_source"
+    if not any(p.is_file() for p in source_dir.glob("*")):
+        gaps.append("posting_source/ has no artifacts")
+    return gaps
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--company", required=True)
@@ -265,6 +288,16 @@ def main(argv=None) -> int:
             "notes": "drafted, not yet submitted",
         })
         print(f"tracker: {result}")
+
+    gaps = posting_archive_gaps(folder)
+    if gaps:
+        # Everything above is built and the tracker row is written - the work
+        # is preserved. The nonzero exit is the point: the package is not
+        # presentable until the posting it answers is archived beside it.
+        print("POSTING ARCHIVE INCOMPLETE - write these, then re-run:")
+        for gap in gaps:
+            print(f"  {gap}")
+        return 2
     return 0
 
 

@@ -213,5 +213,49 @@ class PackageAssembly(unittest.TestCase):
                 self.build, REGISTER, self.applications)
 
 
+class PostingArchiveGate(unittest.TestCase):
+    """The package is not complete until the posting it answers is archived.
+
+    REGRESSION: for the entire original build nothing checked this. The demo
+    package shipped with an empty posting_source/ and no job_posting.md, and a
+    contract test that reads a document cannot notice a file that does not
+    exist — the same failure mode the combined-document bug had.
+    """
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="harness-gate-"))
+        self.folder = self.tmp / "Acme_Data_Analyst"
+        (self.folder / "posting_source").mkdir(parents=True)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _fill_archive(self):
+        (self.folder / "job_posting.md").write_text("# Data Analyst\nAcme.",
+                                                    encoding="utf-8")
+        (self.folder / "provenance.md").write_text("# Provenance\n- Rung 1",
+                                                   encoding="utf-8")
+        (self.folder / "posting_source" / "pasted.md").write_text(
+            "raw posting", encoding="utf-8")
+
+    def test_a_complete_archive_passes(self):
+        self._fill_archive()
+        self.assertEqual(apply_package.posting_archive_gaps(self.folder), [])
+
+    def test_missing_files_and_empty_source_dir_are_each_named(self):
+        gaps = apply_package.posting_archive_gaps(self.folder)
+        self.assertEqual(len(gaps), 3)
+        self.assertTrue(any("job_posting.md" in g for g in gaps))
+        self.assertTrue(any("provenance.md" in g for g in gaps))
+        self.assertTrue(any("posting_source" in g for g in gaps))
+
+    def test_a_blank_posting_doc_is_a_gap_not_a_pass(self):
+        """The reported symptom: the file exists and there is nothing in it."""
+        self._fill_archive()
+        (self.folder / "job_posting.md").write_text("  \n\n", encoding="utf-8")
+        gaps = apply_package.posting_archive_gaps(self.folder)
+        self.assertEqual(gaps, ["job_posting.md empty"])
+
+
 if __name__ == "__main__":
     unittest.main()

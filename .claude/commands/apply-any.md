@@ -132,6 +132,14 @@ appends the tracker row with `status=in_progress` and an empty `submitted_date`.
 Read its output. It names every file it wrote, and says so plainly when pandoc is absent
 and the `.docx` files were skipped.
 
+**It exits non-zero when the posting archive is incomplete** — `job_posting.md` or
+`provenance.md` missing or empty, or `posting_source/` holding no artifacts. Those are
+the intake step's files; if packaging reports them, go back and write what intake
+resolved (the canonical posting text, the provenance record, the raw artifacts), then
+re-run the same command. Never present a package while this check is failing: the
+archived posting is the only record of what was applied to once the posting goes
+offline, and it is what `/interview` reads weeks later when the original is gone.
+
 **Build sources keep their slug names** (`cv/main_<slug>.tex`,
 `cover_letters/cover_<slug>.tex`) because `fact_check.py`, the compile loop and the
 tracker's `cv_file`/`cover_letter_file` columns all reference them — only the folder

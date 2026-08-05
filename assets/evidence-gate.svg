@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="120" viewBox="0 0 560 120" role="img" aria-label="Evidence flows through a gate before becoming an application">
+  <!-- Original artwork for the Job Search Agent Harness: the evidence gate.
+       Three stages: your documents, the deterministic gate, the application.
+       Muted palette chosen to read on GitHub's light and dark themes. -->
+  <style>
+    .label { font: 600 13px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #7d8590; }
+    .stroke { stroke: #7d8590; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .accent { stroke: #3fb950; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+
+  <!-- documents -->
+  <g>
+    <rect x="52" y="26" width="44" height="56" rx="4" class="stroke"/>
+    <rect x="44" y="34" width="44" height="56" rx="4" class="stroke" fill="none"/>
+    <line x1="54" y1="48" x2="76" y2="48" class="stroke"/>
+    <line x1="54" y1="60" x2="78" y2="60" class="stroke"/>
+    <line x1="54" y1="72" x2="70" y2="72" class="stroke"/>
+    <text x="66" y="110" text-anchor="middle" class="label">your evidence</text>
+  </g>
+
+  <line x1="118" y1="58" x2="196" y2="58" class="stroke" stroke-dasharray="2 7"/>
+
+  <!-- the gate: a shield with a check -->
+  <g>
+    <path d="M 280 18 L 316 32 L 316 62 Q 316 88 280 100 Q 244 88 244 62 L 244 32 Z" class="stroke"/>
+    <path d="M 264 58 L 276 70 L 298 44" class="accent"/>
+    <text x="280" y="115" text-anchor="middle" class="label">the fact gate</text>
+  </g>
+
+  <line x1="344" y1="58" x2="422" y2="58" class="stroke" stroke-dasharray="2 7"/>
+
+  <!-- the application: a sealed letter -->
+  <g>
+    <rect x="446" y="36" width="60" height="44" rx="4" class="stroke"/>
+    <path d="M 446 40 L 476 62 L 506 40" class="stroke"/>
+    <text x="476" y="110" text-anchor="middle" class="label">your application</text>
+  </g>
+</svg>

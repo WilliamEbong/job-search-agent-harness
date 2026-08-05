@@ -6,21 +6,31 @@
 
 # Job Search Agent Harness
 
-A truthful job-application system that runs inside the AI coding agent you already have —
-**Claude Code or Codex, on an ordinary subscription.** It finds open jobs, judges whether
-they are worth your time, and turns "apply to this" into a researched, tailored,
-fact-checked resume and cover letter — then archives everything and keeps your tracker
-current.
+An **evidence-gated, human-reviewed application assistant** — an agent harness that runs
+inside the AI coding agent you already have (**Claude Code or Codex, on an ordinary
+subscription**) and treats your career as something to be *evaluated*, not embellished.
 
-It does not submit anything. Generating an application and sending one are different acts,
-and the second one stays yours.
+Its centre of gravity is assessment: it reads your CV, portfolio and public work the way
+a hiring manager would, tells you what actually lands (including the unflattering parts
+and the strong thing you never wrote down), measures your profile against the market's
+real postings, and identifies your paths to employability — the gaps worth closing, the
+transferable skills worth naming, the employers worth watching. When you decide a job is
+worth pursuing, it turns "apply to this" into a researched, tailored, fact-checked resume
+and cover letter, every claim traced to evidence you supplied — then archives everything
+and keeps your tracker current.
+
+It does not submit anything, and it does not invent anything. A deterministic fact gate
+blocks any claim your evidence register cannot back, and every document passes a human
+review — yours — before it goes anywhere. Generating an application and sending one are
+different acts, and the second one stays yours.
 
 ---
 
 ## Built on ai-job-search
 
-This project is a **fork-derivative of
-[ai-job-search](https://github.com/MadsLorentzen/ai-job-search) by MadsLorentzen** (MIT).
+This is a **standalone repository derived from
+[ai-job-search](https://github.com/MadsLorentzen/ai-job-search) by MadsLorentzen** (MIT) —
+not a GitHub fork; upstream is tracked as a git remote and merged by tag.
 That project contributes the parts doing the heaviest lifting: the drafter-and-reviewer
 apply pipeline, PDF compilation and inspection, ATS text-layer checks, the portal-CLI
 architecture, application archives, the tracker, template and portal registration, the
@@ -104,16 +114,23 @@ Full walkthrough of every feature: **[USER-GUIDE.md](USER-GUIDE.md)**.
 
 ## What it does
 
+**A career review.** Point `/career-review` at your portfolio, site or GitHub and it
+reports what a hiring manager would conclude — including the unflattering parts (the
+abandoned repo pinned to your profile, the broken contact form), and the strong thing you
+did that never made it onto your CV. It only suggests; nothing is added without your
+say-so.
+
+**Paths to employability.** `/upskill` compares your profile against the real postings
+you have tracked and produces a prioritised gap analysis: which missing skills actually
+gate the jobs you want, which you can honestly claim already under another name, and a
+learning plan for the rest. `/rank` triages found jobs by fit so effort goes where the
+odds are.
+
 **Onboarding that starts with your CV.** It reads your CV, then interviews you on what the
 CV left out — the numbers, whether a credential is finished, whether you *led* or
 *supported*. Say "speed up" for fewer questions or "that's enough" to stop, at any point;
 resume later with `/setup-harness --interview`. It never re-asks something you have
 already answered.
-
-**A career review, if you want one.** Point `/career-review` at your portfolio, site or
-GitHub and it reports what a hiring manager would conclude — including the unflattering
-parts, and the strong thing you did that never made it onto your CV. It only suggests;
-nothing is added without your say-so.
 
 **Job discovery you control.** Five scopes — one board, one company, all your companies of
 interest, all boards, or everything — and three usage modes from `focused` (one board, no

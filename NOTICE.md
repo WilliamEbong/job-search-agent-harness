@@ -1,6 +1,6 @@
 # NOTICE
 
-Job Search Agent Harness is a fork-derivative of
+Job Search Agent Harness is a standalone repository derived from
 **ai-job-search** by MadsLorentzen (https://github.com/MadsLorentzen/ai-job-search),
 MIT licence. The apply pipeline (drafter/reviewer, PDF compile and inspection,
 ATS text-layer checks), portal-CLI architecture, application archives, tracker,

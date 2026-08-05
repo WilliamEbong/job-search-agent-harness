@@ -21,7 +21,7 @@ To prevent duplication and configuration drift across different AI agent framewo
 <!-- harness:begin -->
 ## Job Search Agent Harness layer
 
-This repository is a fork-derivative of `MadsLorentzen/ai-job-search` with a harness layer
+This repository is a standalone derivative of `MadsLorentzen/ai-job-search` (not a GitHub fork; upstream is a tag-merged remote) with a harness layer
 added. Upstream's thin-pointer design above still holds; these are the harness additions.
 
 **Read `RUNTIME-MAP.md` before doing anything runtime-specific.** It is the only place

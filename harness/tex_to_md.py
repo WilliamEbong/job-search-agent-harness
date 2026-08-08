@@ -270,5 +270,9 @@ if __name__ == "__main__":
         self_check()
     elif len(sys.argv) == 2:
         sys.stdout.write(convert(sys.argv[1]))
+    elif len(sys.argv) == 4 and sys.argv[2] == "--register":
+        # Lets a caller (and the tests) mirror against a named register rather
+        # than only the one at the repo root.
+        sys.stdout.write(convert(sys.argv[1], sys.argv[3]))
     else:
         sys.exit(__doc__)

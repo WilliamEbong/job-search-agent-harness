@@ -118,8 +118,8 @@ Do not present a bundle and ask "shall I apply these?". Take them one at a time:
 
 ## What this command must never do
 
-- Never write to `evidence/register.yaml`. `/fact` is the only writer, and it needs the
-  user's confirmation.
+- Never write to `evidence/register.yaml`. Outside onboarding, `/fact` is the only
+  writer, and it needs the user's confirmation.
 - Never edit a CV or cover letter template without explicit approval of that specific
   change.
 - Never infer a fact from a public page and treat it as confirmed. A GitHub profile

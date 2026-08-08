@@ -235,4 +235,25 @@ updates only `seen_jobs.json`, so a ranked job never reaches `/today`, the
 workbook, or `/discover review` unless the verdicts are appended to
 `shortlist.csv` in the format `/scrape` defines. Do that after `/rank`, and
 send the user to `/apply-any` rather than `/apply`.
+
+**Never leave the user wondering what happens next.** Job hunting is stressful
+and most users do not know this system's vocabulary, so every workflow:
+
+1. **Opens with the plan** - a numbered list of what it is about to do and a
+   rough time for the whole thing ("4 steps, about 15 minutes; I do 1-3, you
+   do 4"). If a step needs something from them, say so up front rather than
+   stopping halfway to ask.
+2. **Says where it is** while working - "step 2 of 4, drafting the CV" - and
+   names anything that will take more than a moment before starting it.
+3. **Ends with exactly one next action**, written as the literal thing to
+   type or say. "Run `/verify-facts`" is a next action; "you may wish to
+   consider reviewing the output" is not. Where there are genuinely several,
+   number them and put the recommended one first.
+4. **Marks who does what.** Steps the system performs, and steps only the
+   human can (submitting, sending an email, doing a practice exercise, making
+   a decision) are visibly different things.
+
+Estimates are rough and honest: a range is fine, "this one is slow" is fine,
+a made-up precise number is not. Say plainly when something will be expensive
+or long before spending the user's time or tokens on it.
 <!-- harness:end -->

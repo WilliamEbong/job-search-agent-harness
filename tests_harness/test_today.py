@@ -70,6 +70,22 @@ class DailyBrief(unittest.TestCase):
         self.assertEqual(1, len(menu))
         self.assertEqual("/setup-harness", menu[0]["command"])
 
+    def test_a_future_date_in_notes_does_not_suppress_the_followup(self):
+        """REGRESSION: a scheduled date made days_quiet negative, forever.
+
+        `/outcome` routinely writes forward-looking dates into notes ("phone
+        screen 2026-09-15", a posting's "ref 2026-12-31"). days_quiet took
+        max() over every date it found, so the row reported negative silence,
+        never crossed the follow-up threshold, and sat in `waiting` for good -
+        the longer the silence, the more invisible it became.
+        """
+        self.write("job_search_tracker.csv", TRACKER_HEADER, [
+            {"date": "2026-05-01", "company": "Rivermouth", "role": "Analyst",
+             "status": "in_progress", "notes": "phone screen 2026-09-15"}])
+        state = self.collect()
+        self.assertEqual(95, state["followups"][0]["days_quiet"])
+        self.assertEqual(1, len(state["followups"]))
+
     # ---------------------------------------------------------------- trials
 
     def _trial_prefs(self, status: str = "trial") -> None:

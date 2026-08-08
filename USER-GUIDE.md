@@ -52,6 +52,11 @@ green:
 Flags: `--doctor` (check only, change nothing), `--yes` (accept recommended defaults),
 `--quick` (skip the test compiles — faster, less proof).
 
+> **Ignore `SETUP.md` in the repository root.** It is upstream's manual-install guide,
+> kept for attribution reasons. It predates `harness_setup.py` and still tells you to
+> fork-and-clone the upstream project, install each portal CLI by hand, and run `/setup`
+> and `/apply`. Follow this section instead.
+
 **Optional extras setup offers.** Ponytail (recommended). Caveman — optional, explained at
 the prompt, `lite` mode recommended; it only ever touches the agent's internal chatter,
 never your applications. Playwright and Firecrawl MCP — let posting intake read
@@ -165,11 +170,12 @@ a name attached to an employer is enough to make that possible.
 
 ```
 /scrape                                    # your defaults
-/scrape --mode focused --board freehire
+/scrape --scope board freehire --mode focused
 /scrape --scope companies
 /scrape --scope company "Prairie Grid Utilities"
 /scrape --scope boards --mode balanced
-/scrape --scope all --mode full --limit 40
+/scrape --scope all --mode full            # heaviest; asks before running
+/scrape skip trials                        # this run, usual role families only
 ```
 
 **Five scopes:** one named board · one named company · all your companies · all your
@@ -409,7 +415,7 @@ right one runs. The list is here for when you want it.
 |---|---|
 | `/add-portal <url>` | Teach it a new job board |
 | `/add-template` | Register your own CV or cover-letter design |
-| `/rank` | Re-score what the last search found |
+| `/rank` | Re-score what the last search found. It updates the scraper's memory only — say so and the verdicts get added to your shortlist, otherwise `/today` will not see them |
 | `/expand` | Upstream's competency miner. Prefer `/career-review`, which suggests rather than writes |
 | `/gmail-sync` | Read application updates from Gmail. Needs a Gmail connection |
 | `/notion-sync` | Push the tracker to a Notion database |

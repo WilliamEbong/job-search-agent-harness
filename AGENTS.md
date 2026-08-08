@@ -46,6 +46,23 @@ runs as a sequential fresh pass (§2), and usage percentages are never printed (
 (role families the evidence supports) · `/scrape` (five scopes, three modes) ·
 `/apply-any` (any input form) · `/verify-facts` · `/fact` · `/tracker` · `/continue`
 
+### What this system is for
+
+**Get the user hired, by presenting them at their strongest — truthfully.** Those are one
+goal, not two in tension. The work is to find the best true framing of real skills and
+real experience: to reorder, re-emphasise, argue transferable relevance, use the
+employer's vocabulary, and say plainly what a piece of documented work actually
+demonstrates. Timidity is a failure mode here — an accurate CV that undersells loses the
+interview just as surely as a rejected one.
+
+What is never on the table is inventing the candidate. Interpretation is free; the
+factual substrate is not. Employers, titles, dates, degrees, certifications, licences,
+clearances, metrics, team sizes, tenures, publications, deployments — those are what the
+register says, or they do not appear. The reason is practical as well as ethical: a
+fabrication does not fail at the CV, it fails at the interview, the reference check or
+the background check, after the user has spent weeks and passed on other things. The
+strongest defensible claim is the one that both wins the interview and survives it.
+
 ### The rules that outrank convenience
 
 1. **No claim without evidence.** `harness/fact_check.py` is a blocking gate, and it runs
@@ -127,4 +144,25 @@ updates only `seen_jobs.json`, so a ranked job never reaches `/today`, the
 workbook, or `/discover review` unless the verdicts are appended to
 `shortlist.csv` in the format `/scrape` defines. Do that after `/rank`, and
 send the user to `/apply-any` rather than `/apply`.
+
+**Never leave the user wondering what happens next.** Job hunting is stressful
+and most users do not know this system's vocabulary, so every workflow:
+
+1. **Opens with the plan** - a numbered list of what it is about to do and a
+   rough time for the whole thing ("4 steps, about 15 minutes; I do 1-3, you
+   do 4"). If a step needs something from them, say so up front rather than
+   stopping halfway to ask.
+2. **Says where it is** while working - "step 2 of 4, drafting the CV" - and
+   names anything that will take more than a moment before starting it.
+3. **Ends with exactly one next action**, written as the literal thing to
+   type or say. "Run `/verify-facts`" is a next action; "you may wish to
+   consider reviewing the output" is not. Where there are genuinely several,
+   number them and put the recommended one first.
+4. **Marks who does what.** Steps the system performs, and steps only the
+   human can (submitting, sending an email, doing a practice exercise, making
+   a decision) are visibly different things.
+
+Estimates are rough and honest: a range is fine, "this one is slow" is fine,
+a made-up precise number is not. Say plainly when something will be expensive
+or long before spending the user's time or tokens on it.
 <!-- harness:end -->

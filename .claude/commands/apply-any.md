@@ -55,8 +55,11 @@ posting's own wording quoted**, and is **not drafted**. Quoting matters: "requir
 years of professional software development" is checkable by the user, while "didn't match
 your skills" is not.
 
-Remember the `mandatory_only` distinction — a hard-skip skill listed as *preferred*
-does not block the application.
+Two rules apply here exactly as they do in a search, and `/scrape` Step 5 is where both
+are stated in full: the **`mandatory_only`** distinction (a hard-skip skill listed as
+*preferred* does not block the application) and the **stated-pay demotion** (a posting
+that states pay below the minimum is flagged with the numbers shown, never silently
+dropped — the user may know something the posting does not).
 
 If the gate passes, execute `.claude/commands/apply.md` **unchanged**, with the resolved
 posting as its input. That workflow owns: fit evaluation, the LaTeX CV and cover letter,
@@ -115,11 +118,9 @@ drafts.
   than editing for editing's sake.
 
 **Then re-ground — this is not optional and not a formality.** If the humanizer changed
-any wording at all: recompile, and re-run `/verify-facts` on the final text. Stylistic
-rewriting is exactly the operation that strengthens a claim past its evidence —
-"supported the migration" becomes "led the migration" and it reads better, which is why
-nobody catches it by eye. The fact gate always runs on the text that will actually be
-sent.
+any wording at all: recompile, and re-run `/verify-facts` on the final text. The gate
+always runs on the text that will actually be sent, because rewriting for style is the
+operation that quietly strengthens a claim past its evidence.
 
 ## Step 4: Assemble the package — one command
 
@@ -138,16 +139,12 @@ python harness/apply_package.py \
 `.tex` sources and the script finds them there. `--build <dir>` is only for a toolchain
 that writes PDFs somewhere else.)
 
-That single call: creates the folder and its `posting_source/`, stamps `.created` (which
-is what stops the archiver mis-aging a new folder), copies the `.tex` and compiled
-`.pdf` under human-readable names, generates each `.md` mirror with `tex_to_md`, converts
-each to `.docx` via pandoc, builds the **combined** cover-letter-then-resume document in
-all three formats — with a real Word page break, not just a PDF merge — writes the
-`cv_draft.tex` / `cover_letter.tex` copies that `/interview` and `/outcome` look for, and
-appends the tracker row with `status=in_progress` and an empty `submitted_date`.
-
-Read its output. It names every file it wrote, and says so plainly when pandoc is absent
-and the `.docx` files were skipped.
+That one call builds the whole folder — both documents and the combined
+cover-letter-then-resume in `.tex`/`.md`/`.docx`/`.pdf`, the canonical copies
+`/interview` and `/outcome` read, the `.created` stamp the archiver needs, and the
+tracker row with `status=in_progress` and an empty `submitted_date`. **Read its output**
+rather than restating it here: it names every file it wrote, and says plainly when
+pandoc is absent and the `.docx` files were skipped.
 
 **It exits non-zero when the posting archive is incomplete** — `job_posting.md` or
 `provenance.md` missing or empty, or `posting_source/` holding no artifacts. Those are

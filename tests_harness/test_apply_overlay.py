@@ -39,16 +39,16 @@ class TexToMdMirror(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertIn("OK", proc.stdout)
 
-    def test_contact_details_are_not_hardcoded(self):
+    def test_mirror_takes_its_identity_from_the_register(self):
         """The ported original carried a real person's name, phone and email as
-        a module constant. It must never come back."""
-        source = (ROOT / "harness" / "tex_to_md.py").read_text(encoding="utf-8")
-        self.assertNotIn("CONTACT = [", source)
-        self.assertIn("contact_block", source)
-        self.assertIn("meta", source)
+        a module constant; identity must come from the register instead.
 
-    def test_mirror_uses_register_contact(self):
-        """Rendering a CV snippet must pull identity from the register."""
+        This used to grep the module's own source for the string
+        `contact_block` and accept either outcome of the run - so it passed
+        with the function stubbed out, and never checked that any identity
+        reached the output. It now renders against the demo register and looks
+        for the demo candidate.
+        """
         import tempfile
 
         tex = ("\\begin{document}\\makecvtitle\n"
@@ -61,17 +61,34 @@ class TexToMdMirror(unittest.TestCase):
             path = handle.name
         try:
             proc = subprocess.run(
-                [sys.executable, str(ROOT / "harness" / "tex_to_md.py"), path],
+                [sys.executable, str(ROOT / "harness" / "tex_to_md.py"), path,
+                 "--register", str(ROOT / "evidence" / "register.example.yaml")],
                 capture_output=True, text=True, cwd=str(ROOT),
             )
         finally:
             Path(path).unlink()
-        # No register.yaml on a fresh clone, so it must fail loudly rather than
-        # emit a mirror with no identity on it.
-        if proc.returncode != 0:
-            self.assertIn("no evidence register", proc.stdout + proc.stderr)
-        else:
-            self.assertIn("#", proc.stdout)
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("Riley Chen", proc.stdout)
+        self.assertIn("riley.chen@example.com", proc.stdout)
+
+    def test_mirror_refuses_to_render_without_a_register(self):
+        """Better a loud failure than a mirror with no identity on it."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile("w", suffix=".tex", delete=False,
+                                         encoding="utf-8") as handle:
+            handle.write("\\begin{document}\\makecvtitle\\end{document}")
+            path = handle.name
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(ROOT / "harness" / "tex_to_md.py"), path,
+                 "--register", str(ROOT / "evidence" / "does-not-exist.yaml")],
+                capture_output=True, text=True, cwd=str(ROOT),
+            )
+        finally:
+            Path(path).unlink()
+        self.assertNotEqual(0, proc.returncode)
+        self.assertIn("no evidence register", proc.stdout + proc.stderr)
 
 
 class IntakeLadder(unittest.TestCase):
@@ -101,6 +118,28 @@ class IntakeLadder(unittest.TestCase):
     def test_mandatory_only_distinction_is_stated(self):
         self.assertIn("mandatory_only", self.text)
         self.assertIn("nice to have", self.text)
+
+    def test_the_posting_record_must_hold_the_posting_not_a_pointer(self):
+        """Observed in a sibling system: `job_posting.md` held a header and
+        "full posting text archived in posting_source/" — and nothing else. The
+        posting was gone by the time anyone needed it, and every downstream
+        reader opens that one file.
+        """
+        self.assertIn("contains the posting text itself, in full", self.text)
+        self.assertIn("is not a posting record", self.text)
+
+    def test_a_tool_returned_body_is_written_to_a_file_first(self):
+        """The other half of the same failure: a portal CLI or MCP tool returns
+        the body into the conversation, a note records that it did, and the
+        text is lost at end of turn.
+        """
+        self.assertIn("rung 2b", self.text)
+        self.assertIn("is not an archive", self.text)
+        self.assertIn("is not archival", self.text)
+
+    def test_the_quality_gate_checks_the_file_not_the_context(self):
+        """A stub is invisible from inside the session that just wrote it."""
+        self.assertIn("on disk", self.text)
 
     def test_pdf_text_layer_is_checked_before_it_is_trusted(self):
         """A posting PDF's embedded text is not always what the page shows.

@@ -39,6 +39,13 @@ ALLOWED_LITERALS = {
     "+1 555-0142",
     "example-rileychen",
     "example-riley-chen",
+    # The stock cover-letter template's placeholder LinkedIn URL, beside
+    # `[YOUR NAME]` and `your.email@example.com`. It was previously excused by
+    # a line-level placeholder rule that also excused real addresses sharing a
+    # line with a placeholder; that rule is now scoped away from contact
+    # labels, so this one names itself here instead of loosening a pattern.
+    "www.linkedin.com/in/yourprofile",
+    "linkedin.com/in/yourprofile",
 }
 ALLOWED_DOMAINS = ("example.com", "example.org", "example.net", "example.ca",
                    "example-", "localhost")
@@ -119,18 +126,25 @@ def is_allowed(match: str, line: str, label: str = "") -> bool:
     # Now only explicit placeholder tokens excuse a line, and the documentation
     # vocabulary ("Example Company", "123 Hiring Street") must appear in the
     # MATCH ITSELF rather than merely somewhere on the line.
-    if re.search(r"\[YOUR_|@@|<your|your[.\-_]|placeholder", line, re.I):
+    # A placeholder token inside the MATCH itself always excuses it.
+    if re.search(r"\[YOUR_|@@|<your|your[.\-_]|placeholder", lowered, re.I):
         return True
     # A documentation marker inside the MATCH itself always excuses it.
     if re.search(r"\b(example|test|sample|acme)\b", lowered):
         return True
-    # A marker merely elsewhere on the line excuses only the shape-based
+    # A marker merely elsewhere on the LINE excuses only the shape-based
     # categories — a street-address or postal-code regex firing on
     # "123 Hiring Street\\Example City" in a template snippet. It never
     # excuses an email, phone number, profile URL or key: those are exactly
     # what a real leak looks like, and "test" appears near real data all the
     # time.
+    #
+    # The placeholder half of this used to run above the label split, which
+    # quietly reopened the hole the split was written to close: one `your-`
+    # anywhere on a line excused a real address on the same line.
     if label and label not in CONTACT_LABELS:
+        if re.search(r"\[YOUR_|@@|<your|your[.\-_]|placeholder", line, re.I):
+            return True
         if re.search(r"\b(example|test|sample|placeholder|template)\b", line, re.I):
             return True
     return False

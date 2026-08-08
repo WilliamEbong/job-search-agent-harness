@@ -39,6 +39,21 @@ Use it directly. Archive it verbatim as `posting_source/pasted.md`. No fetching 
    date at the top.
 4. If every route fails, drop to rung 6.
 
+### Rung 2b — The body is already in hand from a tool
+A portal CLI's `detail` command, a job-board MCP tool, or an earlier `/scrape` in this
+same session has already returned the full description. There was no page fetch, so
+nothing on disk yet: **the posting exists only in this conversation, and it disappears
+when the turn ends.**
+
+Write it out before doing anything else with it:
+`posting_source/<tool>_detail.md` (e.g. `linkedin_detail.md`), the body verbatim, with
+the tool, the command or call, the job ID and the retrieval date at the top. Then
+continue as if it had come from rung 1.
+
+**A note recording that a tool returned the body is not an archive.** "Full description
+returned by `jobindex detail 12345`" preserves nothing; the next session reads that line
+and has no posting. Paste the text.
+
 ### Rung 3 — Screenshot(s)
 1. Read the images natively. Extract: **company, exact role title, location, employment
    type, requisition/job ID, closing date, salary if shown**, and the full requirement
@@ -79,9 +94,16 @@ versions — never silently pick one. A silently resolved conflict is indistingu
 from a posting that never disagreed with itself.
 
 ### Rung 6 — Expired or inaccessible
-Proceed from the best captured representation. Flag `posting_state: unverified` in
-`provenance.md`, and **say so plainly in the final summary** — the user needs to know the
-package was built against a posting that could not be confirmed live.
+Proceed from the best captured representation, and **capture it to a file** — a cached
+copy, a search-result excerpt, whatever the user can still see — as
+`posting_source/best_available.md`, with a line saying where it came from and what is
+missing. Flag `posting_state: unverified` in `provenance.md`, and **say so plainly in the
+final summary** — the user needs to know the package was built against a posting that
+could not be confirmed live.
+
+If genuinely nothing can be captured, say that to the user and stop. A package drafted
+against a posting nobody can produce afterwards cannot be checked, and interview prep
+weeks later will have nothing to read.
 
 ## What gets archived
 
@@ -91,10 +113,31 @@ Inside the application folder the upstream workflow uses,
 ```
 posting_source/          raw artifacts exactly as supplied or fetched
                          (screenshots, saved PDF, fetched.md, pasted.md,
-                          extraction transcript)
+                          <tool>_detail.md, extraction transcript)
 provenance.md            the record below
 job_posting.md           the resolved posting text the apply workflow consumes
 ```
+
+### Two rules that are not negotiable
+
+**1. `job_posting.md` contains the posting text itself, in full.** Header first
+(source URL, retrieval date), then the whole posting: title, company, location,
+responsibilities, requirements, preferred, compensation, closing date, how to apply —
+whatever the posting actually said. **A header plus a pointer to `posting_source/` is not
+a posting record.** Lines like "full text archived in posting_source/" or "see
+fetched.md" are a failure, not a shortcut: every downstream reader — the fit evaluation,
+the reviewer, `/verify-facts --posting`, `/interview` weeks later — opens this one file,
+and a pointer hands them nothing. Duplication between `job_posting.md` and
+`posting_source/` is intended: one is the working text, the other is the untouched
+original, and having both is how you can later tell a reformatting from a change.
+
+**2. A body that arrived through a tool is written to a file before anything is
+drafted.** Any posting text produced in-session by a portal CLI, an MCP job tool,
+Firecrawl or Playwright is on the same footing as a page fetch: it goes into
+`posting_source/` as a file, verbatim, first (rung 2b). A metadata note saying the body
+was returned is not archival — the body was in the transcript and the transcript is not
+the archive. This applies to a `/scrape` `detail` result the user then asks to apply to,
+and to any escalation inside rung 2.
 
 `provenance.md` records, briefly:
 
@@ -117,10 +160,13 @@ which is what interview preparation reads weeks later.
 
 ## Resolution quality gate
 
-Before handing off, confirm the resolved text actually contains: **company · exact role
-title · location or remote status · the responsibilities and requirements**. If any is
-missing, say which one and **ask the user rather than guessing** — a fit evaluation built
-on an inferred title is wrong in a way that is very hard to see later.
+Before handing off, confirm **`job_posting.md` on disk** — not the text in your context —
+actually contains: **company · exact role title · location or remote status · the
+responsibilities and requirements**. Open it and look. A file that names the posting but
+does not carry its requirements is the pointer-stub failure rule 1 rules out, and it is
+invisible from inside the session that just wrote it. If any field is missing, say which
+one and **ask the user rather than guessing** — a fit evaluation built on an inferred
+title is wrong in a way that is very hard to see later.
 
 **When the working text came from a picture and nothing canonical was found** (rung 3, or
 rung 4 dropped to rung 3 by the text-layer check), that gate is not enough: it proves the

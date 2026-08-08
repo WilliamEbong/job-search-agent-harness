@@ -29,7 +29,13 @@ KEEP = 5
 
 
 def _stamp() -> str:
-    return datetime.now().strftime("%Y%m%d-%H%M%S")
+    # Microseconds, so two backups in the same second still sort correctly.
+    # The old second-resolution stamp collided, and the collision was resolved
+    # by appending "-2"/"-3" AFTER the timestamp - but "-" sorts before ".", so
+    # `name-120000.yaml` sorted as newer than `name-120000-3.yaml`. A batch
+    # /outcome writing three rows in one second then made `--restore 1` return
+    # the OLDEST of the three, and the keep-5 prune delete genuinely newer ones.
+    return datetime.now().strftime("%Y%m%d-%H%M%S-%f")
 
 
 def backups_for(path: Path, backup_dir: Path | None = None) -> list[Path]:
@@ -55,11 +61,6 @@ def rotate(path: Path, backup_dir: Path | None = None,
         return None
     backup_dir.mkdir(parents=True, exist_ok=True)
     target = backup_dir / f"{path.stem}-{_stamp()}{path.suffix}"
-    # A same-second second call would clobber its own predecessor.
-    counter = 1
-    while target.exists():
-        counter += 1
-        target = backup_dir / f"{path.stem}-{_stamp()}-{counter}{path.suffix}"
     shutil.copy2(path, target)
     for stale in backups_for(path, backup_dir)[keep:]:
         stale.unlink()

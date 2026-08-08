@@ -1,3 +1,7 @@
+> **Build-stage document, kept as history.** These are instructions to the agent that
+> planned the build, written before it ran. Nothing here is needed to use the harness —
+> see `USER-GUIDE.md`.
+
 # Job Search Agent Harness — Doc 02: Plan-Mode Handoff (Stage 2)
 **For:** Fable running in Claude Code **Plan Mode**, in `~/Documents/job-search-build/job-search-agent-harness`.
 **Self-contained:** this file + `harness-01-architecture.md` + the systems you inspect are everything; assume no access to prior conversations. The owner is non-technical and hands-off: batch questions, prefer the recorded defaults (doc 01 §14) over asking, and end every session with a plain-language bullet summary.

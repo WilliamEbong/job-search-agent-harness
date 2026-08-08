@@ -15,7 +15,7 @@ documents/
 ├── postings/                    # Raw job posting text, pasted manually for pages Claude can't fetch
 │   └── <Company> - <Job Title>.txt  # Filename = company + job title, content = full posting text
 ├── applications/                # Past job applications
-│   └── <company>_<role>/
+│   └── <Company>_<Role>/
 │       ├── job_posting.md       # The original job posting (paste as text)
 │       ├── cover_letter.tex     # The cover letter you submitted
 │       ├── cv_draft.tex         # The CV variant you submitted

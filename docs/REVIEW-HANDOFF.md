@@ -135,7 +135,7 @@ All four waves are **complete, committed and pushed**. CI green.
 
 ```
 git status   clean, pushed
-tests        341 harness + 154 upstream + 157 Bun (portal CLIs; jobbank-ca offline suite now 6)
+tests        352 harness + 154 upstream + 157 Bun (portal CLIs; jobbank-ca offline suite now 6)
 guards       security_guards, harness_guards, lint_skills, privacy_sweep — all green
 harness/     13 scripts   .claude/commands/  24   .codex/prompts/  22
 ```

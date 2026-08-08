@@ -1,3 +1,8 @@
+> **Build-stage document, kept as history.** This walked the owner through
+> commissioning the build in 2026-08; the build is done and the repository is public.
+> The step-by-step instructions here are for that process, not for using the harness —
+> see `USER-GUIDE.md` for that, and `docs/REVIEW-HANDOFF.md` for the current state.
+
 # Job Search Agent Harness — Doc 03: Owner's Guide
 **Your manual for the whole pipeline: design is done (Stage 1 — this package). You run Stage 2 (Fable plans in Claude Code), Stage 3 (Opus builds), and then anyone can use the product. Your total attention: ~30–45 minutes across everything, mostly two pastes and a few clicks. Your private job-search system is never touched.**
 
@@ -56,12 +61,12 @@ The harness is for the public; **your** job search stays in your private `job-se
 Stage 3 is built. The repository exists at
 `github.com/WilliamEbong/job-search-agent-harness` and is **private**.
 
-- **Where the detail lives:** `docs/BUILD-STATE.md` — the phase ledger, the
+- **Where the detail lives:** `docs/build-history/BUILD-STATE.md` — the phase ledger, the
   40-test results table with its seven written waivers, and a plain-language
   close-out at the end. Read that file's close-out section if you read nothing
   else.
 - **The demo package** is at
-  `documents/applications/Rivermouth_Environmental_Data_Analyst/`. It is the
+  `documents/applications/Rivermouth_Environmental_Consulting_Environmental_Data_Analyst/`. It is the
   fictional Riley Chen applying to a fictional employer. Open the two PDFs.
 - **The fabrication test passed live.** Seven fake claims planted into the demo
   CV were all caught and blocked; the honest version passes cleanly.

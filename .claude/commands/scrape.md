@@ -128,6 +128,21 @@ a role found on an employer's own page is deduplicated against the same memory a
 hit and is visible to `/rank`. The entry fields are additive — adding a source tag does
 not disturb anything upstream reads.
 
+**A posting body you fetched does not survive this turn unless you write it down.** A
+portal CLI's `detail` command, a Firecrawl extraction or a Playwright read returns the
+full description into the conversation, and `seen_jobs.json` has nowhere to put it — it
+stores title, company, URL, date and fit, and nothing else. So the moment the user says
+"apply to that one", the posting has to be fetched again, and by then a board listing may
+be gone.
+
+So: **whenever you pull a full body during a run, save it** to
+`documents/applications/<Company>_<Role>/posting_source/<tool>_detail.md`, verbatim, with
+the tool, the job ID and the date at the top — the `posting-intake` skill's rung 2b, which
+`/apply-any` then finds already done. This is not a licence to fetch more bodies: keep
+following the skill's advice to pre-filter on title and company and pull detail only for
+jobs worth a closer look. It is a rule about what happens to the ones you *did* pull.
+A note saying a body was returned archives nothing.
+
 If a careers page cannot be read — JavaScript shell, bot wall, login — record
 `access: unverified` with a note on that entry in `companies.yaml` and report it as
 unverified. **"We could not read this page" is not "this employer has no openings."**

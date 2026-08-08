@@ -580,17 +580,12 @@ def offer_statusline() -> Check:
     upstream's security guard freezes: a permissions file that setup edits is a
     permissions file an attacker can edit through setup.
     """
-    import json
-
     settings = ROOT / ".claude" / "settings.local.json"
-    try:
-        existing = json.loads(settings.read_text(encoding="utf-8")) if settings.is_file() else {}
-    except (OSError, json.JSONDecodeError) as exc:
-        return Check("statusline", UNVERIFIED, f"could not read {settings.name}: {exc}",
-                     required=False)
-    if not isinstance(existing, dict):
+    existing = _read_local_settings(settings)
+    if existing is None:
         return Check("statusline", UNVERIFIED,
-                     f"{settings.name} is not a JSON object", required=False)
+                     f"{settings.name} is unreadable or not a JSON object",
+                     required=False)
 
     current = (existing.get("statusLine") or {}).get("command")
     if current == STATUSLINE_COMMAND:
@@ -608,11 +603,12 @@ def offer_statusline() -> Check:
                      required=False)
 
     existing["statusLine"] = {"type": "command", "command": STATUSLINE_COMMAND}
-    try:
-        settings.parent.mkdir(parents=True, exist_ok=True)
-        settings.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")
-    except OSError as exc:
-        return Check("statusline", UNVERIFIED, f"could not write {settings.name}: {exc}",
+    # Via the atomic helper: this rewrites the whole file, and the earlier
+    # permissions step has usually already written to it. A bare write_text
+    # interrupted partway (Ctrl-C during a long guided setup is the normal
+    # case) left the user with a truncated settings file and no allow-list.
+    if not _write_local_settings(settings, existing):
+        return Check("statusline", UNVERIFIED, f"could not write {settings.name}",
                      required=False)
     return Check("statusline", OK, f"registered in {settings.name}", required=False)
 

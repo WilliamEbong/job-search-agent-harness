@@ -51,6 +51,12 @@ ROOT = HARNESS_DIR.parent
 APPLICATIONS_DIR = ROOT / "documents" / "applications"
 REGISTER = ROOT / "evidence" / "register.yaml"
 
+# Shortest plausible real posting. A header-and-pointer stub runs ~150
+# characters; the shortest genuine posting anyone would apply to still carries a
+# title, a company and some requirements. Set well below any real posting so it
+# only ever catches the stub.
+MIN_POSTING_CHARS = 400
+
 sys.path.insert(0, str(HARNESS_DIR))
 import tex_to_md  # noqa: E402
 import tracker_row  # noqa: E402
@@ -104,7 +110,11 @@ def candidate_name(register: Path = REGISTER) -> str:
         return ""
     try:
         with register.open(encoding="utf-8") as handle:
-            return str((yaml.safe_load(handle) or {}).get("meta", {}).get("owner", ""))
+            # `.get("meta") or {}` - a register with a bare `meta:` key parses
+            # to None there, and `None.get` is an AttributeError that this
+            # handler does not catch, crashing packaging at its first step.
+            meta = (yaml.safe_load(handle) or {}).get("meta") or {}
+            return str(meta.get("owner", ""))
     except (OSError, ValueError):
         return ""
 
@@ -250,12 +260,29 @@ def posting_archive_gaps(folder: Path) -> list[str]:
     later, and by then it cannot be re-fetched.
     """
     gaps: list[str] = []
+    texts: dict[str, str] = {}
     for doc in ("job_posting.md", "provenance.md"):
         path = folder / doc
         if not path.is_file():
             gaps.append(f"{doc} missing")
-        elif not path.read_text(encoding="utf-8", errors="replace").strip():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace").strip()
+        texts[doc] = text
+        if not text:
             gaps.append(f"{doc} empty")
+
+    # A header plus "full text archived in posting_source/" passed the checks
+    # above - it is a file, and it is not empty. It is also not a posting: every
+    # later reader (the fit evaluation, the reviewer, /verify-facts --posting,
+    # /interview weeks on) opens this one file and would find a pointer. The
+    # floor is deliberately low; a real posting clears it many times over.
+    posting = texts.get("job_posting.md", "")
+    if posting and len(posting) < MIN_POSTING_CHARS:
+        gaps.append(
+            f"job_posting.md is only {len(posting)} characters - it must hold the "
+            "posting text itself, not a header pointing at posting_source/"
+        )
+
     source_dir = folder / "posting_source"
     if not any(p.is_file() for p in source_dir.glob("*")):
         gaps.append("posting_source/ has no artifacts")

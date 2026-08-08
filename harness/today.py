@@ -33,13 +33,11 @@ sys.path.insert(0, str(HARNESS_DIR))
 import status as status_mod  # noqa: E402
 import tracker_row  # noqa: E402
 
-TRACKER = ROOT / "job_search_tracker.csv"
-SHORTLIST = ROOT / "shortlist.csv"
-RUN_LOG = ROOT / "run_log.csv"
-APPLICATIONS = ROOT / "documents" / "applications"
-REGISTER = ROOT / "evidence" / "register.yaml"
-PREFERENCES = ROOT / "preferences.yaml"
-
+# No module-level paths here on purpose: every reader below takes `root` and
+# builds its own, so a test (or a workbook built from an archived tracker) can
+# point the whole module somewhere else. The six constants that used to sit
+# here were read by nothing and were the same stale-global shape that made
+# tracker_xlsx link into the live tree regardless of its arguments.
 FOLLOWUP_DAYS = status_mod.FOLLOWUP_DAYS
 STALE_SEARCH_DAYS = 7
 DATE_IN_NOTE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
@@ -81,7 +79,11 @@ def days_quiet(row: dict, today: date) -> int | None:
     """
     stamps = [parse_date(row.get("date"))]
     stamps += [parse_date(found) for found in DATE_IN_NOTE.findall(row.get("notes") or "")]
-    stamps = [s for s in stamps if s]
+    # Only dates in the past say when something last happened. `/outcome`
+    # routinely writes forward-looking ones into notes ("phone screen 2026-09-15",
+    # "ref 2026-12-31"), and a future stamp made days_quiet negative - so a row
+    # with months of real silence never became a follow-up, permanently.
+    stamps = [s for s in stamps if s and s <= today]
     if not stamps:
         return None
     return (today - max(stamps)).days
@@ -99,11 +101,19 @@ def trial_families(shortlist: list[dict], root: Path = ROOT) -> list[dict]:
     back to `/discover review` was the user remembering it existed, so an
     approved trial ran forever and was never judged.
     """
+    path = root / "preferences.yaml"
+    if not path.is_file():
+        return []
     try:
         import yaml
-        prefs = yaml.safe_load(
-            (root / "preferences.yaml").read_text(encoding="utf-8")) or {}
-    except Exception:
+        prefs = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        # Say so rather than reporting "no trials". A broken preferences file
+        # also silences the page target and /discover, and three features
+        # degrading quietly off one unreported parse error is exactly what this
+        # repo's fail-loudly rule exists to prevent.
+        print(f"today: could not read {path.name} ({exc}) - trials not shown",
+              file=sys.stderr)
         return []
     if not isinstance(prefs, dict):
         return []
@@ -202,43 +212,58 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
     }
 
 
+# Rough wall-clock for each action, so the menu answers "have I got time for
+# this right now?" - the question that actually decides whether a tired person
+# does one more thing tonight. Ranges, because honest beats precise-looking.
+# `who` separates what the system does from what only the human can do.
+MINUTES = {
+    "/setup-harness": ("about 15 min", "together"),
+    "/outcome": ("2-3 min", "you decide, I write"),
+    "apply": ("10-15 min", "I draft, you submit"),
+    "/scrape": ("5-10 min", "I search"),
+    "/discover review": ("3-5 min", "you decide"),
+}
+
+
+def _annotate(command: str) -> dict:
+    for prefix, (minutes, who) in MINUTES.items():
+        if command.startswith(prefix):
+            return {"minutes": minutes, "who": who}
+    return {"minutes": "", "who": ""}
+
+
 def actions(state: dict) -> list[dict]:
-    """The numbered menu. Each item carries the command that performs it."""
+    """The numbered menu. Each item carries the command that performs it,
+    plus a rough time and who does the work."""
     items: list[dict] = []
+
+    def add(label: str, command: str) -> None:
+        items.append({"label": label, "command": command, **_annotate(command)})
+
     if not state["onboarded"]:
-        return [{"label": "Set up your profile (about 5 minutes)",
-                 "command": "/setup-harness"}]
+        add("Set up your profile", "/setup-harness")
+        return items
 
     for entry in state["followups"][:3]:
-        items.append({
-            "label": f"Follow up with {entry['company']} "
-                     f"({entry['days_quiet']} days quiet)",
-            "command": f"/outcome {entry['company']}",
-        })
+        add(f"Follow up with {entry['company']} "
+            f"({entry['days_quiet']} days quiet)",
+            f"/outcome {entry['company']}")
     for entry in state["deadlines"][:2]:
-        items.append({
-            "label": f"{entry['company']} closes in {entry['closes_in']} days",
-            "command": f"apply {entry['company']} {entry['role']}",
-        })
+        add(f"{entry['company']} closes in {entry['closes_in']} days",
+            f"apply {entry['company']} {entry['role']}")
     for entry in state["undrafted"][:2]:
         score = f" (scored {entry['score']})" if entry.get("score") else ""
-        items.append({
-            "label": f"Apply to {entry['company']} - {entry['role']}{score}",
-            "command": f"apply {entry['url'] or entry['company']}",
-        })
+        add(f"Apply to {entry['company']} - {entry['role']}{score}",
+            f"apply {entry['url'] or entry['company']}")
     age = state["search_age_days"]
     if age is None:
-        items.append({"label": "Search for jobs - you have not run one yet",
-                      "command": "/scrape"})
+        add("Search for jobs - you have not run one yet", "/scrape")
     elif age >= STALE_SEARCH_DAYS:
-        items.append({"label": f"Search for new jobs (last run {age} days ago)",
-                      "command": "/scrape"})
+        add(f"Search for new jobs (last run {age} days ago)", "/scrape")
     for entry in state.get("trials", [])[:1]:
-        items.append({
-            "label": f"Judge the {entry['family']} trial "
-                     f"({entry['found']} found, {entry['shortlisted']} shortlisted)",
-            "command": "/discover review",
-        })
+        add(f"Judge the {entry['family']} trial "
+            f"({entry['found']} found, {entry['shortlisted']} shortlisted)",
+            "/discover review")
     return items
 
 
@@ -298,7 +323,9 @@ def render(state: dict) -> str:
     if menu:
         lines.append("What would you like to do?")
         for number, item in enumerate(menu, 1):
-            lines.append(f"  {number}. {item['label']}")
+            tail = " · ".join(p for p in (item.get("minutes"), item.get("who")) if p)
+            lines.append(f"  {number}. {item['label']}"
+                         + (f"   [{tail}]" if tail else ""))
         lines.append("")
         lines.append("Say a number, or just tell me what you want to do.")
     else:

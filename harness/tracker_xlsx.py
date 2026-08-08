@@ -33,6 +33,7 @@ SHORTLIST = os.path.join(ROOT, "shortlist.csv")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from archive_applications import RESERVED, match_folder  # noqa: E402
 import status  # noqa: E402
+import today as today_mod  # noqa: E402
 import tracker_row  # noqa: E402
 
 APPLICATIONS_DIR = os.path.join(ROOT, "documents", "applications")
@@ -103,19 +104,27 @@ def _key(row):
             (row.get("role") or "").strip().lower())
 
 
-def application_folder(row):
+def application_folder(row, root=None):
     """Best-effort path to the application folder, if one exists.
 
     Submitted applications are moved into documents/applications/applied/ by
     harness/archive_applications.py, so both locations are searched.
+
+    `root` defaults to the repo, but `build()` passes the tracker's own
+    directory: resolving against a module global meant a workbook built from a
+    CSV anywhere else still linked into the live repo tree, and made the
+    workbook tests depend on whatever was in the developer's private
+    documents/applications/.
     """
-    if not os.path.isdir(APPLICATIONS_DIR):
+    root = root or ROOT
+    applications_dir = os.path.join(root, "documents", "applications")
+    if not os.path.isdir(applications_dir):
         return ""
     places = [("documents", "applications")]
-    if os.path.isdir(os.path.join(APPLICATIONS_DIR, "applied")):
+    if os.path.isdir(os.path.join(applications_dir, "applied")):
         places.append(("documents", "applications", "applied"))
     for parts in places:
-        base = os.path.join(ROOT, *parts)
+        base = os.path.join(root, *parts)
         names = [n for n in sorted(os.listdir(base))
                  if n not in RESERVED
                  and os.path.isdir(os.path.join(base, n))]
@@ -136,6 +145,8 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
                  "Run: pip install -r requirements.txt")
 
     today = today or datetime.date.today()
+    # Application folders live beside the tracker, not beside this module.
+    tree_root = os.path.dirname(os.path.abspath(csv_path)) or ROOT
     rows, _ = tracker_row.read_rows(Path(csv_path))
     shortlist = shortlist_rows = read_csv(shortlist_path or SHORTLIST)
     rows.sort(key=lambda r: (parse_date(r.get("date")) or datetime.date.min),
@@ -177,7 +188,13 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
         applied_on = parse_date(row.get("date"))
         days = (today - applied_on).days if applied_on else ""
         is_open = status.is_open(row.get("status"))
-        due = "YES" if (is_open and isinstance(days, int) and days > FOLLOWUP_DAYS) else ""
+        # Ask today.py, so the workbook and the daily brief cannot disagree.
+        # This column used to count from the application date alone, which
+        # meant it kept saying a follow-up was due after one had been sent and
+        # logged - the exact complaint /today was fixed for.
+        quiet = today_mod.days_quiet(row, today)
+        due = "YES" if (is_open and quiet is not None and quiet >= FOLLOWUP_DAYS
+                        and today_mod.followups_sent(row) < 2) else ""
         if due:
             follow_ups += 1
         body.append([row.get("date", ""), row.get("company", ""), row.get("role", ""),
@@ -187,7 +204,7 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
                      row.get("fit_rating", ""), row.get("rationale", ""),
                      row.get("contact_person", ""), row.get("notes", ""),
                      row.get("cv_file", ""), row.get("cover_letter_file", ""),
-                     row.get("source", ""), application_folder(row)])
+                     row.get("source", ""), application_folder(row, tree_root)])
     write_sheet(sheet, headers, body)
 
     # Derived from the header, never hardcoded: inserting a column used to

@@ -15,17 +15,15 @@ tracker workflows call it every run and no scheduled task is needed:
     python harness/archive_applications.py --dry-run  # report only, change nothing
     python harness/archive_applications.py --archive  # also zip and remove the old
 
-Creation age: on Windows `st_ctime` is the folder's creation time. The oldest
-file mtime inside the folder is used when it is older still, so folders whose
-metadata was rewritten (by a git operation, say) cannot dodge archiving.
-Everything under `documents/applications/` is gitignored, so archiving never
-touches a tracked file.
+Creation age comes from the `.created` marker the packaging script stamps; see
+`folder_created_at` for why file mtimes are only a fallback and never override
+it. Everything under `documents/applications/` is gitignored, so archiving
+never touches a tracked file.
 """
 
 from __future__ import annotations
 
 import argparse
-import csv
 import re
 import shutil
 import sys
@@ -35,6 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import status  # noqa: E402  (sibling module; path shim above must run first)
+import tracker_row  # noqa: E402  (the one tracker reader; heals short/ragged rows)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 APPLICATIONS_DIR = REPO_ROOT / "documents" / "applications"
@@ -88,16 +87,16 @@ def open_application_folders() -> set[str]:
         names += [d.name for d in APPLIED_DIR.iterdir() if d.is_dir()]
     protected: set[str] = set()
     try:
-        with TRACKER_CSV.open(newline="", encoding="utf-8-sig") as handle:
-            for row in csv.DictReader(handle):
-                if not status.is_open(row.get("status", "")):
-                    continue
-                hit = match_folder(row.get("company", ""), row.get("role", ""), names)
-                if hit:
-                    protected.add(hit)
+        rows, _ = tracker_row.read_rows(TRACKER_CSV)
     except OSError:
         # An unreadable tracker must not licence deletion. Protect everything.
         return set(names)
+    for row in rows:
+        if not status.is_open(row.get("status", "")):
+            continue
+        hit = match_folder(row.get("company", ""), row.get("role", ""), names)
+        if hit:
+            protected.add(hit)
     return protected
 
 
@@ -249,13 +248,19 @@ def submitted_folders() -> set[str]:
     live = [d.name for d in APPLICATIONS_DIR.iterdir()
             if d.is_dir() and d.name not in RESERVED]
     wanted: set[str] = set()
-    with TRACKER_CSV.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            if not (row.get("submitted_date") or "").strip():
-                continue
-            hit = match_folder(row.get("company", ""), row.get("role", ""), live)
-            if hit:
-                wanted.add(hit)
+    try:
+        rows, _ = tracker_row.read_rows(TRACKER_CSV)
+    except OSError:
+        # Same rule as open_application_folders: an unreadable tracker means we
+        # know nothing, and moving on no knowledge is how a folder that was
+        # never submitted ends up in applied/. Move nothing.
+        return set()
+    for row in rows:
+        if not (row.get("submitted_date") or "").strip():
+            continue
+        hit = match_folder(row.get("company", ""), row.get("role", ""), live)
+        if hit:
+            wanted.add(hit)
     return wanted
 
 

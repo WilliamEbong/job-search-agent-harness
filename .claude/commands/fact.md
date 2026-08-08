@@ -10,9 +10,17 @@ that it becomes claimable evidence instead of a sentence in a chat log.
 ```
 
 This is the **only** sanctioned way a new fact enters `evidence/register.yaml`.
-(`/setup` is the other writer, and it only runs during onboarding.)
+(`/setup-harness` is the other writer, and it only runs during onboarding.)
 
 ---
+
+## Step 0: Check they are set up
+
+Run the standing first-run check ("Before any harness workflow runs" in `AGENTS.md` /
+`CLAUDE.md`). This command **writes** to the register, so it matters more here than
+elsewhere: recording a fact into a register that does not exist yet produces one holding
+a single owner-confirmed line and none of the evidence a CV would have supplied. Offer
+`/setup-harness` and stop.
 
 ## Step 1: Understand what kind of fact it is
 

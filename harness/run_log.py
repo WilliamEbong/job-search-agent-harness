@@ -30,7 +30,12 @@ def main() -> None:
         parser.add_argument("--" + column, default="")
     args = parser.parse_args()
 
-    is_new = not os.path.exists(LOG)
+    # An empty file needs the header just as much as a missing one. A zero-byte
+    # run_log.csv (interrupted first write, a `touch`, an editor saving an empty
+    # buffer) otherwise makes the first data row the header: `today.py` then
+    # finds no `date` column and reports "no search has been run yet" after
+    # every single search, permanently.
+    is_new = not os.path.exists(LOG) or os.path.getsize(LOG) == 0
     with open(LOG, "a", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         if is_new:

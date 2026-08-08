@@ -188,6 +188,28 @@ class BackupRotation(unittest.TestCase):
         self.assertEqual(5, len(rotate_backup.backups_for(self.target,
                                                           self.backups)))
 
+    def test_rapid_backups_restore_the_newest_not_the_oldest(self):
+        """REGRESSION: `--restore 1` returned the OLDEST of a same-second batch.
+
+        The stamp had second resolution, so a collision was resolved by
+        appending "-2"/"-3" after it. `-` sorts before `.`, which put the
+        un-suffixed (first, oldest) name at the head of a reverse sort. A batch
+        /outcome or /gmail-sync updating three rows within one second then made
+        the documented undo restore the wrong file and silently discard two
+        updates - while keep-5 pruned genuinely newer copies.
+
+        The old count-only test passes with that bug intact.
+        """
+        for version in ("v1", "v2", "v3"):
+            self.target.write_text(version + "\n", encoding="utf-8")
+            rotate_backup.rotate(self.target, self.backups, keep=5)
+        newest = rotate_backup.backups_for(self.target, self.backups)[0]
+        self.assertEqual("v3\n", newest.read_text(encoding="utf-8"))
+
+        self.target.write_text("clobbered\n", encoding="utf-8")
+        rotate_backup.restore(self.target, 1, self.backups)
+        self.assertEqual("v3\n", self.target.read_text(encoding="utf-8"))
+
     def test_restore_brings_content_back(self):
         self.target.write_text("good content\n", encoding="utf-8")
         rotate_backup.rotate(self.target, self.backups)

@@ -89,6 +89,22 @@ intelligent reasoning about what those facts demonstrate. The test for any frami
 *the strongest version of the claim the candidate could defend in a serious interview
 without backtracking.*
 
+**The line this stage must not cross.** The job is to find the best true framing of real
+skills and real experience — not to invent a better candidate. Everything above licenses
+*interpretation*: ordering, emphasis, what a documented activity demonstrates,
+transferable-skill argument, the employer's vocabulary in place of the candidate's.
+It licenses **nothing** about the factual substrate. An employer, a title, a date, a
+degree, a certification, a licence, a clearance, a number, a team size, a tenure, a
+publication, a deployment — these are what the register says they are, or they do not
+go in. If a proposition needs a fact the register does not hold, the proposition is
+wrong; drop it and find a real one, or tell the user what would make it true.
+
+This is not caution for its own sake. A fabrication does not fail at the CV — it fails
+at the interview, the reference check or the background check, after the candidate has
+spent weeks on the process and turned down other things. The strongest defensible claim
+wins the interview *and* survives it. That is the whole objective, and the two halves
+are the same rule, not a trade-off.
+
 ---
 
 ## Step 2: DRAFTER - Draft CV + Cover Letter

@@ -58,17 +58,36 @@ class SweepStillCatchesRealData(unittest.TestCase):
     """The allow-list must not have become an everything-list."""
 
     def scan_text(self, text: str) -> list:
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "sample.md"
-            path.write_text(text, encoding="utf-8")
-            hits = []
-            for line_no, line in enumerate(text.splitlines(), 1):
-                for label, pattern in privacy_sweep.BLOCKING_PATTERNS:
-                    for match in pattern.finditer(line):
-                        if privacy_sweep.is_allowed(match.group(0), line):
-                            continue
-                        hits.append((line_no, label, match.group(0)))
-            return hits
+        """Re-implements the scan loop, but must call `is_allowed` the way
+        production does — with the label.
+
+        It used to omit the third argument, so `label` defaulted to "" and the
+        CONTACT_LABELS branch (the whole point of the split: a placeholder
+        elsewhere on a line must not excuse a real email) was unreachable in
+        every test in this class. Deleting that branch left them all green.
+        """
+        hits = []
+        for line_no, line in enumerate(text.splitlines(), 1):
+            for label, pattern in privacy_sweep.BLOCKING_PATTERNS:
+                for match in pattern.finditer(line):
+                    if privacy_sweep.is_allowed(match.group(0), line, label):
+                        continue
+                    hits.append((line_no, label, match.group(0)))
+        return hits
+
+    def test_a_placeholder_on_the_line_does_not_excuse_a_real_email(self):
+        """REGRESSION: one `your-` anywhere on a line excused every match on it.
+
+        The line-level placeholder check ran above the contact-label split, so
+        a template-looking line carrying one real address shipped clean — the
+        exact hole the split was written to close.
+        """
+        hits = self.scan_text(
+            "your-config example: jane.doe@realcompany.co.uk")
+        self.assertTrue(any(label == "email" for _, label, _ in hits), hits)
+
+    def test_a_placeholder_inside_the_match_is_still_excused(self):
+        self.assertEqual([], self.scan_text("email: your.email@example.com"))
 
     def test_catches_a_real_email(self):
         hits = self.scan_text("Contact me at jane.doe@realcompany.co.uk about the role.")
@@ -262,11 +281,19 @@ class UserGuide(unittest.TestCase):
         self.assertIn("that's enough", self.text)
 
     def test_documents_all_five_scopes_and_three_modes(self):
+        # `--scope board <name>` is the real fifth scope. The guide used to show
+        # a bare `--board` flag, which `/scrape` has never implemented, and this
+        # test pinned it — so the sweep that removed the phantom flag from the
+        # command file left the copy users actually type from untouched.
         for scope in ("--scope companies", "--scope boards", "--scope all",
-                      "--scope company", "--board"):
+                      "--scope company", "--scope board"):
             self.assertIn(scope, self.text)
         for mode in ("focused", "balanced", "full"):
             self.assertIn(mode, self.text)
+
+    def test_does_not_document_flags_scrape_never_implemented(self):
+        self.assertNotIn("--board ", self.text)
+        self.assertNotIn("--limit", self.text)
 
     def test_documents_the_doctor_statuses_including_degraded(self):
         for status in ("degraded", "restart shell", "unverified"):

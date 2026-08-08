@@ -169,6 +169,28 @@ class WorkbookGeneration(unittest.TestCase):
         # Only in_progress/interview_only rows older than 10 days count.
         self.assertEqual(2, follow_ups)
 
+    def test_a_logged_followup_stops_the_workbook_nagging(self):
+        """REGRESSION: the workbook and /today gave opposite answers.
+
+        /today counts silence from the newest date in `notes`, so a logged
+        follow-up resets the clock. This column counted from the application
+        date alone and kept saying a follow-up was due after one had been sent
+        - the exact complaint /today was fixed for, still live one file over.
+        """
+        rows = demo_rows()
+        rows[0]["notes"] = "drafted, not yet submitted; followed up 2026-08-01"
+        write_tracker(self.csv_path, rows)
+        _, _, follow_ups = self.build()
+        self.assertEqual(1, follow_ups)
+
+    def test_two_followups_already_sent_is_enough(self):
+        """Same cap as /today: after two, stop telling them to chase."""
+        rows = demo_rows()
+        rows[0]["notes"] = "followed up 2026-07-05; followed up 2026-07-12"
+        write_tracker(self.csv_path, rows)
+        _, _, follow_ups = self.build()
+        self.assertEqual(1, follow_ups)
+
     def test_open_and_closed_are_split(self):
         from openpyxl import load_workbook
 

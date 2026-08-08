@@ -494,13 +494,17 @@ def main(argv=None) -> int:
     parser.add_argument("--config", default=CONFIG)
     args = parser.parse_args(argv)
 
-    posting_text = ""
-    if args.posting and os.path.exists(args.posting):
-        posting_text = read_doc(args.posting)
-
-    missing = [f for f in args.files if not os.path.exists(f)]
+    # A mistyped --posting used to be ignored silently, which fails in the
+    # strict direction and so went unnoticed: the posting whitelist comes up
+    # empty, and every salary figure and requisition ID the draft legitimately
+    # quotes red-lines as an unregistered metric. The printed remedy then tells
+    # the user to /fact-record a salary that is not theirs.
+    missing = [f for f in args.files + ([args.posting] if args.posting else [])
+               if not os.path.exists(f)]
     if missing:
         sys.exit("fact_check: file not found: " + ", ".join(missing))
+
+    posting_text = read_doc(args.posting) if args.posting else ""
 
     red, _ = check(args.files, posting_text, args.register, args.config)
 

@@ -1,3 +1,8 @@
+> **Build-stage document, kept as history.** This is a Stage-1 planning artefact from
+> before the harness existed. Nothing here is needed to use it, and some of it was
+> superseded during the build — see `USER-GUIDE.md` to use the system,
+> `docs/REVIEW-HANDOFF.md` for its current state.
+
 # Job Search Agent Harness — Doc 01: Product Architecture & Scoping
 **Stage-1 output (Fable, chat).** Scoped under the Build Scoper skill with the owner's override applied: docs 04–05 (visual design) are skipped by instruction — this is an agent harness/CLI product with generated documents and a spreadsheet; functional UX only. Doc numbering: 01–03. Doc 02 = Plan-Mode handoff (Stage 2). Doc 03 = owner's guide.
 **Authority note:** the owner's evolved private system at `../job-search` outranks every prior conceptual scope, including earlier chat designs. This document defines the product; Stage-2 Plan Mode reconciles it against that local reality before anything is built.

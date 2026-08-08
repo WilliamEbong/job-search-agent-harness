@@ -230,17 +230,54 @@ class PostingArchiveGate(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
+    # A realistic posting, because the fixture is also the example. The old
+    # one was "# Data Analyst\nAcme." — 21 characters asserted to be a complete
+    # archive, which pinned the pointer-stub shape as acceptable.
+    POSTING = (
+        "**Source:** https://careers.example.com/acme/data-analyst-88\n"
+        "**Retrieved:** 2026-08-08\n\n"
+        "## Data Analyst\n\n"
+        "**Acme Analytics** - Winnipeg, Manitoba (hybrid)\n\n"
+        "### Responsibilities\n"
+        "- Own QA/QC for incoming datasets across client contracts.\n"
+        "- Produce recurring reporting to deadline.\n"
+        "- Investigate anomalies and follow them to an explanation.\n\n"
+        "### Requirements\n"
+        "- Degree in a quantitative field.\n"
+        "- Two or more years working with operational data.\n"
+        "- Advanced spreadsheet skills; SQL an asset.\n\n"
+        "### How to apply\n"
+        "Submit a resume and cover letter through the careers portal.\n"
+    )
+
     def _fill_archive(self):
-        (self.folder / "job_posting.md").write_text("# Data Analyst\nAcme.",
-                                                    encoding="utf-8")
+        (self.folder / "job_posting.md").write_text(self.POSTING, encoding="utf-8")
         (self.folder / "provenance.md").write_text("# Provenance\n- Rung 1",
                                                    encoding="utf-8")
         (self.folder / "posting_source" / "pasted.md").write_text(
-            "raw posting", encoding="utf-8")
+            self.POSTING, encoding="utf-8")
 
     def test_a_complete_archive_passes(self):
         self._fill_archive()
         self.assertEqual(apply_package.posting_archive_gaps(self.folder), [])
+
+    def test_a_header_plus_pointer_is_a_gap_not_a_pass(self):
+        """The reported symptom from a sibling project.
+
+        The file exists, is not empty, and names the posting — and contains no
+        posting. Every later reader opens this one file: the fit evaluation,
+        the reviewer, /verify-facts --posting, /interview weeks on. A pointer
+        hands all of them nothing, and by then the live posting is often gone.
+        """
+        self._fill_archive()
+        (self.folder / "job_posting.md").write_text(
+            "**Source:** https://careers.example.com/acme/data-analyst-88\n"
+            "**Retrieved:** 2026-08-08\n\n"
+            "Full posting text archived in posting_source/.\n",
+            encoding="utf-8")
+        gaps = apply_package.posting_archive_gaps(self.folder)
+        self.assertEqual(len(gaps), 1, gaps)
+        self.assertIn("posting text itself", gaps[0])
 
     def test_missing_files_and_empty_source_dir_are_each_named(self):
         gaps = apply_package.posting_archive_gaps(self.folder)

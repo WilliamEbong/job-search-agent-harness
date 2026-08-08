@@ -13,7 +13,7 @@ Follow these steps **in order**.
 `$ARGUMENTS` may contain a company name (optionally with a role), e.g. `/interview acme`.
 
 - **With an argument:** match against `job_search_tracker.csv` rows (case-insensitive on company, then role). One match → proceed. Several → list and ask. None → this application isn't tracked; suggest `/outcome <company>` to register it first, or accept the posting and role details directly if the user wants to prep anyway.
-- **Without an argument:** list tracker rows whose status suggests a live process (`interview`, `offer`, or recently `applied`) and ask which one. If the tracker is empty, ask for the company, role, and posting.
+- **Without an argument:** list tracker rows whose status suggests a live process (`interview_only`, or `in_progress` with a `submitted_date`) and ask which one. If the tracker is empty, ask for the company, role, and posting.
 
 v1 preps for a **specific application**. Generic no-target practice is out of scope - if asked, prep against a real tracked application instead.
 
@@ -91,7 +91,7 @@ Pick 4-6 from `07`'s categories, customized to the research and the stage: role 
 ### 6. Logistics
 The phone/video tips from `07` when the format calls for them, plus date and interviewer names as a header.
 
-Save the pack to `documents/applications/<company>_<role>/interview_prep_<stage>.md` (create the folder if this application predates `/outcome`). The folder is gitignored, so the pack stays personal; one file per stage, so earlier packs remain as history. Present the pack in chat as well - the file is the artifact, the conversation is the delivery.
+Save the pack as `interview_prep_<stage>.md` **inside the folder you matched in Step 1** — never a path you derive here. If no folder matched (the application predates the packaging script), create one in the `<Company>_<Role>` form, case preserved. A lowercased guess lands the pack in a sibling folder that `/outcome` will never look in. The folder is gitignored, so the pack stays personal; one file per stage, so earlier packs remain as history. Present the pack in chat as well - the file is the artifact, the conversation is the delivery.
 
 ---
 
@@ -119,6 +119,6 @@ If Step 3 drafted new STAR answers the user approved for keeps, remind them thos
 2. **Honesty on gaps.** Weak matches get bridge answers (acknowledge → adjacent experience → learning path), never invented experience. Same rule as everywhere else in this repo.
 3. **Verified research only.** Company specifics go in the pack only after independent confirmation. Interviewer notes stick to public professional information.
 4. **Stage-appropriate prep.** A phone screen pack and a final-round pack are different documents; recorded feedback from earlier stages takes priority over generic question lists.
-5. **Write only to the application archive** — with one exception. The prep pack lands in `documents/applications/<company>_<role>/`; framework files are not edited, except appending user-approved STAR examples to `07-interview-prep.md` on explicit request.
+5. **Write only to the application archive** — with one exception. The prep pack lands in `documents/applications/<Company>_<Role>/` (or its `applied/` copy — the folder matched in Step 1); framework files are not edited, except appending user-approved STAR examples to `07-interview-prep.md` on explicit request.
 
    **The exception is `01-candidate-profile.md`.** Interview prep is where new facts surface most often: the user recalls a metric, corrects a scope, or fills in a STAR stub. When that happens, write the fact into the profile, as well as putting it in the prep pack. A fact recorded only in prep material reads as unsupported to a later drafting session and gets stripped from CVs as a fabrication. Prep files are not a substitute for the profile.

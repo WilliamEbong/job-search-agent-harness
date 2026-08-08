@@ -8,11 +8,12 @@ reachable from it.
 /today
 ```
 
-It reads. It never writes, so it is always safe to run.
+It mostly reads, and it is always safe to run. The two things it can write are described
+at the end.
 
 ---
 
-## Step 1: Check they are set up
+## Step 0: Check they are set up
 
 If `evidence/register.yaml` does not exist, this is a new user. Say so in one line and
 offer to start:
@@ -103,8 +104,8 @@ Never do this without asking, and never for anything at `interview_only`.
 
 ## What this command does not do
 
-**Reading is always safe.** Steps 1–4 create nothing and change nothing, so `/today` can
-be run as often as you like.
+**Reading is always safe.** Reading the state and showing the screen create nothing and
+change nothing, so `/today` can be run as often as you like.
 
 Two steps write, and the distinction between them is the rule this whole system follows:
 **a write that regenerates a view proceeds; a write that changes what is recorded asks

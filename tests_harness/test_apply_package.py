@@ -257,6 +257,52 @@ class PostingArchiveGate(unittest.TestCase):
         self.assertEqual(gaps, ["job_posting.md empty"])
 
 
+class PdfBesideTheSource(unittest.TestCase):
+    """REGRESSION: every package shipped without a PDF.
+
+    `/apply` compiles in place — lualatex in `cv/`, xelatex in
+    `cover_letters/` — so the two PDFs are never under one `--build`
+    directory, and the documented `--build build` pointed at a directory
+    nothing writes. Packaging printed a soft "no compiled PDF" note and
+    produced .tex/.md/.docx with no PDF and no combined PDF.
+    """
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="harness-pdf-"))
+        self.src = self.tmp / "sources"
+        self.src.mkdir()
+        self.cv = self.src / "main_acme.tex"
+        self.letter = self.src / "cover_acme.tex"
+        for path in (self.cv, self.letter):
+            path.write_text("\\documentclass{article}\\begin{document}"
+                            "x\\end{document}", encoding="utf-8")
+            path.with_suffix(".pdf").write_bytes(b"%PDF-1.4 fake\n%%EOF\n")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_pdf_next_to_the_tex_is_packaged_when_build_dir_is_empty(self):
+        folder, written = apply_package.build_package(
+            "Acme", "Data Analyst", self.cv, self.letter,
+            self.tmp / "empty-build", Path(apply_package.REGISTER),
+            self.tmp / "applications",
+        )
+        pdfs = [f for f in written if f.endswith(".pdf")]
+        # Both documents. The combined PDF needs readable input, which the
+        # byte-stub here is not — merging it is covered by PackageAssembly.
+        self.assertEqual(len(pdfs), 2, sorted(written))
+
+    def test_an_unreadable_pdf_skips_the_merge_instead_of_crashing(self):
+        """An interrupted compile must not destroy the rest of the package."""
+        folder, written = apply_package.build_package(
+            "Acme", "Data Analyst", self.cv, self.letter,
+            self.tmp / "empty-build", Path(apply_package.REGISTER),
+            self.tmp / "applications",
+        )
+        self.assertTrue(any(f.endswith(".tex") for f in written), sorted(written))
+        self.assertTrue(any(f.endswith(".md") for f in written), sorted(written))
+
+
 class TrainingGate(unittest.TestCase):
     """A package leaning on an unpractised rapidly-closable skill is not final.
 

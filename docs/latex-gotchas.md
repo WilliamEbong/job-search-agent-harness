@@ -75,7 +75,7 @@ When a trailing section pushes two lines onto a third page:
 Use it to rescue a near-miss, not to compress a genuinely three-page CV into two. If the
 content does not fit, cut content.
 
-### Exact page counts are a requirement, not a preference
+### Hit the configured page count exactly, and never by shrinking type
 
 The CV is exactly the configured page target (`preferences.yaml` →
 `presentation.cv_pages`, default 2; `python harness/presentation.py` prints it); the

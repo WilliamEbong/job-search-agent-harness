@@ -55,10 +55,8 @@ Present the script's output, lightly. Keep it short — this is a glance, not a 
   on a decision.
 - **Waiting** — one line with a count. These need nothing today; do not list them.
 - **Last search** — how many days ago.
-- **Trials to judge** — only when `preferences.yaml` has `discovery.trial_families` at
-  `status: trial` that have accumulated results. One line, counted from the shortlist:
-  `trial: business analysis — 12 found, 3 shortlisted → /discover review`. Reading only;
-  the keep-or-drop decision lives in `/discover`, where it asks first.
+- **Trials to judge** — a `/discover` trial family whose finds have piled up. The script
+  counts them; the keep-or-drop decision lives in `/discover review`, which asks first.
 
 Then the numbered actions. **The point of this command is that the answer to "what now?"
 is a number**, so always end with them, and keep each label to one line naming the
@@ -108,9 +106,11 @@ Never do this without asking, and never for anything at `interview_only`.
 **Reading is always safe.** Steps 1–4 create nothing and change nothing, so `/today` can
 be run as often as you like.
 
-The two exceptions are both explicit and both need a yes: refreshing the workbook when
-it is stale (Step 3, a regenerated view, never a source of truth), and the batch
-close-out in Step 6. Nothing else writes.
+Two steps write, and the distinction between them is the rule this whole system follows:
+**a write that regenerates a view proceeds; a write that changes what is recorded asks
+first.** So Step 3 refreshes the stale workbook without asking — it is rebuilt from the
+CSV and can never hold the only copy of anything — while the batch close-out in Step 6
+changes recorded statuses and always needs a yes. Nothing else writes.
 
 It makes no decisions on the user's behalf. And if nothing needs attention it says so in
 one line rather than manufacturing a task — a daily brief that always invents something

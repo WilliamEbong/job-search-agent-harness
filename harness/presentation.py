@@ -46,5 +46,10 @@ def cv_page_target(prefs_path: Path | str = ROOT / "preferences.yaml") -> int | 
 
 
 if __name__ == "__main__":
-    target = cv_page_target(sys.argv[1]) if len(sys.argv) > 1 else cv_page_target()
-    print(target)
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("preferences", nargs="?", default=str(ROOT / "preferences.yaml"),
+                        help="path to preferences.yaml (default: repo root)")
+    # Without argparse, `--help` was read as a path, missed, and printed the
+    # default 2 - a confidently wrong answer to a question about the help text.
+    print(cv_page_target(parser.parse_args().preferences))

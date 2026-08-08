@@ -115,14 +115,20 @@ A record of past job applications. Each subfolder is one application.
 
 You can maintain these folders by hand, or let the **`/outcome`** command do it: it records progress updates and final results conversationally, archives the submitted drafts and the posting text, keeps `outcome.md` in the format below, and updates `job_search_tracker.csv` in the same step.
 
-**Subfolder naming:** `<company>_<role>` — lowercase, underscores for spaces.
+**Subfolder naming:** `<Company>_<Role>` — non-alphanumerics become underscores, case is
+preserved, and each part is capped at 45 characters. `harness/apply_package.py` produces
+the name; **never re-derive it by hand.** A lowercased guess creates a second folder on a
+case-sensitive filesystem, and then the package and its `outcome.md` drift apart in
+silence. To find an existing folder, match against the folders that exist (see
+`archive_applications.match_folder`) — and look in `applied/` too, because a submitted
+application has been moved there.
 
 Examples:
 ```
 applications/
-├── acme_ml_engineer/
-├── bigcorp_software_engineer/
-└── consultco_ai_consultant/
+├── Acme_ML_Engineer/
+├── Bigcorp_Software_Engineer/
+└── Consultco_AI_Consultant/
 ```
 
 ### Files within each application folder

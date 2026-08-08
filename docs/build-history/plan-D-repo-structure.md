@@ -1,5 +1,11 @@
 # D — Final Repository Structure
 
+> **Historical.** This is the Stage-3 planning tree, kept as the record of what
+> was intended. It is no longer the ownership authority: it predates six
+> `harness/` scripts, twelve commands and `evidence/framings.*`. The current
+> list of what may and may not be edited is **`docs/REVIEW-HANDOFF.md` §4 and
+> §4.1**.
+
 Legend: **[U]** upstream-owned (never edited; updated only via tag merges) ·
 **[H]** harness-owned (original contributions) · **[P]** upstream file
 personalized-by-design (managed blocks only) · **[G]** generated/local,

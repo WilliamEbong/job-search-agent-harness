@@ -20,6 +20,7 @@ import csv
 import datetime
 import os
 import sys
+from pathlib import Path
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_CSV = os.path.join(ROOT, "job_search_tracker.csv")
@@ -30,8 +31,9 @@ SHORTLIST = os.path.join(ROOT, "shortlist.csv")
 # Folder-name matching is shared with the archiver so the workbook's links and
 # the applied/ move can never disagree about which folder a row belongs to.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from archive_applications import match_folder  # noqa: E402
+from archive_applications import RESERVED, match_folder  # noqa: E402
 import status  # noqa: E402
+import tracker_row  # noqa: E402
 
 APPLICATIONS_DIR = os.path.join(ROOT, "documents", "applications")
 
@@ -58,7 +60,7 @@ FILLS = {
     "rejected":       "F8CBAD",  # red        - closed
     "no_response":    "EDEDED",  # grey       - gone quiet
 }
-FOLLOWUP_DAYS = 10
+FOLLOWUP_DAYS = status.FOLLOWUP_DAYS
 
 # Shortlist verdicts: why a scored candidate did or did not become an application.
 SHORTLIST_FILLS = {
@@ -70,11 +72,20 @@ SHORTLIST_FILLS = {
 
 
 def read_csv(path):
+    """Read the shortlist. The TRACKER goes through `tracker_row.read_rows`,
+    which heals a row carrying an unquoted comma; this reader used to raise
+    `AttributeError: 'list' object has no attribute 'strip'` on exactly the
+    row the writer accepts.
+    """
     if not os.path.exists(path):
         return []
     with open(path, newline="", encoding="utf-8-sig") as handle:
-        return [row for row in csv.DictReader(handle)
-                if any((value or "").strip() for value in row.values())]
+        rows = []
+        for row in csv.DictReader(handle):
+            row.pop(None, None)
+            if any((value or "").strip() for value in row.values()):
+                rows.append(row)
+        return rows
 
 
 def parse_date(value):
@@ -106,7 +117,7 @@ def application_folder(row):
     for parts in places:
         base = os.path.join(ROOT, *parts)
         names = [n for n in sorted(os.listdir(base))
-                 if n not in ("archive", "applied")
+                 if n not in RESERVED
                  and os.path.isdir(os.path.join(base, n))]
         hit = match_folder(row.get("company", ""), row.get("role", ""), names)
         if hit:
@@ -125,7 +136,7 @@ def build(csv_path=DEFAULT_CSV, out_path=DEFAULT_OUT, today=None,
                  "Run: pip install -r requirements.txt")
 
     today = today or datetime.date.today()
-    rows = read_csv(csv_path)
+    rows, _ = tracker_row.read_rows(Path(csv_path))
     shortlist = shortlist_rows = read_csv(shortlist_path or SHORTLIST)
     rows.sort(key=lambda r: (parse_date(r.get("date")) or datetime.date.min),
               reverse=True)

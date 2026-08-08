@@ -17,13 +17,10 @@ This command is a **thin wrapper**. It resolves the posting, then runs the upstr
 
 ## Step 0: Check they are set up
 
-If `evidence/register.yaml` or `preferences.yaml` is missing, stop and say so in one
-line, then offer to fix it — never fail into undefined behaviour, and never read the
-shipped `.example.yaml` as though it were the user's:
-
-> You have not set up a profile yet. Want to do that now? It takes about five minutes.
-
-If they say yes, run `/setup-harness` and come back here afterwards.
+Run the standing first-run check ("Before any harness workflow runs" in `AGENTS.md` /
+`CLAUDE.md`): no `evidence/register.yaml` or `preferences.yaml` means offer
+`/setup-harness` in one line and stop. Never read the shipped `.example.yaml` as though
+it were the user's.
 
 ## Step 1: Resolve the posting
 
@@ -133,10 +130,13 @@ application**. One script builds it, so nothing is improvised per run:
 python harness/apply_package.py \
     --company "<Company>" --role "<Role>" \
     --cv cv/main_<slug>.tex --letter cover_letters/cover_<slug>.tex \
-    --build build \
     --url "<posting URL>" --score <fit> --location "<location>" \
     --channel "<where you found it>" --rationale "<one line on why>"
 ```
+
+(`/apply` compiles each document in its own directory, so the PDFs sit beside their
+`.tex` sources and the script finds them there. `--build <dir>` is only for a toolchain
+that writes PDFs somewhere else.)
 
 That single call: creates the folder and its `posting_source/`, stamps `.created` (which
 is what stops the archiver mis-aging a new folder), copies the `.tex` and compiled
@@ -171,11 +171,14 @@ anywhere — and `/interview` reads it later to prepare defenses for every infer
 transferable claim the documents rest on.
 
 **Then harvest the framings.** Append this application's tailored phrasings to
-`evidence/framings.yaml` (create it from `evidence/framings.example.yaml`'s shape if it
-does not exist): the profile statement, plus any bullet whose wording differs
-meaningfully from the master CV. One entry each, carrying `text`, the `facts` it rests
-on (register section and entry), `used_in: <Company>_<Role>` (the package folder name,
-which is the join key to `outcome.md`), `role_family`, and `source: harvested <date>`.
+`evidence/framings.yaml` — the profile statement, plus any bullet whose wording differs
+meaningfully from the master CV. If the file does not exist, create it with the `meta:`
++ `framings:` **shape** documented in `evidence/framings.example.yaml`; never copy that
+file's entries, which belong to the fictional demo candidate. One entry each, carrying
+`text`, the `facts` it rests on (register section and entry), `used_in` (the package
+folder name exactly as the script created it — the join key to `outcome.md`),
+`role_family`, `source: harvested <date>`, and a one-line `note` where the framing
+carries a condition worth remembering (a required qualifier, a claim ceiling).
 
 Two disciplines, both borrowed from `/setup` Path A because the same trap applies:
 

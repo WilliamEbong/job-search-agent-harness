@@ -62,6 +62,11 @@ SYNONYMS = {
     "withdrew": WITHDRAWN,
 }
 
+# Days of silence before a follow-up is due. One number, shared by the
+# workbook and the daily brief — they used to hold two literals and a comment
+# claiming they were consolidated.
+FOLLOWUP_DAYS = 10
+
 # Live conversations. A folder whose row is open must never be archived.
 OPEN = frozenset({IN_PROGRESS, INTERVIEW_ONLY})
 CLOSED = frozenset({HIRED, OFFER_DECLINED, REJECTED, NO_RESPONSE, WITHDRAWN})
@@ -138,6 +143,10 @@ def demo() -> None:
     assert is_open("awaiting_panel")
     # Blank is neither.
     assert not is_open("") and not is_closed("")
+    # Reaching interview is not the same as merely responding: a rejection is a
+    # response, and an interview that ended in one still counts as reached.
+    assert reached_interview("interview_only") and reached_interview("hired")
+    assert not reached_interview("rejected") and not reached_interview("no_response")
     print("status: OK")
 
 

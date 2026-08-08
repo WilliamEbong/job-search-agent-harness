@@ -14,8 +14,11 @@ cannot notice a file that does not exist.
         --role "Environmental Data Analyst" \
         --cv cv/main_rivermouth_analyst.tex \
         --letter cover_letters/cover_rivermouth_analyst.tex \
-        --build build --url https://... --score 82 \
+        --url https://... --score 82 \
         --location "Winnipeg, MB" --rationale "..."
+
+PDFs are found beside their `.tex` sources, which is where `/apply` compiles
+them. `--build <dir>` is only needed for a toolchain that writes them elsewhere.
 
 Produces, in `documents/applications/<Company>_<Role>/`:
 
@@ -136,12 +139,20 @@ def merge_pdfs(first: Path, second: Path, target: Path) -> bool:
         print("  pypdf not installed - skipping the combined PDF")
         return False
     writer = PdfWriter()
-    for source in (first, second):
-        if not source.is_file():
-            return False
-        writer.append(str(source))
-    writer.write(str(target))
-    writer.close()
+    try:
+        for source in (first, second):
+            if not source.is_file():
+                return False
+            writer.append(str(source))
+        writer.write(str(target))
+        writer.close()
+    except Exception as exc:
+        # A truncated PDF (interrupted compile) used to abort the whole
+        # packaging run with a traceback, losing the .tex/.md/.docx work that
+        # had already succeeded. The combined document is the one artifact
+        # that can be skipped without losing information.
+        print(f"  could not merge the PDFs ({exc}) - skipping the combined PDF")
+        return False
     return True
 
 
@@ -180,12 +191,21 @@ def build_package(company: str, role: str, cv_tex: Path, letter_tex: Path,
         shutil.copy2(source, target_tex)
         record(target_tex)
 
+        # `/apply` compiles in place - lualatex in cv/, xelatex in
+        # cover_letters/ - so the PDFs are never both under one --build
+        # directory, and with the documented `--build build` they were under
+        # none: every package shipped .tex/.md/.docx and no PDF at all. Look
+        # beside the source as well.
         pdf = build_dir / (source.stem + ".pdf")
+        if not pdf.is_file():
+            pdf = source.with_suffix(".pdf")
         if pdf.is_file():
             shutil.copy2(pdf, folder / f"{stem}.pdf")
             record(folder / f"{stem}.pdf")
         else:
-            print(f"  no compiled PDF at {pdf} - compile before packaging")
+            print(f"  no compiled PDF for {source.name} "
+                  f"(looked in {build_dir}/ and beside the source) "
+                  "- compile before packaging")
 
         markdown = folder / f"{stem}.md"
         write_markdown(source, markdown, register)

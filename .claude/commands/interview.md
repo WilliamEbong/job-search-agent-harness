@@ -21,7 +21,11 @@ v1 preps for a **specific application**. Generic no-target practice is out of sc
 
 ## Step 1: Load the Application Context
 
-1. **The archive** (maintained by `/outcome`): `documents/applications/<company>_<role>/`
+1. **The application folder** (built by `/apply-any`, added to by `/outcome`):
+   `documents/applications/<Company>_<Role>/` — **and check
+   `documents/applications/applied/<Company>_<Role>/` too**, because a submitted
+   application has already been moved there by the archiver. Never re-derive the folder
+   name from the company and role; match against the folders that exist.
    - `job_posting.md` - the exact posting the user applied to
    - `cv_draft.tex` and `cover_letter.tex` - what was actually submitted. **These are what the interviewer read**; every talking point must be consistent with their claims.
    - `positioning_brief.md` (when present, written by `/apply-any`) - the argument the documents were built on, including which claims sit on inferred, transferable, or rapidly-acquired footing. These are exactly the claims that need a prepared defense.

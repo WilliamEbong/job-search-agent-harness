@@ -5,7 +5,8 @@ folders. Both are mechanical; neither invents or changes any fact.
 
 ```
 /tracker
-/tracker --dry-run     # report what would move or archive, change nothing
+/tracker --dry-run     # report what would move, change nothing
+/tracker --archive     # also zip and REMOVE folders 8+ weeks old
 ```
 
 Run this after `/outcome`, after `/apply-any`, or any time the CSV changes.
@@ -27,15 +28,15 @@ the status column.
 Never add a write-back path. It is the obvious feature to want and it converts a
 lossless view into a second, competing truth store.
 
-## Step 1: Back up before rewriting
+## Step 1: Nothing to back up — this command does not write the CSV
 
-```
-python harness/rotate_backup.py job_search_tracker.csv
-```
+`harness/tracker_row.py` rotates a backup on **every** write, so the pre-edit copy
+already exists by the time you get here. Rotating again from this command would be worse
+than useless: it keeps only the five most recent, so five routine `/tracker` runs would
+evict every genuine pre-edit backup — exactly the ones wanted after a bad `/outcome`.
 
-Keeps the five most recent. The workbook needs no backup — it is regenerated from
-the CSV by definition. To undo a bad change:
-`python harness/rotate_backup.py job_search_tracker.csv --list` then `--restore 1`.
+To undo a bad change: `python harness/rotate_backup.py job_search_tracker.csv --list`,
+then `--restore 1`. The workbook needs no backup; it is regenerated from the CSV.
 
 ## Step 2: Regenerate the workbook
 
@@ -68,10 +69,14 @@ One call does two things; never skip it:
 
 - **Moves submitted applications** into `documents/applications/applied/`. The trigger is
   the tracker's `submitted_date` column (ISO `YYYY-MM-DD`; empty means drafted but not
-  sent). Fill it in when the user says they applied, and the folder moves itself on the
-  next run.
-- **Archives anything 8+ weeks past creation** into `documents/applications/archive/` as
-  a zip, removing the live folder. Applied folders age out the same way.
+  sent). Fill it in when the user says they applied — `python harness/tracker_row.py
+  --company "..." --role "..." --set submitted_date=<YYYY-MM-DD>` — and the folder moves
+  itself on the next run. Nothing else fills that column, so nothing else triggers the
+  move.
+- **Reports anything 8+ weeks past creation.** It does **not** delete: zipping those
+  folders into `documents/applications/archive/` and removing them needs an explicit
+  `--archive`, because doing it unattended once destroyed folders belonging to live
+  interview processes. Applied folders age the same way.
 
 Use `--dry-run` first if the user wants to see what would happen.
 
@@ -80,8 +85,8 @@ Use `--dry-run` first if the user wants to see what would happen.
 ```
 Tracker updated.
   Job_Search_Tracker.xlsx — N applications, M follow-ups due
-  moved to applied/: <names, or "none">
-  archived (8+ weeks):  <names, or "none">
+  moved to applied/:   <names, or "none">
+  due for archiving:   <names, or "none">   <- reported only; nothing deleted
   backup: backups/job_search_tracker-<timestamp>.csv
 ```
 

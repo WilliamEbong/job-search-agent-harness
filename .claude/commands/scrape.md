@@ -5,25 +5,23 @@ around discovery: it decides **what to search** (scope), **how hard to look** (m
 tells the user **what the run will cost** before it starts.
 
 ```
-/scrape                                   # default scope and mode from preferences.yaml
-/scrape --mode focused --board freehire   # one board, shallow screen
-/scrape --scope companies                 # every companies.yaml careers page
+/scrape                                      # default scope and mode from preferences.yaml
+/scrape --scope board freehire --mode focused   # one board, shallow screen
+/scrape --scope companies                    # every companies.yaml careers page
 /scrape --scope company "Prairie Grid Utilities"
 /scrape --scope boards --mode balanced
-/scrape --scope all --mode full --limit 40
+/scrape --scope all --mode full              # heaviest; confirms before running
+/scrape skip trials                          # this run, usual role families only
 ```
 
 ---
 
 ## Step 0: Check they are set up
 
-If `evidence/register.yaml` or `preferences.yaml` is missing, stop and say so in one
-line, then offer to fix it — never fail into undefined behaviour, and never read the
-shipped `.example.yaml` as though it were the user's:
-
-> You have not set up a profile yet. Want to do that now? It takes about five minutes.
-
-If they say yes, run `/setup-harness` and come back here afterwards.
+Run the standing first-run check ("Before any harness workflow runs" in `AGENTS.md` /
+`CLAUDE.md`): no `evidence/register.yaml` or `preferences.yaml` means offer
+`/setup-harness` in one line and stop. Never read the shipped `.example.yaml` as though
+it were the user's.
 
 ## Step 1: Resolve scope and mode
 

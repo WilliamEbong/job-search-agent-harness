@@ -41,18 +41,22 @@ letter class are under the SIL Open Font Licence and are inherited unchanged.
   shared folder matcher they both use.
 - Quad-format application packaging and the drift-proof Markdown mirror.
 - CV-first onboarding with in-command interview controls, and the career review.
-- One-command `setup.py` installer and doctor.
+- One-command `harness_setup.py` installer and doctor.
+- The framings library, `/discover`, and the user-chosen CV page target.
 - Fictional demo candidate, fixtures, and the privacy guards
   (`tools/harness_guards.py`, `harness/privacy_sweep.py`).
 
 ## On the boundary
 
 Where this project reuses upstream's work, it reuses it in place rather than
-reimplementing it: `/apply`, `/rank`, `/add-portal`, `/add-template`, `/outcome`,
-`/interview`, the templates, the guards and the tests are upstream's files, run
-unchanged. The harness adds wrappers and new files alongside them.
+reimplementing it: `/rank`, `/add-portal`, `/outcome`, the templates, the guards
+and the tests are upstream's files, run unchanged, and the harness adds wrappers
+and new files alongside them. Nine upstream files carry deliberate
+modifications — `/apply`, `/interview`, `/add-template`, `/expand`, four
+job-application skill files, and the CV template. Each change and its reason is
+listed in `docs/REVIEW-HANDOFF.md` §4.1.
 
-One documented exception: `tests/test_readme_assets.py` no longer asserts the
+One documented exception in the tests: `tests/test_readme_assets.py` no longer asserts the
 README contains an image. That assertion encoded upstream's mascot header,
 which this repository deliberately does not carry — the mascot is upstream's
 identity. The test's other half, that any image the README references must

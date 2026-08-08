@@ -134,38 +134,66 @@ All four waves are **complete, committed and pushed**. CI green.
 ## 3. Current state
 
 ```
-HEAD         967a0de  verification pass (was 7136225 at Wave 4)
 git status   clean, pushed
-tests        297 harness + 154 upstream + 157 Bun (portal CLIs; jobbank-ca offline suite now 6)
+tests        341 harness + 154 upstream + 157 Bun (portal CLIs; jobbank-ca offline suite now 6)
 guards       security_guards, harness_guards, lint_skills, privacy_sweep — all green
-harness/     12 scripts   .claude/commands/  23   .codex/prompts/  21
+harness/     13 scripts   .claude/commands/  24   .codex/prompts/  22
 ```
 
-**New files this session:** `harness/{status,tracker_row,rotate_backup,apply_package,today}.py`,
+**New files at the Wave-4 handoff:** `harness/{status,tracker_row,rotate_backup,apply_package,today}.py`,
 `.claude/commands/{today,offer}.md`, `.codex/prompts/{today,offer,outcome,interview}.md`,
 `tests_harness/{test_status_and_rows,test_apply_package,test_today}.py`,
 `docs/build-history/README.md`.
+
+**Since the handoff** (the audit + streamline passes, 2026-08-07/08):
+`harness/presentation.py` (CV page target), `.claude/commands/discover.md` +
+`.codex/prompts/discover.md`, `evidence/framings.example.yaml` (with
+`evidence/framings.yaml` gitignored and guarded), and `graphify-out/` as an
+optional, gitignored knowledge graph. Behavioural changes are listed in §4.1.
 
 ---
 
 ## 4. Conventions a successor must not break
 
-1. **Upstream `[U]` files stay byte-identical.** Never edit
-   `.claude/commands/{setup,apply,rank,outcome,interview,expand,add-portal,add-template,gmail-sync,html-report,notion-sync,reset}.md`,
-   `.claude/skills/{job-application-assistant,job-scraper,upskill}/`,
-   `tools/{security_guards,lint_skills,verify_pdf,check_*}.py`, `tests/`,
-   `SETUP.md`, `LICENSE`, `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`.
-   **The upstream tests passing is the proof (154 since 2026-08-04; see the
-   one documented exception below).** Ownership map:
-   `docs/build-history/plan-D-repo-structure.md`.
-   *One owner-approved exception exists*: `tests/test_readme_assets.py` no
+1. **Upstream `[U]` files stay byte-identical unless the divergence is listed
+   in §4.1.** Still byte-identical, and to be kept so:
+   `.claude/commands/{setup,rank,outcome,add-portal,gmail-sync,html-report,notion-sync,reset}.md`,
+   `.claude/skills/{job-scraper,upskill}/`,
+   `tools/{security_guards,lint_skills,verify_pdf,check_*}.py`, `tests/`
+   (one exception, below), `SETUP.md`, `LICENSE`, `CHANGELOG.md`,
+   `SECURITY.md`, `CONTRIBUTING.md`.
+   **The upstream tests passing is the proof (154 since 2026-08-04).**
+   *One owner-approved test exception*: `tests/test_readme_assets.py` no
    longer asserts the README contains an image — that assertion encoded
    upstream's mascot header, which the owner removed as borrowed identity.
    The broken-reference half of the test is unchanged, and NOTICE.md
-   records the divergence. Every other `[U]` file remains byte-identical.
-   *This is why fixes look indirect*: the filename bridge writes what
+   records the divergence.
+   *This is why many fixes look indirect*: the filename bridge writes what
    `interview.md` expects rather than teaching it new names; the status helper
-   normalises on read rather than correcting `outcome.md`.
+   normalises on read rather than correcting `outcome.md`; the folder-naming,
+   `submitted_date` and `/rank` rules live in the `AGENTS.md`/`CLAUDE.md`
+   harness block rather than in the upstream commands they correct.
+
+### 4.1 Deliberate divergences from upstream (audit pass, 2026-08-07)
+
+Nine `[U]` files now differ. Each was changed on purpose; a merge that reverts
+one silently removes the capability named beside it.
+
+| File | Why it diverges |
+|---|---|
+| `.claude/commands/apply.md` | Step 1b positioning brief; gap-disclosure rewrite; page target replaces the hard 2-page rule; under-selling audit in the reviewer prompt; tool-neutral AI wording; framings read |
+| `.claude/commands/interview.md` | Reads register claim tiers + `positioning_brief.md`; defence cards; checks `applied/` |
+| `.claude/commands/expand.md` | Deep-repo scan proposing project `components:` |
+| `.claude/commands/add-template.md` | Page limit reads `presentation.cv_pages` |
+| `skills/…/05-cv-templates.md` | Page budget by target; Projects section; archetypes; typography; References optional |
+| `skills/…/04-job-evaluation.md` | Competency-inference ladder |
+| `skills/…/03-writing-style.md` | fact → capability → relevance rule |
+| `skills/…/01-candidate-profile.md` | References wording unified |
+| `CLAUDE.md`, `cv/main_example.tex` | Checklist changes; microtype/needspace preamble |
+
+Ownership map: **this section**. `docs/build-history/plan-D-repo-structure.md`
+is the Stage-3 planning tree and is historical — it predates six harness
+scripts, twelve commands and the framings store.
 2. **`.gitignore` harness block must stay negation-free** — upstream's
    `security_guards.py` fails any `!` outside its own allowlist. Name shipped
    files so they never match instead (`*.example.yaml`, `documents/demo/`).

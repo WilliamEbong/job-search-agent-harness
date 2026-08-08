@@ -468,6 +468,43 @@ class DiscoverCommand(unittest.TestCase):
         self.assertIn("including trial families", scrape)
 
 
+class HarnessBlockParity(unittest.TestCase):
+    """CLAUDE.md and AGENTS.md carry the same harness block, deliberately.
+
+    Each runtime auto-loads a different file, so the duplication is the
+    mechanism, not an accident. What it costs is a standing drift trap: every
+    routing-table row, status value and folder-naming rule has to be edited
+    twice, and a miss means the two runtimes quietly disagree about what
+    "find me jobs" does. This makes the miss impossible instead of unlikely.
+    """
+
+    # The two harness blocks open differently on purpose (each orients its own
+    # runtime) and then share one verbatim tail: the routing table, the setup
+    # check, the /apply redirect, the status vocabulary, and the tracker,
+    # folder-naming, submitted_date and /rank rules. That tail is what must
+    # never drift.
+    SHARED_FROM = "### Saying it in plain language"
+
+    def _tail(self, name: str) -> str:
+        text = (ROOT / name).read_text(encoding="utf-8")
+        self.assertIn("harness:begin", text, name)
+        block = text.split("harness:begin", 1)[1].split("harness:end", 1)[0]
+        self.assertIn(self.SHARED_FROM, block, name)
+        return block.split(self.SHARED_FROM, 1)[1]
+
+    def test_the_shared_tail_is_identical(self):
+        self.assertEqual(self._tail("CLAUDE.md"), self._tail("AGENTS.md"),
+                         "the shared tail of the CLAUDE.md and AGENTS.md "
+                         "harness blocks has drifted - edit both or neither")
+
+    def test_the_tail_carries_the_rules_that_must_reach_both_runtimes(self):
+        tail = self._tail("AGENTS.md").lower()
+        for promise in ("/discover", "in_progress", "submitted_date",
+                        "never re-derive an application folder name",
+                        "tracker_row.py"):
+            self.assertIn(promise, tail, promise)
+
+
 class CommandsLintable(unittest.TestCase):
     def test_new_commands_start_with_the_required_title(self):
         for name in ("setup-harness.md", "career-review.md", "companies.md",

@@ -105,4 +105,26 @@ reference.
 It handles quoting, and it repairs a short header (a tracker created by
 `/outcome` lacks `submitted_date`, without which nothing ever moves to
 `applied/`).
+
+**Never re-derive an application folder name.** `harness/apply_package.py`
+owns it (`<Company>_<Role>`, case preserved, each part capped at 45
+characters). Prose that lowercases it, or that guesses before the script has
+run, produces a second folder on a case-sensitive filesystem - and then
+`outcome.md` and the package drift apart silently. Find an existing folder
+with `archive_applications.match_folder`, and **look in
+`documents/applications/applied/` too**: a submitted application has been
+moved there, and a workflow that only checks the top level will create an
+empty duplicate rather than find it.
+
+**"I applied" writes `submitted_date`, not just a status.** The move to
+`applied/` keys on that column and nothing else:
+`python harness/tracker_row.py --company "..." --role "..." --set
+submitted_date=<YYYY-MM-DD> --set status=in_progress`. Without it the folder
+stays live forever and the archiver never fires.
+
+**`/rank` scores; it does not write `shortlist.csv`.** Upstream's `/rank`
+updates only `seen_jobs.json`, so a ranked job never reaches `/today`, the
+workbook, or `/discover review` unless the verdicts are appended to
+`shortlist.csv` in the format `/scrape` defines. Do that after `/rank`, and
+send the user to `/apply-any` rather than `/apply`.
 <!-- harness:end -->

@@ -105,6 +105,13 @@ supply.
 > **The rule of separation.** A résumé used as a template contributes *structure only*.
 > Its facts do not enter the register and do not become claimable.
 
+**And how long the CV should be.** One page, two (the default), a specific number, or
+`adaptive` — pick per posting from how much strong material there is, and be told which
+was chosen and why. It is stored as `presentation.cv_pages` in `preferences.yaml`, so
+changing your mind later is a one-line edit, not another onboarding run; `python
+harness/presentation.py` prints the current target. A shorter CV is met by cutting the
+weakest content, never by shrinking the type.
+
 ---
 
 ## Career review
@@ -388,6 +395,8 @@ right one runs. The list is here for when you want it.
 | Command | Does |
 |---|---|
 | `/setup-harness` | Onboarding. `--interview` resumes or extends it |
+| `/discover` | Kinds of job your evidence already supports that you have not been searching for. Approved ones are searched as trials; `/discover review` decides whether each earned its place |
+| `/offer <company>` | Think an offer through before answering |
 | `/career-review` | Review your public work, suggest CV improvements |
 | `/tracker` | Rebuild the spreadsheet and move submitted applications. `/today` does this for you when it is stale |
 | `/verify-facts` | Run the truth gate by hand (it runs automatically on every application) |

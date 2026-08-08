@@ -31,6 +31,7 @@ ROOT = HARNESS_DIR.parent
 
 sys.path.insert(0, str(HARNESS_DIR))
 import status as status_mod  # noqa: E402
+import tracker_row  # noqa: E402
 
 TRACKER = ROOT / "job_search_tracker.csv"
 SHORTLIST = ROOT / "shortlist.csv"
@@ -39,18 +40,26 @@ APPLICATIONS = ROOT / "documents" / "applications"
 REGISTER = ROOT / "evidence" / "register.yaml"
 PREFERENCES = ROOT / "preferences.yaml"
 
-# Matches tracker_xlsx's FOLLOWUP_DAYS and /outcome's threshold. One number.
-FOLLOWUP_DAYS = 10
+FOLLOWUP_DAYS = status_mod.FOLLOWUP_DAYS
 STALE_SEARCH_DAYS = 7
 DATE_IN_NOTE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 
 
 def read_csv(path: Path) -> list[dict]:
+    """Read shortlist.csv / run_log.csv. The TRACKER goes through
+    `tracker_row.read_rows` instead — it heals a row with an unquoted comma,
+    which this reader used to die on with `AttributeError: 'list' object has
+    no attribute 'strip'` while the writer accepted the same row happily.
+    """
     if not path.exists():
         return []
     with path.open(newline="", encoding="utf-8-sig") as handle:
-        return [row for row in csv.DictReader(handle)
-                if any((value or "").strip() for value in row.values())]
+        rows = []
+        for row in csv.DictReader(handle):
+            row.pop(None, None)
+            if any((value or "").strip() for value in row.values()):
+                rows.append(row)
+        return rows
 
 
 def parse_date(value: str | None):
@@ -82,9 +91,45 @@ def followups_sent(row: dict) -> int:
     return len(re.findall(r"followed up", (row.get("notes") or ""), re.I))
 
 
+def trial_families(shortlist: list[dict], root: Path = ROOT) -> list[dict]:
+    """Trial role families with results waiting to be judged.
+
+    `/discover` adds a family as an experiment and `/scrape` tags its finds
+    `trial: <family>` in the shortlist rationale. Without this, the only route
+    back to `/discover review` was the user remembering it existed, so an
+    approved trial ran forever and was never judged.
+    """
+    try:
+        import yaml
+        prefs = yaml.safe_load(
+            (root / "preferences.yaml").read_text(encoding="utf-8")) or {}
+    except Exception:
+        return []
+    if not isinstance(prefs, dict):
+        return []
+    families = (prefs.get("discovery") or {}).get("trial_families") or []
+    out = []
+    for entry in families:
+        if not isinstance(entry, dict) or entry.get("status") != "trial":
+            continue
+        name = str(entry.get("name", "")).strip()
+        if not name:
+            continue
+        tagged = [r for r in shortlist
+                  if f"trial: {name}".lower() in (r.get("rationale") or "").lower()]
+        if not tagged:
+            continue
+        out.append({
+            "family": name,
+            "found": len(tagged),
+            "shortlisted": sum(1 for r in tagged if r.get("verdict") == "qualified"),
+        })
+    return out
+
+
 def collect(today: date | None = None, root: Path = ROOT) -> dict:
     today = today or date.today()
-    tracker = read_csv(root / "job_search_tracker.csv")
+    tracker, _ = tracker_row.read_rows(root / "job_search_tracker.csv")
     shortlist = read_csv(root / "shortlist.csv")
     runs = read_csv(root / "run_log.csv")
 
@@ -143,6 +188,7 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
     return {
         "date": today.isoformat(),
         "onboarded": (root / "evidence" / "register.yaml").exists(),
+        "trials": trial_families(shortlist, root),
         "followups": followups,
         "interviews": interviews and [
             {"company": r.get("company", ""), "role": r.get("role", ""),
@@ -187,6 +233,12 @@ def actions(state: dict) -> list[dict]:
     elif age >= STALE_SEARCH_DAYS:
         items.append({"label": f"Search for new jobs (last run {age} days ago)",
                       "command": "/scrape"})
+    for entry in state.get("trials", [])[:1]:
+        items.append({
+            "label": f"Judge the {entry['family']} trial "
+                     f"({entry['found']} found, {entry['shortlisted']} shortlisted)",
+            "command": "/discover review",
+        })
     return items
 
 
@@ -220,6 +272,13 @@ def render(state: dict) -> str:
             for entry in state["undrafted"]:
                 score = f" - scored {entry['score']}" if entry.get("score") else ""
                 lines.append(f"  - {entry['company']} - {entry['role']}{score}")
+            lines.append("")
+
+        if state.get("trials"):
+            lines.append("Trials to judge:")
+            for entry in state["trials"]:
+                lines.append(f"  - {entry['family']} - {entry['found']} found, "
+                             f"{entry['shortlisted']} shortlisted")
             lines.append("")
 
         waiting = len(state["waiting"])

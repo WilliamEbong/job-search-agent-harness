@@ -262,6 +262,10 @@ Profile line with \textbf{bold} and 20\% and a \mbox{Word}.
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] in ("-h", "--help"):
+        # Without this, `--help` fell into the read-a-file branch below and
+        # died with FileNotFoundError: '--help'.
+        sys.exit(__doc__)
     if len(sys.argv) == 2 and sys.argv[1] == "--self-check":
         self_check()
     elif len(sys.argv) == 2:

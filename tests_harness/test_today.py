@@ -70,6 +70,51 @@ class DailyBrief(unittest.TestCase):
         self.assertEqual(1, len(menu))
         self.assertEqual("/setup-harness", menu[0]["command"])
 
+    # ---------------------------------------------------------------- trials
+
+    def _trial_prefs(self, status: str = "trial") -> None:
+        (self.tmp / "preferences.yaml").write_text(
+            "discovery:\n"
+            "  trial_families:\n"
+            "    - name: business analysis\n"
+            f"      status: {status}\n",
+            encoding="utf-8")
+
+    def _trial_shortlist(self) -> None:
+        self.write("shortlist.csv", SHORTLIST_HEADER, [
+            {"company": "Acme", "role": "Business Analyst", "verdict": "qualified",
+             "rationale": "trial: business analysis - strong requirements match"},
+            {"company": "Beta", "role": "BA", "verdict": "not-drafted",
+             "rationale": "trial: business analysis - seniority too high"},
+            {"company": "Gamma", "role": "Analyst", "verdict": "qualified",
+             "rationale": "core role family"}])
+
+    def test_a_trial_family_with_results_is_surfaced_for_judging(self):
+        """Without this the return path to /discover review did not exist."""
+        self._trial_prefs()
+        self._trial_shortlist()
+        state = self.collect()
+        self.assertEqual(1, len(state["trials"]))
+        trial = state["trials"][0]
+        self.assertEqual("business analysis", trial["family"])
+        self.assertEqual(2, trial["found"])       # only the tagged rows
+        self.assertEqual(1, trial["shortlisted"])
+        self.assertIn("/discover review",
+                      [item["command"] for item in today_mod.actions(state)])
+
+    def test_a_kept_or_dropped_family_is_not_offered_for_judging(self):
+        self._trial_prefs(status="dropped")
+        self._trial_shortlist()
+        self.assertEqual([], self.collect()["trials"])
+
+    def test_a_trial_with_no_finds_yet_stays_quiet(self):
+        self._trial_prefs()
+        self.assertEqual([], self.collect()["trials"])
+
+    def test_no_preferences_file_is_not_an_error(self):
+        self._trial_shortlist()
+        self.assertEqual([], self.collect()["trials"])
+
     # ------------------------------------------------------------ follow-ups
 
     def test_quiet_application_becomes_a_followup(self):
@@ -293,8 +338,15 @@ class Wave4Capabilities(unittest.TestCase):
         self.assertIn("never for anything at `interview_only`", text)
 
     def test_today_still_declares_what_it_writes(self):
-        """The command gained two write paths; the honesty note must match."""
+        """The command has two write paths; the honesty note must match.
+
+        It used to say both needed a yes while Step 3 said "quietly" — so the
+        model chose, and /today behaved differently run to run. The rule is now
+        stated once and is principled: regenerating a view proceeds, changing
+        what is recorded asks.
+        """
         text = self._flat(ROOT / ".claude" / "commands" / "today.md")
         self.assertIn("reading is always safe", text)
-        self.assertIn("both need a yes", text.replace("both explicit and both need a yes",
-                                                      "both need a yes"))
+        self.assertIn("regenerates a view proceeds", text)
+        self.assertIn("changes what is recorded asks", text)
+        self.assertNotIn("both need a yes", text)

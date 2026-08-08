@@ -15,9 +15,12 @@ If you are looking for how to *use* the system, you want
 | `plan-A` … `plan-N` | Design deliverables: system audit, capability audit, reuse matrix, repo structure, state model, runtime map, phases, file responsibilities, pinning, licensing, test matrix, install test, e2e list, simplification audit |
 | `PLAN-STATE.md`, `OPUS-KICKOFF.txt` | Planning-stage progress file and the build kickoff prompt |
 
-The two most useful if you are changing the code:
+If you are changing the code, the live authority on what may be edited is
+**`docs/REVIEW-HANDOFF.md` §4 and §4.1**, not this folder.
+`plan-D-repo-structure.md` was that authority and has gone stale; it is kept as
+the record of the original plan and carries a banner saying so.
 
-- **`plan-D-repo-structure.md`** — which files are upstream-owned and must never
-  be edited, which are harness-owned, and which are generated.
+Still accurate and worth reading:
+
 - **`plan-E-state-model.md`** — one owner per data family, and which files are
   views that can always be regenerated.

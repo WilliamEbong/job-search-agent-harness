@@ -5,13 +5,15 @@ script does two things, and one call does both — which is why the apply and
 tracker workflows call it every run and no scheduled task is needed:
 
 1. **Move** folders whose tracker row carries a `submitted_date` into
-   `documents/applications/applied/`.
-2. **Archive** anything 8 weeks past creation into
-   `documents/applications/archive/` as a zip, removing the live folder.
-   Applied folders age out the same way.
+   `documents/applications/applied/`. This is the default and it is
+   reversible.
+2. **Report** anything 8 weeks past creation. Zipping it and removing the live
+   folder needs `--archive`, because doing it unattended once deleted folders
+   belonging to live interview processes. Applied folders age out the same way.
 
-    python harness/archive_applications.py            # do it
-    python harness/archive_applications.py --dry-run  # report only
+    python harness/archive_applications.py            # move submitted; report old
+    python harness/archive_applications.py --dry-run  # report only, change nothing
+    python harness/archive_applications.py --archive  # also zip and remove the old
 
 Creation age: on Windows `st_ctime` is the folder's creation time. The oldest
 file mtime inside the folder is used when it is older still, so folders whose
@@ -22,6 +24,7 @@ touches a tracked file.
 
 from __future__ import annotations
 
+import argparse
 import csv
 import re
 import shutil
@@ -272,13 +275,24 @@ def move_applied(dry_run: bool = False) -> list[str]:
     return moved
 
 
-def main(argv: list[str]) -> int:
-    dry_run = "--dry-run" in argv
+def main(argv: list[str] | None = None) -> int:
+    # Hand-rolled flag parsing here meant `--help` fell through to "no flag
+    # matched" and performed the real move - on the one script in the harness
+    # that mutates the filesystem by default. So did any typo. argparse exits
+    # 2 on an unknown flag instead.
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--dry-run", action="store_true",
+                        help="report what would happen; change nothing")
+    parser.add_argument("--archive", action="store_true",
+                        help="also zip and REMOVE folders 8+ weeks old")
+    args = parser.parse_args(argv)
+
+    dry_run = args.dry_run
     # Archiving DELETES the live folder after zipping it. It used to happen
     # unattended inside every /apply-any and /tracker run. It is now opt-in:
     # the default run does the (safe, reversible) applied/ move and only
     # *reports* what is old enough to archive.
-    do_archive = "--archive" in argv and not dry_run
+    do_archive = args.archive and not dry_run
 
     moved = move_applied(dry_run=dry_run)
     verb = "would move" if dry_run else "moved"
@@ -305,4 +319,4 @@ def main(argv: list[str]) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

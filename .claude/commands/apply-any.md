@@ -84,6 +84,23 @@ How far to go without asking, based on the fit score from `/apply`'s evaluation:
 Volume caps from `preferences.yaml` (`usage.modes.<mode>.max_packages_per_run`) apply on
 top and are never exceeded, whatever the scores.
 
+### Rapidly closable gaps
+
+If the evaluation classified a requirement as **rapidly closable** (per
+`04-job-evaluation.md`'s competency-inference ladder) and the drafts lean on it, the
+package is drafted **provisionally**:
+
+1. Tell the user privately: the gap, why it is closable in hours, a short learning plan,
+   one concrete practice/demonstration exercise, and a suitable teaching resource where
+   you know one.
+2. Write `TRAINING-REQUIRED.md` into the application folder in Step 4: the skill, the
+   exercise, and this guard line verbatim — *"This flow never applies to credentials,
+   licences, degrees, years of experience, employment history, clearances, or anything a
+   background check can test."*
+3. `harness/apply_package.py` exits non-zero while the file has content — the package is
+   **not final and not presentable as ready** until the user completes the exercise, the
+   skill is recorded with `/fact`, and the file is deleted; then re-run packaging.
+
 ## Step 3: Humanizer pass (mandatory), then re-ground
 
 After `/apply`'s revision step and **before** final compilation, run the **`humanizer`
@@ -147,6 +164,11 @@ copies get friendly names.
 
 The posting artifacts (`provenance.md`, `job_posting.md`, the raw files in
 `posting_source/`) are written by the intake step in Step 1, not by this script.
+
+**Also save the positioning brief:** write `/apply` Step 1b's brief to
+`positioning_brief.md` in the same folder. It is internal working material — never sent
+anywhere — and `/interview` reads it later to prepare defenses for every inferred or
+transferable claim the documents rest on.
 
 Then, still before presenting:
 

@@ -53,7 +53,41 @@ Present the evaluation to the user with:
 After presenting the evaluation, ask the user:
 > "Should I proceed with drafting the CV and cover letter for this role?"
 
-**If the user says no, stop here.** If yes, continue to Step 2.
+**If the user says no, stop here.** If yes, continue to Step 1b.
+
+---
+
+## Step 1b: DRAFTER - Positioning Brief (internal)
+
+Before drafting a word, decide what the application argues. This is internal working
+material — never employer-facing, never a document the user has to manage. Write it
+in working memory (a short block in your response is fine); when this run came through
+`/apply-any`, it is also saved as `positioning_brief.md` in the application package
+folder for `/interview` to read later.
+
+The brief answers, from the Step 1 evaluation and the profile sources:
+
+1. **Why should this employer interview this candidate?** One sentence.
+2. **3-5 selling propositions for THIS role** — each tied to a specific piece of
+   evidence (a profile fact, a register entry, a project component). A proposition
+   without evidence is not a proposition.
+3. **What is unusual or differentiated** about the candidate relative to the likely
+   applicant pool for this posting.
+4. **Which transferable or inferred arguments carry weight** — classified per the
+   competency-inference ladder in `04-job-evaluation.md` (strongly entailed /
+   reasonably inferred / transferable-adjacent), so the interview prep later knows
+   which claims need a defense ready.
+5. **Which experiences and projects dominate the application** — and, by implication,
+   which get compressed or cut.
+6. **The professional narrative** — one short paragraph: the story the CV's ordering
+   and the letter's opening should both tell.
+
+The brief drives Step 2's emphasis decisions and is passed inline to the reviewer in
+Step 3. Reason from `fact -> demonstrated capability -> significance -> relevance to
+this employer` when forming propositions: the register constrains the facts, not the
+intelligent reasoning about what those facts demonstrate. The test for any framing:
+*the strongest version of the claim the candidate could defend in a serious interview
+without backtracking.*
 
 ---
 
@@ -75,7 +109,9 @@ Also read the most recent existing CV and cover letter files for concrete struct
 *The master candidate profile (`01-candidate-profile.md`), the master CV (`cv/main_example.tex`), and CLAUDE.md's Candidate Profile section are the sole source of truth for facts; existing tailored CVs may be read for structure and phrasing only, never as a source of claims.*
 
 ### Requirement coverage (both documents)
-- **Every requirement the posting states gets addressed - matched or honestly gapped, never silently omitted.** A stated requirement the candidate lacks (a tool, a clearance, years of experience) is acknowledged with an honest bridge ("not in my daily toolkit yet; a natural extension of X"), because omission reads as hiding once an interviewer asks. Build the requirement list from Step 1 and check both drafts against it before Step 3.
+- **Every requirement the posting states gets assessed — and gaps are reported candidly to the USER in the Step 1 evaluation, never hidden from them.** The employer-facing documents are a different matter: they lead with the strongest evidence and transferable arguments, and they do **not** volunteer a list of anti-qualifications. A candidate matching 7 of 10 requirements presents the strongest 7; the 3 gaps live in the user-facing evaluation and interview prep, not in the CV. This is normal professional advocacy, not concealment — internal analysis stays skeptical, external documents stay persuasive and selective.
+- **Narrow exceptions that must still be addressed in-document:** a disclosure the application explicitly requires, work authorization where the posting directly asks, and hard legal/licensing prerequisites that cannot ethically be left implied. Never falsify or omit a required disclosure. A gap the cover letter *chooses* to engage (because the posting makes it unavoidable) gets a confident bridge ("a natural extension of X"), not an apology.
+- Build the requirement list from Step 1 and check both drafts against it before Step 3 — the check is "is every genuine strength represented and every stated exception handled", not "is every gap confessed".
 - **Engage nice-to-haves by name** where the profile supports honest adjacency (e.g. "conceptually aligned with <named tool>"), and use the posting's own term over a synonym wherever it is truthfully applicable - including in CV section headings (a posting hiring for "MLOps" should find a heading containing "MLOps", not only a paraphrase).
 - **Address stated logistics and prerequisites** in the cover letter where the posting raises them: security clearance willingness, start date or availability, commute or location fit, and the posting's reference/job ID where one exists. When the employer operates across several countries, a truthful language-capabilities sentence mapped to their footprint is high-value targeting.
 
@@ -84,7 +120,7 @@ Also read the most recent existing CV and cover letter files for concrete struct
 - Follow the moderncv/banking format from `05-cv-templates.md`
 - Tailor the profile statement and experience bullets to the specific role
 - Reframe skills and achievements to match job requirements
-- Keep to 2 pages
+- Keep to the configured page target: `preferences.yaml` → `presentation.cv_pages` (or run `python harness/presentation.py`), default **2** when unset. `adaptive` means you choose 1 or 2 from content density for this posting and state the choice and reason in the Step 6 report. Meet a lower target by cutting content, never by shrinking fonts or margins
 - **Grounding Audit:** Before writing to disk, audit all tailored bullet points against the union of three sources: `.claude/skills/job-application-assistant/01-candidate-profile.md` + the master CV (`cv/main_example.tex`) + `CLAUDE.md`'s Candidate Profile section to verify that all dates, roles, and metrics match exactly (zero profile drift or fabrication).
 
 ### Cover Letter (`cover_letters/cover_<company>_<role><COVER_EXT>`)
@@ -94,7 +130,7 @@ Also read the most recent existing CV and cover letter files for concrete struct
 - Tailor the opening paragraph to the specific role and company
 - Address to a named person if available in the posting, otherwise "Dear Hiring Manager" (or equivalent in posting language)
 - Keep to approximately one page
-- Any mention of agentic coding or AI tooling must reference **Claude Code** by name
+- When mentioning AI-assisted or agentic development, name only the tool(s) the candidate actually used per the profile/register (Claude Code, Codex, Cursor, Copilot, ...). Generic wording ("AI-assisted development", "agentic coding tools") is always acceptable and often better; naming a specific vendor is optional, never mandatory, and never invented
 
 Write both files to disk. Keep the exact text of both drafts in working memory — you will pass them inline to the reviewer in Step 3 and revise them in Step 4 without re-reading.
 
@@ -135,7 +171,13 @@ Do NOT read `05-cv-templates.md` or `06-cover-letter-templates.md` — those gov
 ### 3. Factual Grounding Audit
 Compare every date, employer, job title, and quantitative metric in both drafts against the union of three sources: `.claude/skills/job-application-assistant/01-candidate-profile.md` + the master CV baseline template (`cv/main_example.tex`) + `CLAUDE.md`'s Candidate Profile section. A claim is grounded if ANY of these sources supports it. Mismatches between these three sources themselves must be reported to the user as a profile-consistency warning rather than treated as draft drift. Draft mismatches must be flagged as Part A edits with `"reason": "grounding"` so they can be distinguished from style changes. Keep the tolerance honest: reframed emphasis is fine; changed facts and escalated numbers are not.
 
-### 4. Drafts to Review
+### 4. Positioning Brief and Drafts to Review
+The drafter's internal positioning brief is provided first — the argument the documents are supposed to make. Judge the drafts against it: if a selling proposition in the brief is missing or buried in the documents, that is a finding.
+
+<POSITIONING_BRIEF>
+<INSERT_POSITIONING_BRIEF_HERE>
+</POSITIONING_BRIEF>
+
 Both drafts are provided inline below. Do NOT use the Read tool on the draft files — use these exact texts.
 
 <CV_DRAFT file="cv/main_<COMPANY>_<ROLE><CV_EXT>">
@@ -173,8 +215,16 @@ Prose suggestions grouped by category. Produce each category even if your findin
 - **Company/department-specific angles** — connections between experience and the company's strategic priorities, based on your research
 - **Action-oriented reframing** — identify passive, generic, or low-energy statements and suggest action-oriented rewrites. Use this category especially for structural weakness that doesn't fit a single-sentence swap (e.g., "the whole opening paragraph reads as passive — restructure around your single strongest match to the posting").
 - **Tone and style issues** — check against `03-writing-style.md` AND `02-behavioral-profile.md`. Flag any issues with tone, formality, or voice (cliches, hedging, over-humility, inconsistent register), and specifically flag any mismatch between the letter's voice and the candidate's natural register as described in the behavioral profile.
+- **Under-selling / positioning audit** — answer explicitly:
+  1. What are the 3 strongest reasons to interview this candidate for this role, and are they obvious within the first third of the CV?
+  2. Is impressive evidence buried under routine duties, or displaced by weak conventional material?
+  3. Are any statements accurate but unnecessarily timid — could a bullet truthfully communicate more ownership, complexity, scale, or outcome without changing the underlying fact?
+  4. Are transferable-skill arguments from the positioning brief actually made, or only implied?
+  5. Do the documents accidentally advertise weaknesses the posting never asked about?
+  6. Does the CV tell a coherent "why hire this person?" story?
+  Suggested strengthenings must stay inside the grounding rule below — stronger framing of a real fact, never a new fact.
 
-**CRITICAL RULE:** All suggestions must be grounded in actual profile data. Do NOT suggest fabricating skills, experience, or achievements. If a requirement is a gap, say so honestly and suggest how to frame adjacent experience instead.
+**CRITICAL RULE:** All suggestions must be grounded in actual profile data. Do NOT suggest fabricating skills, experience, or achievements. If a requirement is a genuine gap, report it to the user-facing findings; do not suggest the documents confess it unprompted — suggest transferable or adjacent framing where the documents engage it at all.
 
 Do **not** run a verification checklist — the drafter will do that in the final step. Focus on content critique.
 
@@ -194,7 +244,7 @@ Once the reviewer agent returns its feedback:
    - **Action-oriented reframing:** rewrite passive or generic phrasing (CV profile statement, cover letter opening, bullet leads). Structural weakness that the reviewer flagged without a clean JSON edit lives here.
    - **Tone and style issues:** apply the writing-style-guide fixes (no em-dashes, no cliches, no apologetic hedging, consistent first-person active voice).
    Use Edit for targeted changes; only re-read a file if an edit fails because the surrounding text has shifted.
-3. Do NOT incorporate any suggestion that would fabricate skills or experience. If a posting requirement is a genuine gap, acknowledge it honestly and frame adjacent experience instead.
+3. Do NOT incorporate any suggestion that would fabricate skills or experience. A genuine gap stays in the user-facing report; where the documents engage it at all, frame adjacent experience confidently rather than confessing the gap.
 
 After all edits are applied, the two files on disk are the final drafts.
 
@@ -224,10 +274,11 @@ If either compile fails, fix the error and re-compile until clean.
 Read both PDFs via the Read tool and verify:
 
 **CV (`cv/main_<company>_<role>.pdf`):**
-- [ ] Exactly 2 pages (not 1, not 3)
+- [ ] Page count equals the configured target (`presentation.cv_pages`, default 2; for `adaptive`, the page count you chose and justified in Step 2)
 - [ ] No orphaned `\cventry` titles — a job/education title line must never sit alone at the bottom of page 1 with its bullets on page 2. This is the most common failure.
 - [ ] Section headings are not isolated at the top of page 2 with only 1-2 lines below
 - [ ] No awkward whitespace gaps
+- [ ] No ugly hyphenation — an ordinary word split across lines (`notifica-`/`tions`) or a bullet stranding one short word on its own continuation line. Fix by rewriting the sentence for better fit first; never by shrinking type or margins.
 
 **Cover letter (`cover_letters/cover_<company>_<role>.pdf`):**
 - [ ] Exactly 1 page
@@ -278,7 +329,7 @@ Failures here are template-level problems: fix them in the `<CV_EXT>` source (e.
 - **covered** — the term appears (verbatim or trivial inflection).
 - **synonym-only** — the concept is present under a different term. If the posting's exact term is truthfully applicable per the profile, prefer the posting's term (ATS keyword matches are often literal).
 - **missing (have it)** — the profile shows the candidate genuinely has this skill but the CV never says it: add it where it fits naturally, preferring experience bullets (concrete evidence) over the profile statement, then re-run 5a–5c.
-- **missing (gap)** — a genuine gap: leave it missing. **Never stuff keywords.** This is the same honesty rule the reviewer follows — a gap gets acknowledged in the cover letter's framing, not hidden in the CV.
+- **missing (gap)** — a genuine gap: leave it missing. **Never stuff keywords.** The gap goes in the user-facing report and interview prep; the documents neither fake it nor volunteer it. If it is a rapidly-closable tool gap (see `04-job-evaluation.md`'s ladder), flag it to the user with a short learning plan instead of writing around it.
 
 **4. Clean up:** delete the extracted `.txt` file.
 

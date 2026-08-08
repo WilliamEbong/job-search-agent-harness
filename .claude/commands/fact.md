@@ -72,6 +72,10 @@ Rules that are easy to get wrong:
 - In-progress credentials need `status: in-progress` **and** `qualifier_required`.
   Without both, the credential can render as earned.
 - A project that is not finished needs `status: in-progress` and a `claim_ceiling`.
+- A project detail (a subsystem built, a deployment done, an outcome measured) can land
+  as a `components:` line under the existing `projects` entry rather than a new
+  top-level entry — that keeps a substantial project's evidence together and mineable
+  at drafting time.
 - If the fact touches a declared `positioning_constraint`, record the fact and its claim
   ceiling together. A fact recorded without its ceiling is a fact that will be
   overclaimed later.
@@ -112,6 +116,10 @@ Recorded: <the fact, as written>
 
 If the new fact resolves a red line that was blocking an application package, say so and
 re-run `/verify-facts` on that package.
+
+If the fact records a skill that closes a `TRAINING-REQUIRED.md` item (the user did the
+practice exercise), say the file can now be deleted and `harness/apply_package.py`
+re-run — that is what makes the provisional package final.
 
 ## Never
 

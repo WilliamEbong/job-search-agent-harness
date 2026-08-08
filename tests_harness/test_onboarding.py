@@ -132,6 +132,21 @@ class RegisterExample(unittest.TestCase):
                     missing.append(f"{section}: {source}")
         self.assertEqual([], missing)
 
+    def test_a_project_demonstrates_components(self):
+        """Wide internal evidence, selective external presentation.
+
+        A substantial project must be storable as its component evidence, not
+        only a summary line — otherwise everything but the summary is lost to
+        every future tailored CV.
+        """
+        projects = self.reg["projects"]
+        with_components = [p for p in projects if p.get("components")]
+        self.assertTrue(with_components,
+                        "no project in the example demonstrates components:")
+        for comp in with_components[0]["components"]:
+            self.assertIsInstance(comp, str)
+            self.assertTrue(comp.strip())
+
     def test_meta_sources_resolve_too(self):
         missing = [s["path"] for s in self.reg["meta"]["sources"]
                    if not (ROOT / s["path"]).is_file()]
@@ -152,9 +167,13 @@ class PreferencesExample(unittest.TestCase):
             "meta", "compensation", "location", "driving", "exclusions",
             "remote_tradeoffs", "hard_skips", "role_families", "seniority",
             "employment_type", "work_authorization", "industries", "direction",
-            "usage", "default_search_scope",
+            "presentation", "usage", "default_search_scope",
         }
         self.assertEqual(expected, set(self.prefs))
+
+    def test_presentation_default_is_two_pages(self):
+        """The historical hard rule becomes the documented default."""
+        self.assertEqual(2, self.prefs["presentation"]["cv_pages"])
 
     def test_missing_compensation_defaults_to_keep(self):
         """Discarding pay-less postings would throw away most of the market."""
@@ -185,6 +204,55 @@ class PreferencesExample(unittest.TestCase):
     def test_default_scope_is_one_of_the_five(self):
         self.assertIn(self.prefs["default_search_scope"],
                       {"board", "company", "companies", "boards", "all"})
+
+
+class CvPageTarget(unittest.TestCase):
+    """`harness/presentation.py` — backward-compatible page-target resolution.
+
+    Users onboarded before `presentation:` existed have no such section; they
+    must keep getting 2, the old hard rule, without touching their file.
+    """
+
+    def _write(self, tmpdir: Path, text: str) -> Path:
+        path = tmpdir / "preferences.yaml"
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def test_missing_file_defaults_to_two(self):
+        import tempfile
+        from harness.presentation import cv_page_target
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(2, cv_page_target(Path(tmp) / "preferences.yaml"))
+
+    def test_missing_section_defaults_to_two(self):
+        import tempfile
+        from harness.presentation import cv_page_target
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(Path(tmp), "role_families:\n  - analysis\n")
+            self.assertEqual(2, cv_page_target(path))
+
+    def test_one_two_and_n_pass_through(self):
+        import tempfile
+        from harness.presentation import cv_page_target
+        for pages in (1, 2, 3):
+            with tempfile.TemporaryDirectory() as tmp:
+                path = self._write(Path(tmp),
+                                   f"presentation:\n  cv_pages: {pages}\n")
+                self.assertEqual(pages, cv_page_target(path))
+
+    def test_adaptive_is_returned_verbatim(self):
+        import tempfile
+        from harness.presentation import cv_page_target
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(Path(tmp), "presentation:\n  cv_pages: adaptive\n")
+            self.assertEqual("adaptive", cv_page_target(path))
+
+    def test_garbage_value_defaults_to_two(self):
+        import tempfile
+        from harness.presentation import cv_page_target
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(Path(tmp), "presentation:\n  cv_pages: tall\n")
+            self.assertEqual(2, cv_page_target(path))
 
 
 class CompaniesExample(unittest.TestCase):

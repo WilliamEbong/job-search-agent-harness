@@ -70,4 +70,4 @@ a hard no, not a gap to smooth over. -->
 ## References
 - [NAME], [TITLE], [COMPANY] ([EMAIL], [PHONE])
 
-More references available upon request.
+Available upon request.

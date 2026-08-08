@@ -1,5 +1,5 @@
 ---
-framework_version: 1.1.0
+framework_version: 1.2.0
 ---
 
 # Writing Style Guide
@@ -16,6 +16,7 @@ framework_version: 1.1.0
    - **Flag it:** Combining academic + industry experience into a single claim that implies it was all industry; describing work using the posting's specific terminology when the actual work was adjacent but not the same.
    - **Never:** Claiming experience the candidate doesn't have; implying they worked in a domain they haven't.
    When a bullet falls in the "flag it" zone, present it to the user after drafting with: "This bullet is a stretch because X. Keep, soften, or drop?" If the evaluation experience match score is below 50, warn before proceeding to drafting that extensive reframing would be needed.
+7. **Transform facts into market value — a CV is an argument, not an inventory.** For every important fact, reason `fact -> what it demonstrates -> why this employer cares`, and write the bullet at the end of that chain, not the start. "Entered lab results into the database" is the fact; "maintained data quality across N-record datasets, catching entry errors before they reached analysis" is what it demonstrates (when the scale and the QC are real). Communicate scale and context; do not bury the strongest evidence under routine duties. The bound is rule 6's interview backtrack test — the strongest version of the claim the candidate can defend without backtracking, never a new fact.
 
 ## Tone
 - **Warm but direct.** Friendly and approachable, but confident without arrogance.

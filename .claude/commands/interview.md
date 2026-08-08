@@ -24,7 +24,9 @@ v1 preps for a **specific application**. Generic no-target practice is out of sc
 1. **The archive** (maintained by `/outcome`): `documents/applications/<company>_<role>/`
    - `job_posting.md` - the exact posting the user applied to
    - `cv_draft.tex` and `cover_letter.tex` - what was actually submitted. **These are what the interviewer read**; every talking point must be consistent with their claims.
+   - `positioning_brief.md` (when present, written by `/apply-any`) - the argument the documents were built on, including which claims sit on inferred, transferable, or rapidly-acquired footing. These are exactly the claims that need a prepared defense.
    - `outcome.md` - the stage reached so far and any recorded feedback from earlier stages. Feedback from stage N is the highest-value input for stage N+1 prep.
+   - Also read `evidence/register.yaml` for the claims the documents rest on: `technology_claim_rules` tiers, `claim_ceiling` lines, and `qualifier_required` fields say how far each claim may be talked up in the room. A technology recorded as `ai-assisted` or `familiarity_only` must not be rehearsed as hands-on fluency.
 2. **Fallbacks** (the application may predate `/outcome`): posting via WebFetch on the tracker row's `source` URL, or ask the user to paste it; CV via `cv/main_<company>*.tex` and cover letter via `cover_letters/cover_<company>_*.tex`. State plainly which context is missing rather than guessing - and suggest `/outcome <company>` to build the archive for next time.
 3. **Ask the user what this interview is** (skip anything `outcome.md` already records): stage (phone screen / technical / case / final round), date, format (phone, video, onsite), and who is interviewing (names and titles, if known).
 4. **Read the frameworks once** - do not re-read them in later steps:
@@ -66,6 +68,15 @@ Match the ready-made STAR examples in `07-interview-prep.md` to the likely quest
 
 ### 3. Consistency brief
 A short list of the specific claims the submitted CV and cover letter make (achievements, numbers, skills emphasized) that the interviewer is most likely to probe. The rule stated plainly: **no claim in the room that isn't on the paper, and every claim on the paper must be defensible in depth.**
+
+For every claim that rests on inferred, transferable, or rapidly-acquired footing (per `positioning_brief.md` and the register's claim tiers), prepare a defense card:
+- **the claim** as the document words it;
+- **the evidence** behind it (the register entry or project component);
+- **the likely challenge** an interviewer raises;
+- **a concise truthful answer** — acknowledge the footing, cite the evidence, bridge;
+- **the limits** the user must not overstate under pressure (the `claim_ceiling`, the qualifier, the "familiarity, not mastery" line).
+
+Skip the card for trivial statements; this is for the claims the application actually leans on. The candidate must never be surprised by their own resume.
 
 ### 4. Tough questions, customized
 The relevant entries from `07`'s tough-question list with per-application answers - "Why this company specifically?" must use the verified hooks from Step 2, never a generic line.

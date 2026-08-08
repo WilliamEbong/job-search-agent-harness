@@ -1,5 +1,5 @@
 ---
-framework_version: 1.4.0
+framework_version: 1.5.0
 ---
 
 # CV Templates and Tailoring Guide
@@ -20,7 +20,7 @@ All CVs use the moderncv LaTeX package with the "banking" style and "blue" color
 cd cv && lualatex -interaction=nonstopmode main_<company>_<role>.tex
 ```
 
-Expected output: `Output written on main_<company>_<role>.pdf (2 pages, ...)`. Any page count other than 2 is a failure that must be fixed before presenting to the user.
+Expected output: `Output written on main_<company>_<role>.pdf (N pages, ...)` where **N is the configured page target** — `preferences.yaml` → `presentation.cv_pages`, default **2** when unset. `adaptive` means the drafter chose 1 or 2 for this posting and says why. Any other page count is a failure that must be fixed before presenting to the user, and never by shrinking fonts, margins or `\vspace`.
 
 ## Document Structure
 
@@ -46,8 +46,16 @@ Expected output: `Output written on main_<company>_<role>.pdf (2 pages, ...)`. A
     pdftitle={[YOUR_NAME] - CV},
     pdfpagemode=FullScreen,
 }
-\usepackage[scale=0.77]{geometry}
+\usepackage[scale=0.80]{geometry}
 \usepackage{import}
+% Typography: microtype smooths line breaking; needspace is what the
+% orphaned-\cventry fix uses; the penalties discourage hyphenating ordinary
+% words and let a line stretch slightly instead of splitting a word.
+\usepackage{microtype}
+\usepackage{needspace}
+\hyphenpenalty=300
+\tolerance=2000
+\setlength{\emergencystretch}{1.5em}
 
 % Personal data
 \name{[FIRST_NAME]}{[LAST_NAME]}
@@ -63,9 +71,11 @@ Expected output: `Output written on main_<company>_<role>.pdf (2 pages, ...)`. A
 % 2. Skills section
 % 3. Education section
 % 4. Professional Experience section
-% 5. Selected Publications (if applicable)
-% 6. Honors and Awards (if applicable)
-% 7. References
+% 5. Selected Projects (if applicable - may move above Experience, see
+%    "Archetype starting strategies")
+% 6. Selected Publications (if applicable)
+% 7. Honors and Awards (if applicable)
+% 8. References (optional - first cut when space is tight)
 
 \end{document}
 ```
@@ -189,12 +199,33 @@ If there is a gap in your employment history:
 ### Evidence Links
 Wherever the CV names a verifiable artifact - a public project, a hackathon entry, a publication - carry its link (`\href`) so a reader can verify the claim in one click. A CV whose strongest claims are checkable reads as more credible everywhere else too.
 
+### Projects (personal, academic, research, portfolio)
+
+Projects are first-class evidence, not filler. The register stores a substantial
+project **wide** — a `components:` list of everything it demonstrates (architecture,
+data work, deployment, testing, outcomes, ownership) — and the CV selects **narrow**:
+the 2-5 bullets most relevant to THIS posting, chosen per role from those components.
+Two applications from the same project may legitimately show different bullets.
+
+- Format: `\textbf{Name} (Year): what it does, what you built, the outcome` — with an
+  `\href` to the repository or live artifact where one exists (see Evidence Links).
+- **Placement is strategic, not fixed.** Default: after Professional Experience. For a
+  portfolio-heavy or early-career candidate whose strongest evidence is project work,
+  Projects goes **before** Experience — a substantial technical project outranks an
+  unrelated paid job for a technical posting. See "Archetype starting strategies".
+- Never reduce a substantial project to one generic line while routine duties keep
+  four bullets. Content earns space by candidate-value density (below), not by
+  whether an employer paid for it.
+
 ### Honors and Awards
 - Keep format brief, one line each
 
 ### References
-- List 2-4 references with name, title, company, and contact
-- End with: "More references are available upon request."
+- List 2-4 references with name, title, company, and contact, **or** a single line:
+  "Available upon request." (use this exact wording; translate with the CV language)
+- **This section is optional and is the first cut when space is tight.** A
+  boilerplate references line never outranks a strong project or experience bullet —
+  employers ask for references when they want them.
 - **Do not attach reference letters** - employers typically contact references directly
 
 ## Compile-and-Inspect Loop (MANDATORY)
@@ -202,9 +233,10 @@ Wherever the CV names a verifiable artifact - a public project, a hackathon entr
 After writing the CV and before presenting to the user, always compile and visually inspect the PDF. Iterate until the layout is clean. Workflow:
 
 1. Run `lualatex -interaction=nonstopmode main_<company>_<role>.tex`
-2. Check the output page count: must be exactly 2
-3. Read the PDF via the Read tool and visually inspect both pages
+2. Check the output page count: must equal the configured target (`presentation.cv_pages`, default 2)
+3. Read the PDF via the Read tool and visually inspect every page
 4. Check for **orphaned entries**: a `\cventry` title line must never sit alone at the bottom of page 1 with its bullets on page 2
+5. Check line breaking: no ordinary word hyphenated across lines (`notifica-`/`tions`), no bullet whose continuation line holds a single short word, no badly wrapped title/date lines. **Fix by rewriting the sentence for a better fit** — a slightly shorter phrase beats any typography knob. The preamble's microtype/penalty settings prevent most of this; what survives them is a sentence-length problem.
 
 ### Fixing common page-break problems
 
@@ -269,9 +301,14 @@ Two independent causes, both easy to avoid:
 
 **Add this to the step 5d checks**: after extracting the text layer, confirm every experience entry shows a start *and* an end separated by an ASCII hyphen. Because the failure is silent and invisible in the PDF, the candidate otherwise discovers it only while filling in the application form.
 
-## Page Budget - Hard 2-Page Limit
+## Page Budget - the configured target
 
-The CV **must** fit on exactly 2 pages when compiled. Use these content limits as a guide:
+The CV **must** fit exactly the configured page target when compiled
+(`preferences.yaml` → `presentation.cv_pages`; default **2**; `adaptive` = drafter
+picks 1 or 2 per posting and justifies the choice). The budget is a content-strategy
+decision, never a typography one — a lower target is met by cutting, not shrinking.
+
+**2-page target (the default):**
 
 | Section | Max budget |
 |---------|-----------|
@@ -280,10 +317,29 @@ The CV **must** fit on exactly 2 pages when compiled. Use these content limits a
 | Most recent role | 4-5 bullets |
 | Previous role | 2-3 bullets |
 | Older roles | 2 bullets (1 line each) |
+| Projects | 2-5 bullets total, role-selected |
 | Education | 2-3 entries |
 | Publications | 2-3 entries |
 | Awards | 3 entries, single line each |
-| References | "Available upon request." (single line) |
+| References | "Available upon request." (single line) — or cut entirely |
+
+**1-page target:** highest-signal evidence only. Profile 2-3 lines; 4-5 skill items;
+most recent role 3-4 bullets, one earlier role 1-2, older roles collapse to single
+lines or drop; 2-3 project bullets only if projects are the differentiator; References,
+Awards, and all but the single most relevant publication go first. Prioritize
+differentiators over completeness — the reader gets one page of reasons to interview,
+not a compressed biography.
+
+**N-page / adaptive targets above 2:** the same budget logic scales — extra space goes
+to additional *relevant* technical, research, or project depth, never to padding.
+Adaptive recommends: 1 page when the strong, role-relevant material genuinely fits one
+page (early-career, single-track); 2 otherwise. Tell the user which was chosen and why.
+
+**Candidate-value density decides what survives:** roughly
+`relevance × impressiveness × credibility × differentiation / space`. A decision
+principle, not arithmetic — the point is that a boilerplate line ("References
+available upon request") loses its slot to a strong technical bullet whenever they
+compete, whatever a static section order says.
 
 **If in doubt, cut rather than squeeze.** Reducing `\vspace` or geometry scale to force-fit content makes the CV look cramped.
 
@@ -334,3 +390,23 @@ The section order varies by role type:
 4. Professional Experience (reverse chronological)
 5. Publications & Awards
 6. References
+
+### Archetype starting strategies
+
+The orders above are **starting points, chosen by what the candidate's strongest
+evidence is** — not a fixed taxonomy, and not one hierarchy forced on everyone:
+
+- **Early-career / portfolio-heavy technical:** the strongest evidence is project
+  work, so Projects moves above Professional Experience (Profile → Skills → Projects
+  → Experience → Education). An unrelated paid job never outranks a substantial
+  relevant project just because it was paid.
+- **Experienced professional:** the technical order above — Experience dominates,
+  projects appear only where they add something employment doesn't.
+- **Career changer / domain specialist:** lead with the domain-transfer argument in
+  the profile (see Profile Statement above) and put whichever section carries the
+  bridge — Education for credential-led changes, Projects for self-taught ones —
+  before the less relevant employment history.
+
+Pick the order that puts the "why hire this person" evidence in the first third of
+page 1, then adjust by judgment. The positioning brief (`/apply` Step 1b) names which
+experiences dominate; the section order should agree with it.

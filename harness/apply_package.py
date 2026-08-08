@@ -242,6 +242,25 @@ def posting_archive_gaps(folder: Path) -> list[str]:
     return gaps
 
 
+TRAINING_FILE = "TRAINING-REQUIRED.md"
+
+
+def training_gaps(folder: Path) -> list[str]:
+    """Is this package waiting on a rapid-learning step, or [] if not.
+
+    `/apply-any` writes TRAINING-REQUIRED.md when a draft leans on a skill the
+    evaluation classified as *rapidly closable* (a few-hours tool gap, never a
+    credential or years-of-experience gap). The package stays provisional -
+    nonzero exit here - until the user does the exercise, records the skill
+    with `/fact`, and deletes the file. A blank file does not block: that is
+    the escape hatch for a stale leftover.
+    """
+    path = folder / TRAINING_FILE
+    if path.is_file() and path.read_text(encoding="utf-8", errors="replace").strip():
+        return [f"{TRAINING_FILE} present - a draft leans on a skill not yet practised"]
+    return []
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--company", required=True)
@@ -289,6 +308,7 @@ def main(argv=None) -> int:
         })
         print(f"tracker: {result}")
 
+    blocked = False
     gaps = posting_archive_gaps(folder)
     if gaps:
         # Everything above is built and the tracker row is written - the work
@@ -297,8 +317,15 @@ def main(argv=None) -> int:
         print("POSTING ARCHIVE INCOMPLETE - write these, then re-run:")
         for gap in gaps:
             print(f"  {gap}")
-        return 2
-    return 0
+        blocked = True
+    training = training_gaps(folder)
+    if training:
+        print("TRAINING REQUIRED - complete the exercise, record the skill "
+              "with /fact, delete the file, then re-run:")
+        for gap in training:
+            print(f"  {gap}")
+        blocked = True
+    return 2 if blocked else 0
 
 
 if __name__ == "__main__":

@@ -166,6 +166,19 @@ direction: >-
   programme work, keeping enough fieldwork to stay close to the source data.
 
 # ---------------------------------------------------------------------------
+# Presentation — how generated documents look, not which jobs are pursued.
+#
+# `cv_pages` is the CV page target the compile check enforces: 1, 2, any
+# integer, or `adaptive` (the drafter picks 1 or 2 per posting from content
+# density and says which it chose and why). Missing section or key = 2, so
+# existing users keep the old behaviour without touching this file. The cover
+# letter is always 1 page regardless. Content strategy follows the target —
+# a 1-page CV keeps differentiators only; lower targets are never met by
+# shrinking fonts or margins.
+presentation:
+  cv_pages: 2              # 1 | 2 | <N> | adaptive
+
+# ---------------------------------------------------------------------------
 # Usage modes — how much a single run is allowed to cost.
 #
 # Every run prints its cost posture BEFORE starting, in qualitative terms. The

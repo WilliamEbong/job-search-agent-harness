@@ -193,6 +193,72 @@ class DateRanges(unittest.TestCase):
         self.assertEqual(code, 0, out)
 
 
+class MetricQualifiers(unittest.TestCase):
+    """`qualifier_required` on a metric is enforced, not just documented.
+
+    `/fact` has always promised: record `qualifier_required: about` and "the
+    qualifier then becomes mandatory in every rendering". Until check 4b the
+    promise was empty — an approximate figure could render as exact and pass.
+    """
+
+    def _register_with_qualified_metric(self) -> str:
+        import yaml
+
+        register = yaml.safe_load(REGISTER.read_text(encoding="utf-8"))
+        register["metrics"].append({
+            "value": "1,900",
+            "claim": "records covered by the demo migration",
+            "qualifier_required": "about",
+            "aliases": ["1,900 records"],
+            "source": "owner-confirmed 2026-08-06",
+        })
+        handle = tempfile.NamedTemporaryFile(
+            "w", suffix=".yaml", delete=False, encoding="utf-8"
+        )
+        yaml.safe_dump(register, handle, allow_unicode=True)
+        handle.close()
+        return handle.name
+
+    def _run(self, register_path: str, draft: str) -> tuple[int, str]:
+        proc = subprocess.run(
+            [sys.executable, str(CHECKER), "--register", register_path, draft],
+            capture_output=True, text=True, cwd=str(ROOT),
+        )
+        return proc.returncode, proc.stdout + proc.stderr
+
+    def test_metric_without_required_qualifier_is_blocked(self):
+        reg = self._register_with_qualified_metric()
+        try:
+            with WriteDraft("Migrated 1,900 records to the new system.\n") as draft:
+                code, out = self._run(reg, draft)
+            self.assertNotEqual(code, 0, out)
+            self.assertIn('qualifier "about"', out)
+        finally:
+            os.unlink(reg)
+
+    def test_with_qualifier_passes(self):
+        reg = self._register_with_qualified_metric()
+        try:
+            with WriteDraft("Migrated about 1,900 records to the new system.\n") as draft:
+                code, out = self._run(reg, draft)
+            self.assertEqual(code, 0, out)
+        finally:
+            os.unlink(reg)
+
+    def test_second_bare_occurrence_is_still_caught(self):
+        """Same per-occurrence contract as the credential check: the bare
+        rendering is the one an employer reads as exact."""
+        reg = self._register_with_qualified_metric()
+        try:
+            text = ("Summary: migrated about 1,900 records.\n" + "x\n" * 200
+                    + "Skills: migration of 1,900 records.\n")
+            with WriteDraft(text) as draft:
+                code, out = self._run(reg, draft)
+            self.assertNotEqual(code, 0, out)
+        finally:
+            os.unlink(reg)
+
+
 class PositioningConstraints(unittest.TestCase):
     def test_ai_assisted_framing_exempts_the_build_verb(self):
         with WriteDraft(

@@ -171,6 +171,10 @@ Cover, in `examples/preferences.example.yaml`'s shape:
   have got.
 - **Role families, seniority, employment type, work authorization, industries,
   direction.**
+- **CV length** — *"How long should your CV be?"* Options: 1 page, 2 pages, another
+  number, or *adaptive* (the drafter picks 1 or 2 per posting and says why). Default 2 if
+  they have no opinion. Record as `presentation.cv_pages`. Changeable later without
+  redoing onboarding — a one-line edit to `preferences.yaml` or a re-run of this step.
 - **Usage mode** — explain the three modes in terms of cost and control, and default new
   users to `focused`.
 

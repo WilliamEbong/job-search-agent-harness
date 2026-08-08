@@ -56,6 +56,15 @@ Look up the GitHub username from `01-candidate-profile.md`. If a GitHub URL or u
    - Fetch the repository README
    - Note: name, description, primary language(s), topics/tags, any frameworks or libraries mentioned in the README
 3. Also retrieve the full repository list if available (to catch unpinned repos)
+4. **For a substantial repository (or a local project the user points at), go past the
+   README** — dependency manifests (`package.json`, `requirements.txt`, ...), directory
+   structure, database schema/migrations, API routes, deployment config, tests,
+   meaningful commit history. Real evidence lives there that the user never thought to
+   mention: auth they implemented, background jobs, integrations, testing discipline.
+   Propose each finding as a `components:` line under the project's register entry.
+   Two guards: attribute nothing the contribution history does not support (code in a
+   fork is not their code), and skip the deep pass for trivial repos — this is for
+   projects that could carry CV bullets, not every gist.
 
 If no GitHub username or URL is found in the profile, skip this source and note it was skipped.
 

@@ -200,6 +200,20 @@ class ApplyOverlay(unittest.TestCase):
     def test_codex_reviewer_fallback_is_named(self):
         self.assertIn("sequential fresh pass", self.text)
 
+    def test_training_required_flow_is_documented(self):
+        """A rapidly-closable gap makes the package provisional, not final."""
+        self.assertIn("training-required.md", self.text)
+        self.assertIn("/fact", self.text)
+        self.assertIn("rapidly closable", self.text)
+
+    def test_training_flow_cannot_touch_the_strict_list(self):
+        """The escape hatch must never apply to background-check facts."""
+        self.assertIn("never applies to credentials", self.text)
+        self.assertIn("years of experience", self.text)
+
+    def test_positioning_brief_is_saved_into_the_package(self):
+        self.assertIn("positioning_brief.md", self.text)
+
 
 class VendoredHumanizer(unittest.TestCase):
     def test_license_and_provenance_ship_with_the_skill(self):

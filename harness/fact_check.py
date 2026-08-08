@@ -248,6 +248,25 @@ def credential_rules(reg: dict) -> list[tuple[list[str], str]]:
     return out
 
 
+def metric_qualifier_rules(reg: dict) -> list[tuple[list[str], str]]:
+    """Metrics that may never render without their qualifier.
+
+    `/fact` has always instructed recording `qualifier_required: about` when
+    the user said "about", "roughly", "nearly" — and promised the qualifier
+    "becomes mandatory in every rendering". Nothing enforced that promise: an
+    approximate metric could render as exact and pass clean. Mirrors
+    credential_rules(), which is the same contract for credentials.
+    """
+    out = []
+    for metric in reg.get("metrics", []) or []:
+        qualifier = metric.get("qualifier_required")
+        if not qualifier:
+            continue
+        values = [metric.get("value", "")] + list(metric.get("aliases", []) or [])
+        out.append(([str(v) for v in values if v], str(qualifier)))
+    return out
+
+
 def active_constraints(reg: dict, config: dict) -> list[tuple[str, str, str, list[str]]]:
     """(constraint_id, compiled_regex_source, description, exemption_markers).
 
@@ -287,6 +306,7 @@ def check(paths, posting_text: str = "", register_path: str = REGISTER,
     numerals = registered_numerals(reg)
     spans = employment_spans(reg)
     creds = credential_rules(reg)
+    metric_rules = metric_qualifier_rules(reg)
     constraints = active_constraints(reg, config)
     lexicon = config.get("tech_lexicon", []) or []
     case_sensitive = {str(x) for x in (config.get("case_sensitive_lexicon", []) or [])}
@@ -407,6 +427,32 @@ def check(paths, posting_text: str = "", register_path: str = REGISTER,
                     red.append((
                         where, alias,
                         'credential is in progress and must not render without "%s"'
+                        % qualifier,
+                    ))
+                    flagged = True
+                    break
+
+        # 4b. Approximate metrics may never render without their qualifier —
+        #     same per-occurrence contract as check 4. A "1,400" recorded with
+        #     `qualifier_required: about` must carry "about" (or the recorded
+        #     word) at every rendering, or it reads as an exact figure.
+        for values, qualifier in metric_rules:
+            flagged = False
+            for value in values:
+                if flagged:
+                    break
+                needle = norm(value)
+                if not needle:
+                    continue
+                pattern = r"(?<![\d.,])" + re.escape(needle) + r"(?![\d.,])"
+                for occurrence in re.finditer(pattern, low):
+                    idx = occurrence.start()
+                    window = low[max(0, idx - 120): idx + len(needle) + 160]
+                    if norm(qualifier) in window:
+                        continue
+                    red.append((
+                        where, value,
+                        'metric requires the qualifier "%s" in every rendering'
                         % qualifier,
                     ))
                     flagged = True

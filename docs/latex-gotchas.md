@@ -77,7 +77,9 @@ content does not fit, cut content.
 
 ### Exact page counts are a requirement, not a preference
 
-The CV is exactly 2 pages; the cover letter is exactly 1. Verify with `pdfinfo` or
+The CV is exactly the configured page target (`preferences.yaml` →
+`presentation.cv_pages`, default 2; `python harness/presentation.py` prints it); the
+cover letter is exactly 1 page. Verify with `pdfinfo` or
 upstream's `tools/verify_pdf.py --pages`, and iterate until it is true. A cover letter
 whose signature block has slipped onto page 2 is the single most common defect in this
 pipeline.
@@ -145,7 +147,7 @@ documents. Read the compiled PDF.
 ## Before presenting any package
 
 1. Compiled with the right engine, from the right directory, log free of `!` lines.
-2. CV exactly 2 pages; cover letter exactly 1.
+2. CV exactly the configured page target (default 2); cover letter exactly 1.
 3. No `\cventry` title orphaned at a page foot.
 4. Cover-letter bullets in the body font.
 5. Text layer extracts cleanly: `pdftotext -layout`, no `(cid:NN)` markers, email and

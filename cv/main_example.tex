@@ -29,6 +29,14 @@
 }
 \usepackage[scale=0.80]{geometry}
 \usepackage{import}
+% Typography: microtype smooths line breaking; needspace is what the
+% orphaned-\cventry fix uses; the penalties discourage hyphenating ordinary
+% words and let a line stretch slightly instead of splitting a word.
+\usepackage{microtype}
+\usepackage{needspace}
+\hyphenpenalty=300
+\tolerance=2000
+\setlength{\emergencystretch}{1.5em}
 
 % personal data
 \name{[First]}{[Last]}

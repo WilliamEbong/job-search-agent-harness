@@ -257,5 +257,40 @@ class PostingArchiveGate(unittest.TestCase):
         self.assertEqual(gaps, ["job_posting.md empty"])
 
 
+class TrainingGate(unittest.TestCase):
+    """A package leaning on an unpractised rapidly-closable skill is not final.
+
+    `/apply-any` writes TRAINING-REQUIRED.md when a draft uses a skill the
+    evaluation classified as learnable in hours. The package must stay at
+    exit 2 until the user has actually done the exercise — otherwise the
+    training flow is decoration and the draft ships on an unearned claim.
+    """
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="harness-training-"))
+        self.folder = self.tmp / "Acme_Data_Analyst"
+        self.folder.mkdir(parents=True)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_absent_file_passes(self):
+        self.assertEqual(apply_package.training_gaps(self.folder), [])
+
+    def test_blank_file_passes(self):
+        """A stale empty leftover must not block a finished package."""
+        (self.folder / apply_package.TRAINING_FILE).write_text(
+            "  \n\n", encoding="utf-8")
+        self.assertEqual(apply_package.training_gaps(self.folder), [])
+
+    def test_nonempty_file_is_a_gap_naming_the_file(self):
+        (self.folder / apply_package.TRAINING_FILE).write_text(
+            "# Training required\n- PivotTables: 2h exercise pending\n",
+            encoding="utf-8")
+        gaps = apply_package.training_gaps(self.folder)
+        self.assertEqual(len(gaps), 1)
+        self.assertIn(apply_package.TRAINING_FILE, gaps[0])
+
+
 if __name__ == "__main__":
     unittest.main()

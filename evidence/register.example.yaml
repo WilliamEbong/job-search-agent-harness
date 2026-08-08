@@ -273,6 +273,17 @@ projects:
     summary: >-
       AI-assisted reporting workflow, built with Claude Code, that turns field
       sample data into the monthly board report.
+    # `components` (optional) keeps a substantial project WIDE in the register
+    # even though any one CV shows it narrow: each line is a claimable piece of
+    # evidence the drafter can select from per role (2-5 bullets, chosen to fit
+    # the posting). Without this, a project collapses to its summary line and
+    # the rest of its evidence is lost to every future application.
+    components:
+      - Ingestion script that validates and normalises raw field-sample CSVs
+        before they enter the reporting set
+      - Mapping layer in QGIS joining sample sites to watershed boundaries
+      - Automated assembly of the monthly board report from the cleaned data
+      - Adopted by the alliance as the standing monthly reporting process
     source: owner-confirmed 2026-08-04
 
 public_repositories:

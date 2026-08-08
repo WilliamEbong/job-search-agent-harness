@@ -1,5 +1,5 @@
 ---
-framework_version: 1.2.2
+framework_version: 1.3.0
 ---
 
 # Job Evaluation Framework
@@ -45,6 +45,45 @@ Read the posting's language requirements as stated for **the role itself** — n
 Judge the level comparison the same way you judge everything else in this framework: read both sides as written and reason about it, don't force either into a rigid scale — CEFR letters, LinkedIn-style buckets ("professional working proficiency"), and plain-English words ("conversational," "fluent," "native") all appear in the wild and don't map onto each other precisely. When genuinely unsure whether a stated bar exceeds the candidate's level, prefer FLAG over a silent PASS — the human is meant to be the tiebreaker, not the gate.
 
 **Worked example:** a candidate whose Languages table lists Spanish (Native) and English (B1/B2). A posting requiring "fluent Russian" → **FAIL**, Russian isn't declared at all. A posting requiring "fluent English" → **FLAG**, English is declared but "fluent" plausibly exceeds B1/B2 — score and draft the application, but tell the candidate this posting's bar may be a stretch and let them decide. A posting requiring "conversational English" or unspecified English → **PASS**, B1/B2 clears a "conversational" bar cleanly.
+
+## Requirement Decomposition and the Competency-Inference Ladder
+
+Before scoring, decompose what the posting actually asks for. Job titles and literal
+keywords are proxies; the comparison that matters is **underlying work vs underlying
+work**. "Data entry" decomposes into entering structured data, validation, formatting,
+record maintenance, spreadsheets/databases, quality control — work a research or
+data-science background may already demonstrate in volume under a different title. The
+reverse holds too: a data-entry clerk applying to junior data engineering has real
+transferable foundations (structured data, data quality, validation, imports/exports,
+reconciliation) but is **not** a data engineer, and no framing may say otherwise.
+
+Classify each capability the posting needs on this ladder. It governs both scoring and
+what the drafts may later claim:
+
+| Tier | Meaning | May the application claim it? |
+|------|---------|-------------------------------|
+| **Explicit** | Directly documented in the profile/register | Yes, at full strength |
+| **Strongly entailed** | The documented activity itself demonstrates it (someone who built and deployed a database-backed dashboard has demonstrably worked with schemas and queries) | Yes — claim the demonstrated capability, cite the work that shows it |
+| **Reasonably inferred** | Strongly supported by the combination of documented activities and background (ordinary spreadsheet familiarity from years of documented data work) | Yes, at **proportional** strength — ordinary familiarity, never mastery |
+| **Transferable / adjacent** | Different work exercising materially overlapping competencies | Yes, framed as what it is: adjacent experience arguing relevance, not the target experience itself |
+| **Rapidly closable** | A small tool/feature gap realistically learnable and demonstrable in a few hours (a Jira board, PivotTables, Postman basics, everyday Git operations) | Only via the training flow: flag it to the user with a short learning plan and a concrete practice exercise; the package is not final until the exercise is done and the skill recorded with `/fact` |
+| **Unsupported** | Nothing above applies | No. Report as a gap to the user |
+
+**Proportionality rule.** An inference licenses ordinary familiarity, never advanced
+capability. Documented Office/data work supports "comfortable in Excel"; it does not
+support VBA, Power Query, or financial-modelling claims unless those are themselves
+demonstrated. Match the claimed strength to what the evidence actually shows.
+
+**The strict list is never inferred.** Employers, job titles, employment dates,
+degrees/credentials, licences, security clearances, hard metrics, claimed years of
+experience, and anything a background check can test come from the register or not at
+all. No ladder tier, and no "rapidly closable" argument, ever applies to these — a
+credential or years-of-experience gap is a real gap, full stop.
+
+The ladder feeds three places: the scoring below (a strongly-entailed match scores like
+a match), the positioning brief in `/apply` Step 1b (which tiers each selling
+proposition sits on), and interview prep (every inferred or transferable claim gets a
+defense prepared).
 
 ## Scoring Dimensions
 
@@ -189,7 +228,7 @@ Present the evaluation as:
 
 ## Thresholds
 - **Strong Fit** (75+): Definitely apply, tailor everything
-- **Good Fit** (60-74): Apply, address gaps in cover letter
+- **Good Fit** (60-74): Apply, lead with the transferable/entailed evidence; gaps go in the user report, not the documents
 - **Moderate Fit** (45-59): Consider carefully, discuss with user
 - **Weak Fit** (30-44): Probably skip unless strategic reasons
 - **Poor Fit** (<30): Skip

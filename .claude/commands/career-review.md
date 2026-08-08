@@ -39,6 +39,13 @@ For each source, record: what it is, what it demonstrates, when it was last upda
 whether it is genuinely theirs (a fork with no commits from them is not a portfolio
 piece).
 
+For a substantial repository, read past the README: dependencies, structure, schema,
+tests, deployment files, commit history. A project's real evidence — the auth layer,
+the scheduled jobs, the test suite — rarely makes it into the README or the user's own
+description. Suggest each discovery as a `components:` line for the project's register
+entry (routed through `/fact`, as ever — this command still writes nothing). Skip the
+deep read for trivial repos.
+
 ## Step 3: Assess honestly
 
 For each artefact, ask what a hiring manager in the user's target roles would conclude.

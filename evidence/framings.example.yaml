@@ -1,0 +1,89 @@
+# Framings library — documented schema, filled with the FICTIONAL demo candidate.
+#
+# ---------------------------------------------------------------------------
+# EVERYTHING IN THIS FILE IS INVENTED. Riley Chen does not exist, and neither
+# do the employers or applications named here. Do not treat any line as a real
+# career fact.
+# ---------------------------------------------------------------------------
+#
+# WHAT THIS FILE IS FOR
+#
+# The register answers *what may this candidate claim?*. This file answers a
+# different question: *how has that claim been phrased, and which phrasings
+# went out the door?* One true fact supports many honest framings — "entered
+# results into the LIMS" and "maintained data quality across the sample
+# record" can describe the same afternoon — and a good framing is worth
+# keeping, because the next posting may want the other one.
+#
+# THE STANDING RULE: **phrasing references, never fact sources.**
+#
+# A framing here does not license a claim. Every reused line is re-grounded
+# against `evidence/register.yaml` and the candidate profile at drafting time,
+# and `harness/fact_check.py` checks the finished text exactly as it always
+# has. If a framing here ever contradicts the register, the register wins and
+# the framing is deleted. This separation is the whole reason the library is a
+# second file rather than a field inside the register.
+#
+# HOW ENTRIES GET HERE
+#
+# `/apply-any` harvests them automatically at the end of a run: the profile
+# statement and any bullet whose phrasing differs from the master CV, tagged
+# with the register facts it rests on and the application it shipped in.
+# `/career-review` prunes weak ones on request. Nothing else writes here.
+#
+# WHY `used_in` MATTERS
+#
+# It is the join key. `documents/applications/<used_in>/outcome.md` records
+# what happened to that application, so a later review can ask which framings
+# were in front of employers who called back. Small samples, read by eye — no
+# per-framing statistics, because fifteen applications cannot support them.
+#
+# TO USE IT: nothing to do. `/apply-any` creates `evidence/framings.yaml`
+# (gitignored) on the first run. This file documents the shape.
+
+meta:
+  owner: Riley Chen
+  updated: 2026-08-07
+  # Bump when the schema below changes shape, not on every harvest.
+  schema_version: 1
+
+framings:
+  # A metric-anchored framing: the number is registered, the interpretation of
+  # what the work demonstrates is the framing.
+  - text: >-
+      Maintained data quality across a 1,400-record sample migration, catching
+      entry errors before they reached analysis.
+    facts:
+      - metrics: "1,400"
+      - employers: Northwind Analytical Services
+    used_in: Northwind_Data_Analyst
+    role_family: environmental data analysis
+    note: Leads with data quality rather than the migration itself.
+    source: harvested 2026-08-05
+
+  # The same underlying work, framed for a different market. Both are true;
+  # neither is the "correct" one. This pair is the point of the library.
+  - text: >-
+      Ran the intake and batching process for an environmental testing lab,
+      reworking it to cut average turnaround time.
+    facts:
+      - projects: Sample Intake Redesign
+      - employers: Northwind Analytical Services
+    used_in: Prairie_Operations_Coordinator
+    role_family: laboratory operations
+    note: Operations framing of the same redesign; emphasises process ownership.
+    source: harvested 2026-08-06
+
+  # A project framing built from the project's `components:` list in the
+  # register, selected for a posting that cared about reporting automation.
+  - text: >-
+      Built an AI-assisted reporting workflow that turns field sample data into
+      the monthly board report, now the alliance's standing process.
+    facts:
+      - projects: Watershed Monitoring Dashboard
+    used_in: Prairie_Operations_Coordinator
+    role_family: environmental data analysis
+    note: >-
+      Keeps the AI-assisted qualifier the register requires for this project.
+      Do not reuse without it.
+    source: harvested 2026-08-06

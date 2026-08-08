@@ -87,6 +87,25 @@ must pass through the register with a source. Route 2 changes only *wording*, an
 no register entry at all. Conflating them is how an unevidenced claim gets onto a CV
 wearing the costume of a formatting change.
 
+## Step 4b: Review the framings library (only if it exists)
+
+If `evidence/framings.yaml` is present, spend a short pass on it. `/apply-any` fills it
+automatically, so it accumulates without anyone looking at it.
+
+- **Prune on request.** Read the entries back grouped by role family and offer to delete
+  weak ones: a phrasing that is vaguer than the master CV's, a near-duplicate of another
+  entry, or one whose `note` warns of a qualifier the user now finds awkward. Deleting a
+  framing removes a *wording*, never a fact — the register is untouched.
+- **Cross-reference outcomes by eye.** Each entry's `used_in` is the application folder
+  name, so `documents/applications/<used_in>/outcome.md` (or the tracker row) says what
+  happened. Report the pattern in plain words — "the three applications that led with
+  the data-quality framing all got replies; the two GIS-led ones did not" — and say
+  outright how thin the sample is. Do not compute rates, do not rank framings by score,
+  and do not let a pattern from four applications override the user's judgment about
+  what a posting wants.
+- **Anything that reads as a new fact is not a framing.** Route it through `/fact` like
+  every other Step 4 finding.
+
 ## Step 5: Confirm each one, individually
 
 Do not present a bundle and ask "shall I apply these?". Take them one at a time:

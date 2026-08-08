@@ -170,6 +170,25 @@ The posting artifacts (`provenance.md`, `job_posting.md`, the raw files in
 anywhere — and `/interview` reads it later to prepare defenses for every inferred or
 transferable claim the documents rest on.
 
+**Then harvest the framings.** Append this application's tailored phrasings to
+`evidence/framings.yaml` (create it from `evidence/framings.example.yaml`'s shape if it
+does not exist): the profile statement, plus any bullet whose wording differs
+meaningfully from the master CV. One entry each, carrying `text`, the `facts` it rests
+on (register section and entry), `used_in: <Company>_<Role>` (the package folder name,
+which is the join key to `outcome.md`), `role_family`, and `source: harvested <date>`.
+
+Two disciplines, both borrowed from `/setup` Path A because the same trap applies:
+
+- **Ground before storing.** A tailored draft is an output, not a source. Verify each
+  factual claim in the phrasing against the register and the candidate profile; drop or
+  correct anything they do not support, keeping only the framing. A framing harvested
+  from a draft that drifted becomes the seed of every future drift.
+- **Phrasing references, never fact sources.** The library records how a true thing was
+  said, never that a thing is true. Reusing a framing does not skip the grounding audit
+  or the fact gate; both run on the new draft exactly as always.
+
+Skip a phrasing that is identical to the master CV's — the library is for variants.
+
 Then, still before presenting:
 
 5. **Refresh the workbook:** `python harness/tracker_xlsx.py`.

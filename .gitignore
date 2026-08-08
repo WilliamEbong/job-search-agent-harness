@@ -110,6 +110,10 @@ upskill/*.md
 evidence/register.yaml
 evidence/backups/
 
+# Framings library: how the user's own facts have been phrased in real
+# applications. Not facts, but every line names an employer or a metric.
+evidence/framings.yaml
+
 # Preferences and companies of interest: user answers, never shipped.
 preferences.yaml
 companies.yaml

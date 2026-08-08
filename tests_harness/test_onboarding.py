@@ -167,7 +167,7 @@ class PreferencesExample(unittest.TestCase):
             "meta", "compensation", "location", "driving", "exclusions",
             "remote_tradeoffs", "hard_skips", "role_families", "seniority",
             "employment_type", "work_authorization", "industries", "direction",
-            "presentation", "usage", "default_search_scope",
+            "discovery", "presentation", "usage", "default_search_scope",
         }
         self.assertEqual(expected, set(self.prefs))
 
@@ -204,6 +204,55 @@ class PreferencesExample(unittest.TestCase):
     def test_default_scope_is_one_of_the_five(self):
         self.assertIn(self.prefs["default_search_scope"],
                       {"board", "company", "companies", "boards", "all"})
+
+
+class FramingsExample(unittest.TestCase):
+    """The framings library — how a true fact has been phrased, not what is true.
+
+    Kept in its own file precisely so a phrasing can never be mistaken for
+    evidence. The tests below pin the two properties that keep that separation
+    real: every framing names the register facts it rests on, and every framing
+    names the application it shipped in (the join key to the outcome).
+    """
+
+    def setUp(self):
+        self.data = load_example("evidence/framings.example.yaml")
+
+    def test_entries_carry_text_facts_used_in_and_source(self):
+        self.assertTrue(self.data["framings"])
+        for entry in self.data["framings"]:
+            for field in ("text", "facts", "used_in", "source"):
+                self.assertIn(field, entry, entry.get("text", "")[:40])
+            self.assertTrue(str(entry["text"]).strip())
+            self.assertTrue(entry["facts"], entry["text"][:40])
+
+    def test_sources_record_a_harvest_date(self):
+        pattern = re.compile(r"^harvested \d{4}-\d{2}-\d{2}$")
+        for entry in self.data["framings"]:
+            self.assertRegex(entry["source"], pattern)
+
+    def test_one_fact_carries_more_than_one_framing(self):
+        """The whole point: the same evidence, worded for different markets.
+
+        An example where every framing is unique to its own fact would not
+        show a reader what the file is for.
+        """
+        used_facts = []
+        for entry in self.data["framings"]:
+            for anchor in entry["facts"]:
+                used_facts.extend(f"{k}:{v}" for k, v in anchor.items())
+        repeated = {f for f in used_facts if used_facts.count(f) > 1}
+        self.assertTrue(repeated, "no fact is framed two different ways")
+
+    def test_the_phrasing_not_facts_rule_is_stated_in_the_file(self):
+        """A user who opens this file must hit the boundary before the schema."""
+        text = (ROOT / "evidence" / "framings.example.yaml").read_text(
+            encoding="utf-8").lower()
+        self.assertIn("phrasing references, never fact sources", text)
+
+    def test_the_example_is_not_the_users_own_file(self):
+        """framings.yaml is gitignored; only the fictional example ships."""
+        self.assertEqual("Riley Chen", self.data["meta"]["owner"])
 
 
 class CvPageTarget(unittest.TestCase):
@@ -357,10 +406,72 @@ class CompaniesCommand(unittest.TestCase):
                       self.text)
 
 
+class DiscoveryPreferences(unittest.TestCase):
+    """Trial role families — the lifecycle that keeps /discover from nagging."""
+
+    def setUp(self):
+        self.prefs = load_example("examples/preferences.example.yaml")
+        self.families = self.prefs["discovery"]["trial_families"]
+
+    def test_entries_carry_name_because_source_and_status(self):
+        self.assertTrue(self.families)
+        for entry in self.families:
+            for field in ("name", "because", "source", "status"):
+                self.assertIn(field, entry, entry.get("name"))
+
+    def test_status_is_one_of_the_three(self):
+        for entry in self.families:
+            self.assertIn(entry["status"], {"trial", "kept", "dropped"}, entry["name"])
+
+    def test_a_dropped_family_is_demonstrated(self):
+        """A dropped entry is kept on purpose: it is what stops re-proposal.
+
+        Deleting it to tidy the file would make /discover suggest the same
+        rejected family every month, which is how a useful command becomes one
+        the user stops running.
+        """
+        self.assertIn("dropped", {e["status"] for e in self.families})
+
+    def test_source_records_the_discovery_date(self):
+        pattern = re.compile(r"^discovered \d{4}-\d{2}-\d{2}$")
+        for entry in self.families:
+            self.assertRegex(entry["source"], pattern)
+
+
+class DiscoverCommand(unittest.TestCase):
+    def setUp(self):
+        self.text = command_text("discover.md")
+
+    def test_nothing_is_written_without_approval(self):
+        self.assertIn("nothing is written without explicit approval", self.text)
+
+    def test_a_dropped_family_is_never_re_proposed(self):
+        self.assertIn("never re-propose a family recorded at any status", self.text)
+
+    def test_proposals_state_the_gap_honestly(self):
+        """Internal candour: a proposal without its gap cannot be judged."""
+        self.assertIn('"the gap" is not optional', self.text)
+
+    def test_it_proposes_only_what_the_evidence_supports_today(self):
+        self.assertIn("never propose a family the register cannot support today",
+                      self.text)
+        self.assertIn("/upskill", self.text)
+
+    def test_trial_counts_are_not_sold_as_statistics(self):
+        self.assertIn("never present the trial counts as statistical evidence",
+                      self.text)
+
+    def test_scrape_names_trial_families_it_searches(self):
+        """A run spending effort on an experiment must say so."""
+        scrape = command_text("scrape.md")
+        self.assertIn("trial_families", scrape)
+        self.assertIn("including trial families", scrape)
+
+
 class CommandsLintable(unittest.TestCase):
     def test_new_commands_start_with_the_required_title(self):
         for name in ("setup-harness.md", "career-review.md", "companies.md",
-                     "fact.md", "verify-facts.md"):
+                     "fact.md", "verify-facts.md", "discover.md"):
             first = (COMMANDS / name).read_text(encoding="utf-8").splitlines()[0]
             self.assertRegex(first, r"^# /[a-z-]+")
 

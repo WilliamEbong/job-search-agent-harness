@@ -136,6 +136,31 @@ role_families:
   - programme coordination
   - water quality monitoring
 
+# Role families `/discover` proposed from the evidence and the user APPROVED as
+# experiments. They are searched alongside `role_families` above and flagged as
+# trials, so a run that spends effort on an experiment says so.
+#
+# `status` is the whole lifecycle: `trial` (being searched and judged),
+# `kept` (proved itself; the name was also appended to `role_families`),
+# `dropped` (judged and rejected). A dropped entry is never deleted — the record
+# is what stops `/discover` proposing the same family every month.
+#
+# `because` quotes the evidence chain from the original proposal, so a review
+# six weeks later still knows why the family was worth trying.
+discovery:
+  trial_families:
+    - name: business analysis
+      because: >-
+        Decomposed reporting requirements with lab stakeholders; wrote the
+        queries behind the monthly report; specified the watershed workflow
+        before building it.
+      source: discovered 2026-08-07
+      status: trial
+    - name: technical writing
+      because: Documentation components on the watershed reporting project.
+      source: discovered 2026-08-07
+      status: dropped
+
 seniority:
   current: intermediate
   targets:

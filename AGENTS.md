@@ -41,9 +41,9 @@ runs as a sequential fresh pass (§2), and usage percentages are never printed (
 
 ### Harness workflows
 
-`/setup-harness` (onboarding, CV first) · `/career-review` · `/companies` · `/scrape`
-(five scopes, three modes) · `/apply-any` (any input form) · `/verify-facts` · `/fact` ·
-`/tracker` · `/continue`
+`/setup-harness` (onboarding, CV first) · `/career-review` · `/companies` · `/discover`
+(role families the evidence supports) · `/scrape` (five scopes, three modes) ·
+`/apply-any` (any input form) · `/verify-facts` · `/fact` · `/tracker` · `/continue`
 
 ### The rules that outrank convenience
 
@@ -74,6 +74,7 @@ model should treat them as equivalent:
 | "check my spreadsheet", "update the tracker" | `/tracker` |
 | "look at my GitHub / portfolio" | `/career-review` |
 | "watch this company", "add employer" | `/companies` |
+| "what else could I do", "what jobs am I qualified for", "other careers" | `/discover` |
 | "set me up", "start over with my CV" | `/setup-harness` |
 | "prep me for the interview" | `/interview` |
 

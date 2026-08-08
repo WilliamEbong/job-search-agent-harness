@@ -157,8 +157,8 @@ up the same pointers from the file it loads automatically.
 Truth store: `evidence/register.yaml` (every entry sourced) · preferences:
 `preferences.yaml` · companies of interest: `companies.yaml` · continuity: `state/`.
 
-Harness workflows: `/setup-harness`, `/career-review`, `/companies`, `/scrape`,
-`/apply-any`, `/verify-facts`, `/fact`, `/tracker`, `/continue`.
+Harness workflows: `/setup-harness`, `/career-review`, `/companies`, `/discover`,
+`/scrape`, `/apply-any`, `/verify-facts`, `/fact`, `/tracker`, `/continue`.
 
 The Verification Checklist above still governs every generated document. The harness adds
 one blocking step to it: **`/verify-facts` runs on the final text, after any humanizer
@@ -179,6 +179,7 @@ model should treat them as equivalent:
 | "check my spreadsheet", "update the tracker" | `/tracker` |
 | "look at my GitHub / portfolio" | `/career-review` |
 | "watch this company", "add employer" | `/companies` |
+| "what else could I do", "what jobs am I qualified for", "other careers" | `/discover` |
 | "set me up", "start over with my CV" | `/setup-harness` |
 | "prep me for the interview" | `/interview` |
 

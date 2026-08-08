@@ -214,6 +214,16 @@ class ApplyOverlay(unittest.TestCase):
     def test_positioning_brief_is_saved_into_the_package(self):
         self.assertIn("positioning_brief.md", self.text)
 
+    def test_framings_are_harvested_after_the_run(self):
+        """Without the harvest the library never fills and the feature is inert."""
+        self.assertIn("evidence/framings.yaml", self.text)
+        self.assertIn("used_in", self.text)
+
+    def test_the_harvest_keeps_the_phrasing_not_facts_boundary(self):
+        """A harvested framing must never become a licence to claim."""
+        self.assertIn("phrasing references, never fact sources", self.text)
+        self.assertIn("ground before storing", self.text)
+
 
 class VendoredHumanizer(unittest.TestCase):
     def test_license_and_provenance_ship_with_the_skill(self):

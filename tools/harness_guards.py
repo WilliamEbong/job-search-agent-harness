@@ -35,6 +35,7 @@ errors: list[str] = []
 REQUIRED_IGNORE_RULES = [
     "evidence/register.yaml",
     "evidence/backups/",
+    "evidence/framings.yaml",
     "preferences.yaml",
     "companies.yaml",
     "state/",
@@ -51,6 +52,7 @@ REQUIRED_IGNORE_RULES = [
 # which is exactly how personal data gets committed by accident.
 FORBIDDEN_TRACKED = [
     "evidence/register.yaml",
+    "evidence/framings.yaml",
     "preferences.yaml",
     "companies.yaml",
     "shortlist.csv",
@@ -166,7 +168,8 @@ def check_nothing_personal_is_tracked() -> None:
 
 def check_shipped_examples_exist() -> None:
     """The documented schemas have to ship, or onboarding has nothing to copy."""
-    for path in ("evidence/register.example.yaml", "examples/preferences.example.yaml",
+    for path in ("evidence/register.example.yaml", "evidence/framings.example.yaml",
+                 "examples/preferences.example.yaml",
                  "examples/companies.example.yaml"):
         if not (ROOT / path).is_file():
             errors.append(f"{path} is missing — it documents a schema users depend on")

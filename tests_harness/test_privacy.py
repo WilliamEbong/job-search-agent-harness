@@ -219,7 +219,7 @@ class RuntimeMap(unittest.TestCase):
         stubs = {p.stem for p in (ROOT / ".codex" / "prompts").glob("*.md")}
         for workflow in ("setup-harness", "scrape", "apply-any", "verify-facts",
                          "fact", "tracker", "continue", "companies",
-                         "career-review"):
+                         "career-review", "discover"):
             self.assertIn(workflow, stubs)
 
 

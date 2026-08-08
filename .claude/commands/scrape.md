@@ -58,6 +58,17 @@ added this morning via `/companies` are both included by the next matching run; 
 needs re-onboarding. If a named board or company does not exist, say so and list what is
 available rather than silently searching a subset.
 
+**Trial role families are searched too, and are named when they are.** If
+`preferences.yaml` has `discovery.trial_families` entries at `status: trial`, they are
+searched alongside `role_families` and the announce line says so, because a run spending
+effort on an experiment should not do it silently:
+
+> Searching your 4 job boards (focused), including trial families: business analysis.
+> Say "skip trials" to search only your usual families this run.
+
+`skip trials` is a per-run flag and writes nothing. Whether a trial family stays is
+decided in `/discover review`, never here — this command searches, it does not judge.
+
 **The three modes** decide depth and volume, with caps from `preferences.yaml`:
 
 | Mode | Depth | Caps |
@@ -104,6 +115,11 @@ for the boards in scope and let it run each board's CLI, deduplicate against
 `seen_jobs.json`, extract deadlines, flag mass-postings, and check portal health. Never
 write scraping code here; a board with no CLI gets one through upstream `/add-portal`,
 which handles robots/ToS checking, scaffolding and a live test.
+
+Pass any active trial families into that invocation as additional search terms — the
+skill's query strategy already has an adjacent-roles tier, so they land in the right
+place without editing it. Tag their results `trial: <family>` in the shortlist rationale
+so `/discover review` can find them later.
 
 **Companies of interest** — for each selected entry, fetch its `careers_url` and look for
 openings matching the profile. Escalate per `RUNTIME-MAP.md`: plain fetch → Firecrawl

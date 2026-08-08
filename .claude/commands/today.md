@@ -55,6 +55,10 @@ Present the script's output, lightly. Keep it short — this is a glance, not a 
   on a decision.
 - **Waiting** — one line with a count. These need nothing today; do not list them.
 - **Last search** — how many days ago.
+- **Trials to judge** — only when `preferences.yaml` has `discovery.trial_families` at
+  `status: trial` that have accumulated results. One line, counted from the shortlist:
+  `trial: business analysis — 12 found, 3 shortlisted → /discover review`. Reading only;
+  the keep-or-drop decision lives in `/discover`, where it asks first.
 
 Then the numbered actions. **The point of this command is that the answer to "what now?"
 is a number**, so always end with them, and keep each label to one line naming the
@@ -70,6 +74,7 @@ something new"). Either way, run the matching workflow:
 | a follow-up | `/outcome <company>` and go to its follow-up branch |
 | a closing-soon or shortlisted job | `/apply-any <url>` |
 | a new search | `/scrape` |
+| a trial family to judge | `/discover review` |
 | an offer to think about | `/offer <company>` |
 | set-up | `/setup-harness` |
 

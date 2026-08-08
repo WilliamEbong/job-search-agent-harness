@@ -45,6 +45,7 @@ REQUIRED_IGNORE_RULES = [
     "backups/",
     "documents/writing_samples/**",
     "documents/portfolio/**",
+    "graphify-out/",
 ]
 
 # Paths that must never be tracked by git, whatever the ignore file says. A

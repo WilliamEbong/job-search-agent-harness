@@ -157,6 +157,10 @@ up the same pointers from the file it loads automatically.
 Truth store: `evidence/register.yaml` (every entry sourced) · preferences:
 `preferences.yaml` · companies of interest: `companies.yaml` · continuity: `state/`.
 
+If `graphify-out/` exists (optional, gitignored), it holds a knowledge graph of this
+repo — answer questions about the architecture with `graphify query "..."` before
+grepping. It is not required and is absent on a fresh clone.
+
 Harness workflows: `/setup-harness`, `/career-review`, `/companies`, `/discover`,
 `/scrape`, `/apply-any`, `/verify-facts`, `/fact`, `/tracker`, `/continue`.
 

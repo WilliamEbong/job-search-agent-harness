@@ -140,6 +140,11 @@ documents/portfolio/**
 .pytest_cache/
 build/
 
+# Knowledge graph built by the graphify skill. Derived, rebuildable, and it
+# indexes whatever is in the tree at build time - which on a real installation
+# includes the register and the preference answers.
+graphify-out/
+
 # Playwright MCP working directory. Posting intake escalates to it at rungs 2
 # and 3, and it writes page snapshots and console logs into the repo root.
 # Those snapshots contain the page's own text - a posting, or whatever a

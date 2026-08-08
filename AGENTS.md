@@ -38,6 +38,7 @@ runs as a sequential fresh pass (§2), and usage percentages are never printed (
 | `harness/` | Runtime-neutral Python: fact gate, tracker workbook, archiver, run log, `.md` mirror, telemetry. |
 | `.codex/prompts/` | Thin Codex stubs. They add no behaviour; the command files are the procedure. |
 | `docs/` | `board-intelligence.md`, `latex-gotchas.md`, and the build/plan record. |
+| `graphify-out/` | Optional, gitignored: a knowledge graph of this repo. When present, answer architecture questions from it (`graphify query "..."`) before grepping. |
 
 ### Harness workflows
 

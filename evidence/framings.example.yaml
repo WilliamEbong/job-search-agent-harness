@@ -31,6 +31,16 @@
 # with the register facts it rests on and the application it shipped in.
 # `/career-review` prunes weak ones on request. Nothing else writes here.
 #
+# THE USER'S VETO
+#
+# Before an application is presented, every framing that differs from the
+# master CV's wording is shown to the user. Default is `status: used` — the
+# framing is already in the documents, and asking permission first would
+# produce a timid draft. If they reject one it is edited out and recorded here
+# as `status: vetoed`, with their reason, and never re-invented: a phrasing
+# somebody already said no to, coming back next month, reads as not listening.
+# A `vetoed` entry is a memory, not a candidate. Never offer one to a drafter.
+#
 # WHY `used_in` MATTERS
 #
 # It is the join key. `documents/applications/<used_in>/outcome.md` records
@@ -59,6 +69,7 @@ framings:
     used_in: Northwind_Data_Analyst
     role_family: environmental data analysis
     note: Leads with data quality rather than the migration itself.
+    status: used
     source: harvested 2026-08-05
 
   # The same underlying work, framed for a different market. Both are true;
@@ -72,6 +83,7 @@ framings:
     used_in: Prairie_Operations_Coordinator
     role_family: laboratory operations
     note: Operations framing of the same redesign; emphasises process ownership.
+    status: used
     source: harvested 2026-08-06
 
   # A project framing built from the project's `components:` list in the
@@ -86,4 +98,20 @@ framings:
     note: >-
       Keeps the AI-assisted qualifier the register requires for this project.
       Do not reuse without it.
+    status: used
+    source: harvested 2026-08-06
+
+  # A vetoed framing. Kept so it is never re-invented, never offered to a
+  # drafter. Nothing here was untrue - the candidate simply would not want to
+  # defend "led" in a room, which is exactly the judgment that is theirs.
+  - text: >-
+      Led the rollout of the alliance's monthly reporting process.
+    facts:
+      - projects: Watershed Monitoring Dashboard
+    used_in: Prairie_Operations_Coordinator
+    role_family: environmental data analysis
+    note: >-
+      Vetoed 2026-08-06 - "I built the thing, I did not lead anyone."
+      Register says supported; "led" overstates the role.
+    status: vetoed
     source: harvested 2026-08-06

@@ -91,6 +91,43 @@ class TexToMdMirror(unittest.TestCase):
         self.assertIn("no evidence register", proc.stdout + proc.stderr)
 
 
+class DraftingPromises(unittest.TestCase):
+    """The two rules that decide what the drafter is allowed to be.
+
+    They pull in opposite directions on purpose - market the candidate hard,
+    invent nothing - so both are pinned together. Losing either one produces a
+    recognisable failure: a timid CV, or one that cannot survive a reference
+    check.
+    """
+
+    def setUp(self):
+        self.text = flat(COMMANDS / "apply.md")
+
+    def test_interpretation_is_free_and_the_facts_are_not(self):
+        self.assertIn("the strongest version of the claim", self.text)
+        self.assertIn("the line this stage must not cross", self.text)
+        # The list that is never inferred, whatever the framing argument.
+        for fact in ("a degree", "a certification", "a licence", "a clearance",
+                     "a tenure"):
+            self.assertIn(fact, self.text, fact)
+
+    def test_new_framings_are_shown_to_the_user_with_a_veto(self):
+        """It is their career being described; they have to recognise it."""
+        self.assertIn("the user gets a veto", self.text)
+        self.assertIn("default is applied", self.text)
+
+    def test_the_veto_is_recorded_so_it_is_not_re_invented(self):
+        self.assertIn("status: vetoed", self.text)
+
+    def test_a_veto_re_runs_the_fact_gate(self):
+        """The text changed, so the gate runs on what will actually be sent."""
+        self.assertIn("recompile", self.text)
+        self.assertIn("re-run `/verify-facts`", self.text)
+
+    def test_vetoed_framings_are_never_offered_back_to_the_drafter(self):
+        self.assertIn("skip every entry marked `status: vetoed`", self.text)
+
+
 class IntakeLadder(unittest.TestCase):
     def setUp(self):
         self.text = flat(SKILLS / "posting-intake" / "SKILL.md")
@@ -252,6 +289,10 @@ class ApplyOverlay(unittest.TestCase):
 
     def test_positioning_brief_is_saved_into_the_package(self):
         self.assertIn("positioning_brief.md", self.text)
+
+    def test_shortlist_rows_go_through_the_script(self):
+        """`rationale` is free text and shifts columns when hand-quoted."""
+        self.assertIn("harness/shortlist_row.py", self.text)
 
     def test_framings_are_harvested_after_the_run(self):
         """Without the harvest the library never fills and the feature is inert."""

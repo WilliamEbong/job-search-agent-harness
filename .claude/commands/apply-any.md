@@ -84,6 +84,18 @@ How far to go without asking, based on the fit score from `/apply`'s evaluation:
 Volume caps from `preferences.yaml` (`usage.modes.<mode>.max_packages_per_run`) apply on
 top and are never exceeded, whatever the scores.
 
+Every one of those rows goes in through the script — the same one `/scrape` Step 6 uses,
+which owns the schema and the quoting:
+
+```
+python harness/shortlist_row.py --company "<Company>" --role "<Role>" \
+    --score <fit> --verdict <qualified|not-drafted|gate-fail> \
+    --url "<url>" --rationale "<the reason, quoted from the posting where it is one>"
+```
+
+A verdict the ladder produced and never recorded is a decision the user cannot see and
+`/today` cannot act on.
+
 ### Rapidly closable gaps
 
 If the evaluation classified a requirement as **rapidly closable** (per
@@ -174,8 +186,10 @@ meaningfully from the master CV. If the file does not exist, create it with the 
 file's entries, which belong to the fictional demo candidate. One entry each, carrying
 `text`, the `facts` it rests on (register section and entry), `used_in` (the package
 folder name exactly as the script created it — the join key to `outcome.md`),
-`role_family`, `source: harvested <date>`, and a one-line `note` where the framing
-carries a condition worth remembering (a required qualifier, a claim ceiling).
+`role_family`, `source: harvested <date>`, a `status` (`used`, or `vetoed` when the user
+struck it in `/apply` Step 6, with their reason in the `note`), and a one-line `note`
+where the framing carries a condition worth remembering (a required qualifier, a claim
+ceiling).
 
 Two disciplines, both borrowed from `/setup` Path A because the same trap applies:
 

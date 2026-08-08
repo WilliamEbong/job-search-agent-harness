@@ -254,6 +254,24 @@ class FramingsExample(unittest.TestCase):
         """framings.yaml is gitignored; only the fictional example ships."""
         self.assertEqual("Riley Chen", self.data["meta"]["owner"])
 
+    def test_every_framing_records_whether_it_was_used_or_vetoed(self):
+        for entry in self.data["framings"]:
+            self.assertIn(entry.get("status"), {"used", "vetoed"},
+                          entry["text"][:40])
+
+    def test_a_vetoed_framing_is_kept_with_its_reason(self):
+        """The veto has to be remembered, or the same phrasing comes back.
+
+        Nothing about a vetoed framing is untrue - the candidate simply would
+        not want to defend it in a room. Deleting the entry to tidy up means
+        re-inventing it next month, which reads as not listening.
+        """
+        vetoed = [e for e in self.data["framings"] if e.get("status") == "vetoed"]
+        self.assertTrue(vetoed, "no vetoed framing is demonstrated")
+        for entry in vetoed:
+            self.assertTrue(str(entry.get("note", "")).strip(),
+                            "a veto without its reason is not a record")
+
 
 class CvPageTarget(unittest.TestCase):
     """`harness/presentation.py` — backward-compatible page-target resolution.

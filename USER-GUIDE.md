@@ -221,6 +221,14 @@ tracker row.
 combined cover-letter-then-resume file, named so they make sense in a file picker. The
 `.md` is generated from the `.tex`, never written by hand, so the two cannot drift.
 
+**You see how your experience was framed, and you can strike any of it.** Wherever the
+wording differs from your master CV, the summary lists the new line, the old one, and the
+evidence behind it. All of it is already in the documents — the point is not to ask
+permission for every sentence, it is that you should recognise the person on the page.
+Say "2 is a stretch" and it is reworded or removed, the documents recompile, the facts are
+re-checked, and that phrasing is remembered as rejected so it does not come back next
+month.
+
 **Nothing is submitted.** You send it, then tell the system you did.
 
 **On pace, honestly.** Each application runs a dozen careful steps and two LaTeX

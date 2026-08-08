@@ -126,6 +126,8 @@ Also read the most recent existing CV and cover letter files for concrete struct
 
 **Framings library (optional read).** If `evidence/framings.yaml` exists, skim it for phrasings of the same facts that fit this posting's vocabulary — it records how the candidate's evidence has been worded in past applications, including which application each went out in. Same rule as archived drafts, and it is stated in the file's own header: **phrasing references, never fact sources.** A reused framing is re-grounded against the profile like any other sentence, and it earns its place only if it fits this posting better than a fresh line would.
 
+**Skip every entry marked `status: vetoed`.** Those are framings the candidate struck from an earlier application, with their reason in the `note`. They are recorded so they are not re-invented — reaching for one again, or writing a near-paraphrase of it, is the same phrasing coming back after they said no.
+
 ### Requirement coverage (both documents)
 - **Every requirement the posting states gets assessed — and gaps are reported candidly to the USER in the Step 1 evaluation, never hidden from them.** The employer-facing documents are a different matter: they lead with the strongest evidence and transferable arguments, and they do **not** volunteer a list of anti-qualifications. A candidate matching 7 of 10 requirements presents the strongest 7; the 3 gaps live in the user-facing evaluation and interview prep, not in the CV. This is normal professional advocacy, not concealment — internal analysis stays skeptical, external documents stay persuasive and selective.
 - **Narrow exceptions that must still be addressed in-document:** a disclosure the application explicitly requires, work authorization where the posting directly asks, and hard legal/licensing prerequisites that cannot ethically be left implied. Never falsify or omit a required disclosure. A gap the cover letter *chooses* to engage (because the posting makes it unavoidable) gets a confident bridge ("a natural extension of X"), not an apology.
@@ -363,6 +365,45 @@ Run the full verification checklist from `CLAUDE.md` now — this is the **only*
 
 ### Verification Checklist
 Report pass/fail for each item in the CLAUDE.md verification checklist (factual accuracy, targeting, consistency, quality).
+
+### How your experience was framed (the user gets a veto)
+
+**Every framing that is new or materially different from the master CV's wording is
+shown to the user, before they send anything.** It is their career being described, and
+a framing they would not say out loud in an interview is worse than no framing at all —
+they have to recognise the person on the page. This is not the same as the gap report:
+these are all *true*, all grounded, and all already applied.
+
+List them compactly — one line each, numbered, with the evidence underneath:
+
+```
+How I framed your experience for this role
+  1. "Maintained data quality across a 1,400-record migration, catching entry
+     errors before analysis."
+     was: "Entered and checked sample results in the LIMS"  ·  from: metrics 1,400 +
+     Northwind responsibilities  ·  why: the posting leads on QA/QC
+
+  2. "Specified the reporting workflow before building it."
+     new  ·  from: Watershed project components  ·  why: the posting asks for
+     requirements-gathering, and this is the closest real evidence
+
+All of these are in the documents now. Say the number of any you want reworded or
+removed — "2 is a stretch" is enough.
+```
+
+**Default is applied; the veto is the user's.** Do not ask permission first and do not
+water anything down pre-emptively — that produces the timid draft this system exists to
+avoid. Show the work and let them cut.
+
+When a framing is vetoed: edit it out or reword it as they ask, **recompile**, and
+**re-run `/verify-facts`** (the text changed, so the gate runs again). Record the veto in
+`evidence/framings.yaml` with `status: vetoed` and their reason in one line, so the same
+phrasing is not re-invented on the next application — a rejected framing that comes back
+next month reads as not listening.
+
+Keep this to framings that actually differ. A bullet carried over from the master CV
+unchanged is not a framing decision and does not belong in the list; a list that includes
+everything gets skipped, and then the veto is theoretical.
 
 ### Key Tailoring Decisions
 Summarize 3-5 key decisions made to tailor the application:

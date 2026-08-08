@@ -199,9 +199,19 @@ band, equity, a four-day week). Three boundaries, each load-bearing:
 
 ## Step 6: Record the run
 
-Write a shortlist row per scored candidate to `shortlist.csv`
-(`date,company,role,location,source,url,score,verdict,rationale,deadline`), with
-verdict from:
+Write a shortlist row per scored candidate **through the script**, never as hand-written
+CSV — `rationale` is free text and routinely holds the commas and quotes that shift a
+row's columns, after which `/today` stops warning about closing dates:
+
+```
+python harness/shortlist_row.py --company "<Company>" --role "<Role>" \
+    --score <n> --verdict <verdict> --url "<url>" --location "<location>" \
+    --rationale "<one line>" --deadline <YYYY-MM-DD>
+```
+
+It owns the header (`date,company,role,location,source,url,score,verdict,rationale,deadline`),
+defaults the date, and rejects a verdict outside the four below rather than writing a row
+the workbook cannot colour. Verdict from:
 
 | Verdict | Meaning |
 |---|---|

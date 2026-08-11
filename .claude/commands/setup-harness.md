@@ -21,6 +21,46 @@ stops trusting the system with anything.
 
 ---
 
+## Step 0a: Environment check (before anything else)
+
+The harness depends on tools this repo cannot ship — TeX, poppler, Bun, the Python
+packages, the Playwright and Firecrawl MCP servers. A user missing one finds out
+mid-application, which is the worst possible moment. So check first, fix what can be
+fixed, and walk them through the rest.
+
+1. Run `python harness_setup.py --doctor --quick` and read the table.
+2. Run `claude mcp list` (or the runtime's equivalent) and note whether `playwright`
+   and `fcrawl`/`firecrawl` are configured.
+3. If everything required is OK and both MCP servers are present, say one line
+   ("environment checked — everything's in place") and move on to Step 0.
+4. If anything is missing, tell them what and why it matters, then:
+   - **Installable by script** (Python packages, portal CLI deps, plugins, Playwright
+     MCP): offer to run `python harness_setup.py --yes` — it installs the recommended
+     set and verifies every install. Doing this once covers all of it.
+   - **Firecrawl** needs an account, so the script alone can't finish it. Walk them
+     through it, one step at a time, waiting between steps:
+
+     > Firecrawl (https://github.com/firecrawl/firecrawl) is a web-scraping service
+     > this system uses in exactly two places: reading job postings that block a plain
+     > fetch, and extracting listings from careers pages with no CLI. Without it those
+     > pages are marked `unverified` instead — the system works, it just confirms less.
+     >
+     > a. Create a free account at https://firecrawl.dev (Google/GitHub sign-in, no
+     >    payment) and copy your API key — it starts with `fc-`. Don't paste it here.
+     > b. In a terminal, run this yourself with YOUR_KEY replaced:
+     >    `claude mcp add --transport http --scope user fcrawl https://mcp.firecrawl.dev/YOUR_KEY/v2/mcp`
+     > c. Restart the agent, then verify with `claude mcp list` — `fcrawl` should be
+     >    listed. If it isn't, say so; don't report success.
+
+     If they'd rather not sign up, `python harness_setup.py` offers a keyless tier —
+     rate-limited but functional.
+5. Anything the doctor marks MISSING that needs a system installer (TeX, poppler, Bun):
+   give them the fix command from the doctor's own output and offer to continue setup
+   without it, naming what won't work until it's installed.
+
+This step runs on first onboarding. For a returning user (register and preferences both
+exist), skip it unless something visibly fails.
+
 ## Step 0: Offer a short path and a thorough one
 
 Say what is about to happen, then let them choose — with the time cost stated, because

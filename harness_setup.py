@@ -671,10 +671,10 @@ def offer_mcp(runtime: Runtime) -> list[Check]:
             tier if ok else "add command ran but the server is not listed",
             "" if ok else out.strip()[:200], required=False))
         if not has_key:
-            print(f"  Using the keyless tier. To use your own quota, set "
-                  f"{FIRECRAWL_KEY_VAR} in your environment and re-run setup — "
-                  f"setup passes the variable name to the runtime and never reads "
-                  f"or stores the key itself.")
+            print(f"  Using the keyless tier. A free account at https://firecrawl.dev "
+                  f"gives more quota — no payment needed. Set {FIRECRAWL_KEY_VAR} in "
+                  f"your environment and re-run setup — setup passes the variable "
+                  f"name to the runtime and never reads or stores the key itself.")
     else:
         checks.append(Check(f"firecrawl MCP ({runtime.name})", OPTIONAL, "declined",
                             required=False))

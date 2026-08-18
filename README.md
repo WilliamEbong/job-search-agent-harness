@@ -47,8 +47,8 @@ and original work precisely.
 ## The idea
 
 Most AI job-application tools share one failure: asked to make a candidate look good, a
-language model will quietly make things up. A slightly better number. A credential that is
-"basically" finished. A technology used once, described as a skill. Each is defensible in
+language model will quietly make things up — a slightly better number, a credential that is
+"basically" finished, a technology used once and described as a skill. Each is defensible in
 the moment and indefensible in an interview.
 
 So this harness splits two questions that usually get mixed together:
@@ -137,7 +137,7 @@ already answered.
 **Job discovery you control.** Five scopes — one board, one company, all your companies of
 interest, all boards, or everything — and three usage modes from `focused` (one board, no
 documents generated) up to `full`. Every run states what it is about to do before it
-starts, in plain language, with no invented token arithmetic. The mechanics are in
+starts, in plain language, without inventing token arithmetic. The mechanics are in
 [How it finds jobs](#how-it-finds-jobs).
 
 **Companies of interest.** Boards only find jobs that were advertised on boards. Keep a
@@ -155,8 +155,8 @@ workbook is a view, regenerated and never read back. Applications move to `appli
 you say you have applied, and archive themselves after eight weeks.
 
 **Work that survives a session ending.** State is written at every milestone. `/continue`
-resumes at the exact next step — in either runtime — redoing nothing and re-asking
-nothing.
+resumes at the exact next step — in either runtime — without redoing work or re-asking
+questions you have already answered.
 
 ---
 

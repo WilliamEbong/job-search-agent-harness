@@ -223,8 +223,8 @@ combined cover-letter-then-resume file, named so they make sense in a file picke
 
 **You see how your experience was framed, and you can strike any of it.** Wherever the
 wording differs from your master CV, the summary lists the new line, the old one, and the
-evidence behind it. All of it is already in the documents — the point is not to ask
-permission for every sentence, it is that you should recognise the person on the page.
+evidence behind it. All of it is already in the documents. The list is there so you can
+recognise the person on the page before you send it.
 Say "2 is a stretch" and it is reworded or removed, the documents recompile, the facts are
 re-checked, and that phrasing is remembered as rejected so it does not come back next
 month.

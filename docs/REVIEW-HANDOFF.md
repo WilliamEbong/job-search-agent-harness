@@ -158,6 +158,8 @@ optional, gitignored knowledge graph. Behavioural changes are listed in §4.1.
 `.agents/skills/<workflow>/` (the `.codex/prompts/` stubs were never loaded by
 Codex and are deleted), the installer's plan question and `Codex network` doctor
 row, and `tests_harness/test_{ats_check,lite_search,latex_build,codex_skills,recruiter}.py`.
+The handoff for that pass, with its verification record and open items, is
+`docs/HANDOFF-lite-codex.md`.
 
 ---
 

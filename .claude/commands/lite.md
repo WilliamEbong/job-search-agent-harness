@@ -5,6 +5,8 @@ workflows; switch any time.
 
 ## Rules
 
+**Runtime.** Apply `RUNTIME-MAP.md` once per session, including its next-action mapping.
+
 **Budget.** Read only files named here, each once per session; never re-read own writes.
 `/lite setup` and `/lite apply` read their steps from `.claude/lite/setup.md` and
 `.claude/lite/apply.md`. Never open `.claude/skills/**`, `docs/` or other command files,

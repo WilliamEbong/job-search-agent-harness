@@ -31,6 +31,9 @@ and never sends the message
 ([openai/codex#29131](https://github.com/openai/codex/issues/29131), open when
 this was written). On Codex, say `$name` or the plain-language phrase.
 
+Translate user-facing next actions from `/name` to `$name`, including actions
+printed by shared scripts. Keep the shared procedures and script output runtime-neutral.
+
 Codex custom prompts are not the mechanism. They are deprecated and are only
 ever read from the Codex home (`~/.codex/prompts`), never from a repository,
 so the `.codex/prompts/` stubs this repo used to ship were never loaded.
@@ -56,18 +59,18 @@ Two workflows genuinely need this: upstream `apply.md` and `rank.md`.
 
 | | Claude Code | Codex |
 |---|---|---|
-| `/apply` fresh-context reviewer | Agent tool, `general-purpose` subagent, as upstream writes it | No Agent tool. Run the reviewer as a **sequential fresh pass**: finish drafting, then start the reviewer instructions from the top with *only* the reviewer's inputs (posting, drafts, profile), explicitly discarding the drafting context. Same checklist, same output format. |
+| `/apply` fresh-context reviewer | Agent tool, `general-purpose` subagent, as upstream writes it | Available delegation tools vary by host and session. The default fallback is a **sequential review pass**: finish drafting, then apply the reviewer instructions from the top to the posting, drafts and profile. Same checklist and output format, but the drafting context is still present. Report this as self-review, not a fresh-context review. Use an isolated reviewer only when a tool provides that isolation and the session permits delegation. |
 | `/rank` parallel scoring (~5 jobs per agent) | Parallel Agent-tool dispatch | Sequential batches of five with the identical scoring rubric. Slower, same result. |
 
-The reviewer's value comes from *not having written the draft*. On Codex that has to be
-achieved by discipline instead of by process isolation — which means the discarding step
-is the whole mechanism, not a formality.
+A sequential pass can catch errors, but cannot discard context already in the session
+or provide the independence of a reviewer who did not write the draft. Lite mode still
+prohibits subagents and does not run this review step.
 
 ## 3. Tool-name mapping
 
 | Named in the command markdown | Claude Code | Codex |
 |---|---|---|
-| `WebFetch` / `WebSearch` | native tools | Codex's `web_search` tool. Its default mode, `cached`, answers from an OpenAI-maintained index rather than live pages; for today's postings the user sets `web_search = "live"` in `~/.codex/config.toml` (`"disabled"` removes the tool). If no web tool works in a session, use the Firecrawl or Playwright MCP; if neither is configured, **report the inability — never silently skip the step**. |
+| `WebFetch` / `WebSearch` | native tools | Use the built-in web tool actually exposed in the session (for example `web.run` or `web__run` through tool discovery); do not assume its callable name is `web_search`. CLI `web_search` is also a configuration setting: cached results do not establish that a posting is live. Check the returned source and retrieval evidence. If no web tool works, use configured Firecrawl or Playwright MCP tools; otherwise **report the inability — never silently skip the step**. Do not change the user's configuration automatically. |
 | `Glob` / `Read` | native tools | shell equivalents (`ls`/pattern match, file read) |
 | "Read the PDF" (visual page check) | Read tool on the PDF | `pdftoppm -png -r 50 <pdf> <prefix>` (poppler, the package `pdftotext` comes from) writes `<prefix>-1.png`, `<prefix>-2.png`, …; open each with Codex's `view_image` tool. 50 DPI shows page count, page breaks and overflow; re-render one page with `-r 100 -f N -l N` when words must be read. No `pdftoppm`, or a model without image input → say the visual check did not run; never mark it passed |
 | `AskUserQuestion` | native tool | Ask one concise plain-text question that names the options inline ("focused, balanced or full?"), then stop and wait for the reply. Codex's `request_user_input` tool exists only in Plan mode. Never answer for the user to keep going |
@@ -75,6 +78,18 @@ is the whole mechanism, not a formality.
 | `mcp__…` tools | `claude mcp` config; `claude mcp list` | `[mcp_servers.*]` in `~/.codex/config.toml`, or `codex mcp add`; `codex mcp list` |
 | `allowed-tools:` in SKILL.md frontmatter | honoured | Ignored: Codex's skill parser reads only `name`, `description` and `metadata`. The sandbox and approval policy decide instead |
 | Network for shell commands (portal CLIs `bun run .agents/skills/*-search/…`, `bun install`, `pip install`, `curl`) | governed by the permission allowlist: `.claude/settings.json` pre-approves `bun run`; other commands ask | **Off by default** in Codex's sandbox. The user either enables it in their own `~/.codex/config.toml` (`[sandbox_workspace_write]` then `network_access = true`) or, under `approval_policy = "on-request"`, approves Codex's request per command. With neither, a board search fails: report "could not reach the board", never "no jobs found". The repo ships no `.codex/config.toml`: a project config loads only for a trusted project, and the sandbox posture is the user's decision |
+
+Sandbox restrictions also cover filesystem and profile access. A sibling worktree may
+need write escalation even after `git worktree add` succeeds. On Windows, installed
+MiKTeX engines may fail while accessing their user profile; inspect the error and
+request escalation for the affected compile before diagnosing a missing installation.
+Use the session's escalation mechanism when available; never retry silently as success
+or alter global configuration to bypass the restriction.
+
+Write workflow data as UTF-8 without a BOM using file-edit tools. Windows PowerShell
+5.1 `>` writes UTF-16 and `Set-Content -Encoding UTF8` adds a BOM; either can make
+`state/lite-apply.json` unreadable to the driver's UTF-8 JSON reader. Keep posting text
+out of shell command lines, including shell-based file-writing commands.
 
 ## 4. Optional MCP-bound features
 
@@ -105,9 +120,9 @@ The one real per-runtime divergence.
 
 | | Claude Code | Codex |
 |---|---|---|
-| Signal | `harness/telemetry_statusline.py`, registered as the statusline, mirrors `context_window.used_percentage` and `rate_limits.five_hour/.seven_day.used_percentage` (Pro/Max) into `state/telemetry.json` | None exposed to the agent. `/status` and `/statusline` are human-facing only. |
+| Signal | `harness/telemetry_statusline.py`, registered as the statusline, mirrors `context_window.used_percentage` and `rate_limits.five_hour/.seven_day.used_percentage` (Pro/Max) into `state/telemetry.json` | No portable per-session context signal. Some desktop hosts expose account-wide usage limits, which are not context utilization; this harness does not consume them. `/status` and `/statusline` are human-facing. |
 | Triggers | ≥80% context → refresh HANDOFF · ≥90% → advise a fresh session · ≥90% subscription window → offer continuation in the other runtime | Milestone cadence plus a conservative turn-count heuristic (~every 10 turns, refresh HANDOFF) |
-| Reporting | Percentages may be quoted, with their caveats | **Never print a percentage.** No number exists to print, and an invented one is worse than none because the user will plan around it. |
+| Reporting | Percentages may be quoted, with their caveats | **Never print a percentage** for harness continuity or usage telemetry. Follow the milestone cadence; do not infer context utilization from account-wide limits. This does not prohibit measured ATS scores. |
 | Caveats | `used_percentage` is input-tokens-only; null before the first call; resets after `/compact` | — |
 
 ## 6. Plugin installs (handled by `harness_setup.py`)
@@ -126,6 +141,10 @@ remains a documented fallback if a future Codex drops plugin support.
 
 Every install is verified by listing plugins afterwards. An install command that exits 0
 without the plugin appearing in `plugin list` is reported as unverified, not as success.
+
+An empty `codex plugin list` inside the sandbox is not proof that the host has no
+plugins. If it contradicts skills exposed in the session, verify the inventory with
+host-profile access through an approved escalation before offering an installation.
 
 ## 7. Explicitly identical — do NOT fork these
 

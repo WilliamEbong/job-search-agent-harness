@@ -225,8 +225,12 @@ class RuntimeMap(unittest.TestCase):
     def test_states_the_never_fork_rule(self):
         self.assertIn("never two implementations of a workflow", self.text)
 
-    def test_codex_reviewer_is_a_sequential_fresh_pass(self):
-        self.assertIn("sequential fresh pass", self.text)
+    def test_codex_sequential_review_does_not_claim_context_isolation(self):
+        self.assertIn("sequential review pass", self.text)
+        self.assertIn("drafting context is still present", self.text)
+        self.assertIn("self-review, not a fresh-context review", self.text)
+        self.assertIn("only when a tool provides that isolation", self.text)
+        self.assertNotIn("explicitly discarding the drafting context", self.text)
 
     def test_codex_telemetry_absence_is_explicit(self):
         self.assertIn("never print a percentage", self.text)

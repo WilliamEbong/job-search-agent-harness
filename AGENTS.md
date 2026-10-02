@@ -26,8 +26,9 @@ added. Upstream's thin-pointer design above still holds; these are the harness a
 
 **Read `RUNTIME-MAP.md` before doing anything runtime-specific.** It is the only place
 Claude Code and Codex are permitted to differ. Everything else is shared and must not be
-forked. Codex specifically: there is no Agent tool, so `/apply`'s fresh-context reviewer
-runs as a sequential fresh pass (§2), and usage percentages are never printed (§5).
+forked. Codex specifically: `/apply` uses the sequential review fallback in §2 unless
+isolated delegation is available and permitted; never call self-review a fresh context.
+Usage percentages are never printed (§5).
 
 | Where | What lives there |
 |---|---|

@@ -97,7 +97,7 @@ inside it until you allow it. The doctor shows a `Codex network` row; the fix is
 
 Lite mode is the same system with the expensive parts removed. Every search and every
 application spends your plan's usage, and the standard workflows are thorough: one
-`/apply-any` loads about 170 KB of instructions. Lite loads one 8 KB procedure, lets
+`/apply-any` loads about 170 KB of instructions. Lite loads one procedure under 10 KB, lets
 scripts do the mechanical work (searching, deduplicating, compiling, the ATS check, the
 fact gate, packaging) and leaves the model only the judgement.
 

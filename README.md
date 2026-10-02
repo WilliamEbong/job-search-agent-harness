@@ -140,7 +140,7 @@ odds are.
 
 **Lite mode for ordinary plans.** The standard workflows are thorough, and one
 application through them loads about 170 KB of instructions. `/lite` runs the same core
-loop — setup, search, one checked package at a time — from a single 8 KB procedure,
+loop — setup, search, one checked package at a time — from a single procedure under 10 KB,
 with scripts doing the searching, compiling, ATS check, fact gate and packaging. It
 keeps every truth and safety check and drops the expensive extras (humanizer and
 second-reviewer passes, company research, interview prep), each still available as its

@@ -72,7 +72,7 @@ in plain words:
 > **Lite mode** (recommended on any plan below ChatGPT Pro or Claude Max: ChatGPT Free,
 > Go or Plus; Claude Free or Pro; an API key you pay per token). One compact procedure
 > and scripts that do the checking. Onboarding takes 5–10 minutes, and an application
-> loads about 8 KB of instructions instead of about 170 KB. The fact gate, ATS check,
+> loads under 10 KB of instructions instead of about 170 KB. The fact gate, ATS check,
 > compiling and page checks all stay. It drops the humanizer and second-reviewer passes,
 > company research and interview prep, and each stays available as its full command.
 >

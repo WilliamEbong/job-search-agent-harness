@@ -222,5 +222,12 @@ class Output(unittest.TestCase):
         self.assertEqual("?", ls.fold("京"))
 
 
+class LiteSpec(unittest.TestCase):
+    def test_the_spec_stays_under_the_10_kb_the_docs_promise(self):
+        """README, USER-GUIDE, setup and the installer all say "under 10 KB"; the
+        spec is injected on every /lite call, so growth costs every user."""
+        self.assertLess((ROOT / ".claude" / "commands" / "lite.md").stat().st_size, 10 * 1024)
+
+
 if __name__ == "__main__":
     unittest.main()

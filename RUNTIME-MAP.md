@@ -55,12 +55,14 @@ its pointer names `.claude/skills/upskill/SKILL.md`.
 
 ## 2. Subagent spawning
 
-Two workflows genuinely need this: upstream `apply.md` and `rank.md`.
+Upstream `apply.md` and `rank.md` delegate model work; `job-scraper/SKILL.md` also
+names the Agent tool for independent portal CLI calls.
 
 | | Claude Code | Codex |
 |---|---|---|
 | `/apply` fresh-context reviewer | Agent tool, `general-purpose` subagent, as upstream writes it | Available delegation tools vary by host and session. The default fallback is a **sequential review pass**: finish drafting, then apply the reviewer instructions from the top to the posting, drafts and profile. Same checklist and output format, but the drafting context is still present. Report this as self-review, not a fresh-context review. Use an isolated reviewer only when a tool provides that isolation and the session permits delegation. |
 | `/rank` parallel scoring (~5 jobs per agent) | Parallel Agent-tool dispatch | Sequential batches of five with the identical scoring rubric. Slower, same result. |
+| `/scrape` independent portal CLI calls | Agent-tool dispatch | Use available parallel shell/tool calls, or run sequentially when the board's rate limit requires it. Keep the same mode/source caps, query set, source tags and result pool; this does not require a reviewer or a subagent. |
 
 A sequential pass can catch errors, but cannot discard context already in the session
 or provide the independence of a reviewer who did not write the draft. Lite mode still
@@ -77,7 +79,7 @@ prohibits subagents and does not run this review step.
 | `$ARGUMENTS` | the text after `/name` | the text after `$name` (or what the plain-language request supplies) |
 | `mcp__…` tools | `claude mcp` config; `claude mcp list` | `[mcp_servers.*]` in `~/.codex/config.toml`, or `codex mcp add`; `codex mcp list` |
 | `allowed-tools:` in SKILL.md frontmatter | honoured | Ignored: Codex's skill parser reads only `name`, `description` and `metadata`. The sandbox and approval policy decide instead |
-| Network for shell commands (portal CLIs `bun run .agents/skills/*-search/…`, `bun install`, `pip install`, `curl`) | governed by the permission allowlist: `.claude/settings.json` pre-approves `bun run`; other commands ask | **Off by default** in Codex's sandbox. The user either enables it in their own `~/.codex/config.toml` (`[sandbox_workspace_write]` then `network_access = true`) or, under `approval_policy = "on-request"`, approves Codex's request per command. With neither, a board search fails: report "could not reach the board", never "no jobs found". The repo ships no `.codex/config.toml`: a project config loads only for a trusted project, and the sandbox posture is the user's decision |
+| Network for shell commands (portal CLIs `bun run .agents/skills/*-search/…`, `bun install`, `pip install`, `curl`) | governed by the permission allowlist: `.claude/settings.json` pre-approves `bun run`; other commands ask | **Off by default** in Codex's sandbox. The user either enables it in their own `~/.codex/config.toml` (`[sandbox_workspace_write]` then `network_access = true`) or uses the session's approved network-escalation mechanism when available (the approval policy and host decide how it is reviewed). With neither, a board search fails: report "could not reach the board", never "no jobs found". The repo ships no `.codex/config.toml`: a project config loads only for a trusted project, and the sandbox posture is the user's decision |
 
 Sandbox restrictions also cover filesystem and profile access. A sibling worktree may
 need write escalation even after `git worktree add` succeeds. On Windows, installed
@@ -86,10 +88,22 @@ request escalation for the affected compile before diagnosing a missing installa
 Use the session's escalation mechanism when available; never retry silently as success
 or alter global configuration to bypass the restriction.
 
+Read UTF-8 files explicitly on Windows PowerShell 5.1: `Get-Content -Encoding UTF8`.
+For Python output captured by a tool, set `$env:PYTHONIOENCODING='utf-8'` in that shell
+when the script does not configure stdout itself; a cp1252 pipe can otherwise garble
+punctuation even when the file on disk is correct.
+
 Write workflow data as UTF-8 without a BOM using file-edit tools. Windows PowerShell
-5.1 `>` writes UTF-16 and `Set-Content -Encoding UTF8` adds a BOM; either can make
-`state/lite-apply.json` unreadable to the driver's UTF-8 JSON reader. Keep posting text
-out of shell command lines, including shell-based file-writing commands.
+5.1 `>` writes UTF-16 and `Set-Content -Encoding UTF8` adds a BOM. The lite driver now
+accepts a UTF-8 BOM (`utf-8-sig`), but UTF-16 is still invalid input.
+
+Keep posting text out of shell command lines, including shell-based file-writing
+commands. Shared command examples show the CLI arguments, not a safe interpolation
+recipe: store posting-derived metadata with a file-edit tool, then use a UTF-8 Python
+helper that reads the file and passes an argument list to the existing harness
+`main(argv)` entry point (or `subprocess.run([...], shell=False)`). Never construct a
+shell command from those values. Literal shell `--rationale` values are the agent's
+own words in single quotes; an apostrophe is doubled in PowerShell.
 
 ## 4. Optional MCP-bound features
 

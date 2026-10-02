@@ -285,7 +285,9 @@ class ApplyOverlay(unittest.TestCase):
         self.assertIn("the system never submits anything", self.text)
 
     def test_codex_reviewer_fallback_is_named(self):
-        self.assertIn("sequential fresh pass", self.text)
+        self.assertIn("self-review", self.text)
+        self.assertIn("keeps the drafting context", self.text)
+        self.assertNotIn("sequential fresh pass", self.text)
 
     def test_training_required_flow_is_documented(self):
         """A rapidly-closable gap makes the package provisional, not final."""

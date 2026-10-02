@@ -31,8 +31,8 @@ architecture, application archives, the tracker, template and portal registratio
 security guards, and the test suites. **This harness would not exist without it**, and
 none of that work is presented as original here.
 
-It also builds on three MIT-licensed tools: **Humanizer** (blader), **Ponytail**
-(DietrichGebert) and **Caveman** (JuliusBrussee).
+It also builds on four MIT-licensed tools: **Humanizer** (blader), **Ponytail**
+(DietrichGebert), **Caveman** (JuliusBrussee) and **i-have-adhd** (ayghri).
 
 What this project adds — portability across runtimes, a deterministic truth tier,
 multimodal intake, a preference engine, usage modes, session continuity, and a demo
@@ -85,9 +85,19 @@ installers it cannot run for you). It **does** install the Python packages and t
 job-board tools, offers the optional plugins and MCP servers, and finishes with a doctor
 table that tells you the truth — including when something is installed but broken.
 
-Choose **express** when it asks: one confirmation instead of a dozen questions.
+It asks which plan your coding agent runs on and recommends a mode: **lite** on anything
+below ChatGPT Pro or Claude Max, the standard workflows on those. Then choose
+**express**: one confirmation instead of a dozen questions.
 
-Then, in Claude Code or Codex:
+Then, in Claude Code (in Codex, type `$` where you see `/`):
+
+```
+/lite setup         # lite: your CV, five questions, your 20 best-fit positions
+/lite search        # jobs for those positions, near you, deduplicated
+/lite apply <#>     # one tailored, fact-checked, ATS-checked CV and cover letter
+```
+
+or, for the standard workflows:
 
 ```
 /setup-harness      # onboarding: your CV first, then a short interview
@@ -127,6 +137,25 @@ you have tracked and produces a prioritised gap analysis: which missing skills a
 gate the jobs you want, which you can honestly claim already under another name, and a
 learning plan for the rest. `/rank` triages found jobs by fit so effort goes where the
 odds are.
+
+**Lite mode for ordinary plans.** The standard workflows are thorough, and one
+application through them loads about 170 KB of instructions. `/lite` runs the same core
+loop — setup, search, one checked package at a time — from a single 8 KB procedure,
+with scripts doing the searching, compiling, ATS check, fact gate and packaging. It
+keeps every truth and safety check and drops the expensive extras (humanizer and
+second-reviewer passes, company research, interview prep), each still available as its
+full command. Setup recommends it below ChatGPT Pro or Claude Max.
+
+**A recruiter's read, first.** Right after it reads your CV, `/recruiter` names the 20
+positions a good agency recruiter would put you forward for today: titles as employers
+post them, each with a level, a fit score, the evidence behind it, the honest gap and
+the exact search terms. You strike any you do not want, and every search looks for the
+rest first.
+
+**ATS matching on every CV.** `harness/ats_check.py` reads the PDF's text layer the way
+an applicant-tracking system does, checks it parses (your email and phone present as
+text, no garbled glyphs, every year present) and measures coverage of the posting's
+keywords. Every package carries the report; a CV an ATS cannot read never ships.
 
 **Onboarding that starts with your CV.** It reads your CV, then interviews you on what the
 CV left out — the numbers, whether a credential is finished, whether you *led* or
@@ -221,6 +250,12 @@ Claude Code and Codex both work. Workflows, scripts, register and state files ar
 differences that were actually verified — how a subagent is spawned, what a tool is
 called, and what usage telemetry exists (on Codex: none, so no percentage is ever
 printed).
+
+In Codex, every workflow is a skill in `.agents/skills/`: type `$lite`, `$scrape`,
+`$apply-any` and so on, or just say what you want (the Codex CLI rejects slash commands it
+does not know). Codex's default sandbox has no network, so job-board searches fail until
+you allow it; `python harness_setup.py --doctor` shows whether it is on and how to turn it
+on.
 
 ---
 

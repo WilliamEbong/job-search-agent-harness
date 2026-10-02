@@ -15,7 +15,9 @@ Bundled or installed third-party components:
 - **Ponytail** by DietrichGebert (https://github.com/DietrichGebert/ponytail),
   MIT — installed at setup as a development/runtime discipline plugin.
 - **Caveman** by JuliusBrussee (https://github.com/JuliusBrussee/caveman),
-  MIT — offered at setup (optional) for internal-channel compression.
+  MIT — offered at setup (optional; default in lite mode) for terse replies.
+- **i-have-adhd** by ayghri (https://github.com/ayghri/i-have-adhd), MIT —
+  offered at setup (optional; default in lite mode) for action-first replies.
 
 Python dependencies, used normally and not bundled: PyYAML (MIT), openpyxl
 (MIT), pypdf (BSD-3-Clause). The Raleway fonts shipped with upstream's cover
@@ -41,7 +43,11 @@ letter class are under the SIL Open Font Licence and are inherited unchanged.
   shared folder matcher they both use.
 - Quad-format application packaging and the drift-proof Markdown mirror.
 - CV-first onboarding with in-command interview controls, and the career review.
-- One-command `harness_setup.py` installer and doctor.
+- One-command `harness_setup.py` installer and doctor, including the plan
+  question that recommends a mode.
+- Ultra lite mode (`/lite`, `harness/lite_search.py`, `harness/latex_build.py`),
+  the recruiter pass (`/recruiter`) and the mechanical ATS check
+  (`harness/ats_check.py`).
 - The framings library, `/discover`, and the user-chosen CV page target.
 - Fictional demo candidate, fixtures, and the privacy guards
   (`tools/harness_guards.py`, `harness/privacy_sweep.py`).
@@ -51,9 +57,10 @@ letter class are under the SIL Open Font Licence and are inherited unchanged.
 Where this project reuses upstream's work, it reuses it in place rather than
 reimplementing it: `/rank`, `/add-portal`, `/outcome`, the templates, the guards
 and the tests are upstream's files, run unchanged, and the harness adds wrappers
-and new files alongside them. Nine upstream files carry deliberate
-modifications — `/apply`, `/interview`, `/add-template`, `/expand`, four
-job-application skill files, and the CV template. Each change and its reason is
+and new files alongside them. Twelve upstream files carry deliberate
+modifications — `/apply`, `/interview`, `/add-template`, `/add-portal`, `/expand`,
+the job-scraper skill and its query file (portal glob only), four job-application skill files, and the CV
+template. Each change and its reason is
 listed in `docs/REVIEW-HANDOFF.md` §4.1.
 
 One documented exception in the tests: `tests/test_readme_assets.py` no longer asserts the

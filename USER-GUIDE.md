@@ -4,7 +4,7 @@ Everything this system does, and how to use it. Read the README first for what i
 why; this is the manual.
 
 **Contents**
-[Install](#install) · [Onboarding](#onboarding) · [Career review](#career-review) ·
+[Install](#install) · [Lite mode](#lite-mode) · [Onboarding](#onboarding) · [Career review](#career-review) ·
 [Companies of interest](#companies-of-interest) · [Finding jobs](#finding-jobs) ·
 [Applying](#applying) · [Truth checking](#truth-checking) · [Tracking](#tracking) ·
 [Interviews](#interviews) · [Continuity](#continuity) · [Both runtimes](#both-runtimes) ·
@@ -22,6 +22,14 @@ apply <a link>      when you find a job you want
 "I got rejected"    or interviewed, or offered - just say it
 ```
 
+On a plan below ChatGPT Pro or Claude Max, use [lite mode](#lite-mode) instead:
+
+```
+/lite               every morning - status and the one thing to do next
+/lite search        new jobs for your 20 target positions
+/lite apply <#>     one checked CV and cover letter
+```
+
 Everything below is detail for when you want it. You can also just talk: "find me
 jobs", "what should I do today", "remember that I finished my certificate".
 
@@ -35,7 +43,12 @@ cd job-search-agent-harness
 python harness_setup.py
 ```
 
-Choose **express** when it asks — one confirmation instead of a dozen questions.
+It first asks **which plan your coding agent runs on**, explains the two ways to run the
+harness, and recommends one: [lite mode](#lite-mode) on anything below ChatGPT Pro or
+Claude Max, the standard workflows on those. You can overrule it, and you can switch
+later. The answer goes into `preferences.yaml` so onboarding never asks again.
+
+Then choose **express** — one confirmation instead of a dozen questions.
 
 Setup finishes with a doctor table. Read it — it is written to be honest rather than
 green:
@@ -57,11 +70,57 @@ Flags: `--doctor` (check only, change nothing), `--yes` (accept recommended defa
 > fork-and-clone the upstream project, install each portal CLI by hand, and run `/setup`
 > and `/apply`. Follow this section instead.
 
-**Optional extras setup offers.** Ponytail (recommended). Caveman — optional, explained at
-the prompt, `lite` mode recommended; it only ever touches the agent's internal chatter,
-never your applications. Playwright and Firecrawl MCP — let posting intake read
-JavaScript-heavy and bot-walled pages; without them such pages are marked `unverified`
-rather than guessed at.
+**Optional extras setup offers.** Ponytail (recommended). Caveman and
+[i-have-adhd](https://github.com/ayghri/i-have-adhd) — both optional, both explained at the
+prompt, both on by default in lite mode: Caveman makes the agent's replies terse,
+i-have-adhd makes them action-first (next step first, short numbered lists, one concrete
+next action). Neither touches your CV or letters. Start i-have-adhd with `/i-have-adhd`
+(`$i-have-adhd` in Codex) and stop either with "normal mode". Playwright and Firecrawl
+MCP — let posting intake read JavaScript-heavy and bot-walled pages; without them such
+pages are marked `unverified` rather than guessed at.
+
+**Using Codex?** Its default sandbox has no network, so the job-board search fails
+inside it until you allow it. The doctor shows a `Codex network` row; the fix is in
+[RUNTIME-MAP.md](RUNTIME-MAP.md) §3.
+
+---
+
+## Lite mode
+
+```
+/lite setup                 # once: your CV, five questions, your 20 best-fit positions
+/lite search [N]            # boards for your top N positions (default 5)
+/lite apply <# | url | text | file>
+/lite applied <company>     # after you submit it yourself
+/lite                       # status and the next thing to do
+```
+
+Lite mode is the same system with the expensive parts removed. Every search and every
+application spends your plan's usage, and the standard workflows are thorough: one
+`/apply-any` loads about 170 KB of instructions. Lite loads one 8 KB procedure, lets
+scripts do the mechanical work (searching, deduplicating, compiling, the ATS check, the
+fact gate, packaging) and leaves the model only the judgement.
+
+**What stays, unchanged:** facts only from your evidence register, with the fact gate
+blocking anything it cannot back; hard constraints checked before scoring; postings
+treated as untrusted data; the CV at your page target and the letter at one page, both
+compiled and looked at; the ATS check; the package and tracker row; and nothing ever
+submitted for you.
+
+**What it drops:** the humanizer pass, the second-reviewer pass, company research, the
+multi-rung posting intake (lite fetches once or asks you to paste), custom templates,
+interview prep, the workbook refresh and the session handoff. Each one is still there as
+its full command (`/apply-any`, `/interview`, `/tracker`, `/continue`) when you want it.
+
+**Onboarding is short.** Give it your CV, answer five numbered questions in one reply
+(where you can work, work authorization, what you refuse, skills a job must not require,
+and the one gap that most changes what you may claim), strike any of the 20 positions
+you do not want, and you are searching. It takes 5-10 minutes.
+
+**Switching.** Lite writes the same files in the same formats as the standard
+workflows, so you can move either way at any time: say "switch to lite mode", or set
+`usage.mode` in `preferences.yaml`. While `usage.mode` is `lite`, plain language ("find
+me jobs", "apply to this", "what's next") goes to lite.
 
 ---
 
@@ -91,6 +150,14 @@ technology hands-on, with AI assistance, or barely at all.
 Every entry carries a `source:` — a document path, or `owner-confirmed <date>` for
 something you said. An entry with no source is a rumour, and the system will not treat it
 as evidence.
+
+**Then a recruiter's read.** With the register built, it reads your evidence the way a
+good agency recruiter reads a CV and names the **20 positions** it would put you forward
+for today: job titles as employers actually post them, each with a level, a fit score,
+the evidence it rests on, the honest gap, and the exact search terms. You strike any you
+do not want; the rest become `target_positions` in `preferences.yaml`, and every search
+looks for them first. Run it again any time with `/recruiter` ("what jobs am I a good fit
+for?"); struck positions are remembered and never proposed again.
 
 **Then preferences** — pay, location, commute, remote trade-offs, exclusions, and skills
 you would rather not see jobs requiring. Two defaults worth knowing:
@@ -216,6 +283,15 @@ provenance note.
 Then: fit evaluation → drafting → a reviewer pass with fresh context → revision →
 humanizing → **recompile and re-check the facts** → page-count and ATS checks → archive →
 tracker row.
+
+**The ATS check is mechanical, and every package carries it.** An applicant-tracking
+system reads the PDF's text layer, not the page you see. `harness/ats_check.py` extracts
+that layer and checks it can be parsed (no garbled glyphs, your email and phone present
+as text, every year present), then measures how many of the posting's required and
+preferred keywords it finds. The report goes into the package as `ats_report.md`. A
+keyword you genuinely have but never wrote down gets added; a genuine gap stays a gap,
+because keyword stuffing fails at the interview. A CV whose text layer cannot be parsed
+blocks the package.
 
 **You get four formats** of each document — `.tex`, `.pdf`, `.md`, `.docx` — plus a
 combined cover-letter-then-resume file, named so they make sense in a file picker. The
@@ -392,6 +468,7 @@ right one runs. The list is here for when you want it.
 | Command | Does |
 |---|---|
 | `/today` | **Start here.** What needs doing, ending in a numbered list you pick from |
+| `/lite` | The same, in [lite mode](#lite-mode): `/lite search`, `/lite apply <#>`, `/lite applied <company>` |
 | `apply <anything>` | Apply from a link, screenshot, PDF or pasted text |
 | `/outcome <company>` | Record what happened — rejection, interview, offer, or a follow-up |
 
@@ -409,7 +486,8 @@ right one runs. The list is here for when you want it.
 
 | Command | Does |
 |---|---|
-| `/setup-harness` | Onboarding. `--interview` resumes or extends it |
+| `/setup-harness` | Onboarding. `--interview` resumes or extends it. `/lite setup` is the short form |
+| `/recruiter` | The 20 positions your evidence makes you most credibly hireable for, as employers post them. Searches look for these first |
 | `/discover` | Kinds of job your evidence already supports that you have not been searching for. Approved ones are searched as trials; `/discover review` decides whether each earned its place |
 | `/offer <company>` | Think an offer through before answering |
 | `/career-review` | Review your public work, suggest CV improvements |

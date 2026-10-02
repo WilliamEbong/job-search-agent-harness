@@ -137,7 +137,7 @@ All four waves are **complete, committed and pushed**. CI green.
 git status   clean, pushed
 tests        352 harness + 154 upstream + 157 Bun (portal CLIs; jobbank-ca offline suite now 6)
 guards       security_guards, harness_guards, lint_skills, privacy_sweep — all green
-harness/     13 scripts   .claude/commands/  24   .codex/prompts/  22
+harness/     17 scripts   .claude/commands/  26   .agents/skills/ workflow pointers  25
 ```
 
 **New files at the Wave-4 handoff:** `harness/{status,tracker_row,rotate_backup,apply_package,today}.py`,
@@ -151,14 +151,21 @@ harness/     13 scripts   .claude/commands/  24   .codex/prompts/  22
 `evidence/framings.yaml` gitignored and guarded), and `graphify-out/` as an
 optional, gitignored knowledge graph. Behavioural changes are listed in §4.1.
 
+**Lite / recruiter / ATS / Codex pass** (2026-10-02, branch
+`feat/lite-mode-codex-recruiter-ats`): `.claude/commands/{lite,recruiter}.md`,
+`harness/{ats_check,lite_search,latex_build}.py`, 25 Codex pointer skills in
+`.agents/skills/<workflow>/` (the `.codex/prompts/` stubs were never loaded by
+Codex and are deleted), the installer's plan question and `Codex network` doctor
+row, and `tests_harness/test_{ats_check,lite_search,latex_build,codex_skills,recruiter}.py`.
+
 ---
 
 ## 4. Conventions a successor must not break
 
 1. **Upstream `[U]` files stay byte-identical unless the divergence is listed
    in §4.1.** Still byte-identical, and to be kept so:
-   `.claude/commands/{setup,rank,outcome,add-portal,gmail-sync,html-report,notion-sync,reset}.md`,
-   `.claude/skills/{job-scraper,upskill}/`,
+   `.claude/commands/{setup,rank,outcome,gmail-sync,html-report,notion-sync,reset}.md`,
+   `.claude/skills/upskill/`,
    `tools/{security_guards,lint_skills,verify_pdf,check_*}.py`, `tests/`
    (one exception, below), `SETUP.md`, `LICENSE`, `CHANGELOG.md`,
    `SECURITY.md`, `CONTRIBUTING.md`.
@@ -176,12 +183,15 @@ optional, gitignored knowledge graph. Behavioural changes are listed in §4.1.
 
 ### 4.1 Deliberate divergences from upstream (audit pass, 2026-08-07)
 
-Nine `[U]` files now differ. Each was changed on purpose; a merge that reverts
+Thirteen `[U]` files now differ. Each was changed on purpose; a merge that reverts
 one silently removes the capability named beside it.
 
 | File | Why it diverges |
 |---|---|
-| `.claude/commands/apply.md` | Step 1b positioning brief; gap-disclosure rewrite; page target replaces the hard 2-page rule; under-selling audit in the reviewer prompt; tool-neutral AI wording; framings read |
+| `.claude/commands/apply.md` | Step 1b positioning brief; gap-disclosure rewrite; page target replaces the hard 2-page rule; under-selling audit in the reviewer prompt; tool-neutral AI wording; framings read; Step 1 saves the keyword list to `cv/main_<company>_<role>.keywords.txt`; Step 5d runs `harness/ats_check.py` and keeps only the have-it/gap judgement |
+| `.claude/commands/add-portal.md` | `--list` and the "picked up automatically" line glob `.agents/skills/*-search/SKILL.md`: Codex workflow pointers share `.agents/skills/` and must not list as portals |
+| `.claude/skills/job-scraper/{SKILL.md,search-queries.md}` | Step 1b portal discovery globs `.agents/skills/*-search/SKILL.md`, for the same reason. Nothing else changed |
+| `AGENTS.md` (upstream part, item 3) | Names the Codex workflow pointers beside the portal CLIs; `framework_version` 1.1.0 |
 | `.claude/commands/interview.md` | Reads register claim tiers + `positioning_brief.md`; defence cards; checks `applied/` |
 | `.claude/commands/expand.md` | Deep-repo scan proposing project `components:` |
 | `.claude/commands/add-template.md` | Page limit reads `presentation.cv_pages` |
@@ -189,7 +199,7 @@ one silently removes the capability named beside it.
 | `skills/…/04-job-evaluation.md` | Competency-inference ladder |
 | `skills/…/03-writing-style.md` | fact → capability → relevance rule |
 | `skills/…/01-candidate-profile.md` | References wording unified |
-| `CLAUDE.md`, `cv/main_example.tex` | Checklist changes; microtype/needspace preamble |
+| `CLAUDE.md`, `cv/main_example.tex` | Checklist changes; microtype/needspace preamble; ATS checklist points at `harness/ats_check.py` |
 
 Ownership map: **this section**. `docs/build-history/plan-D-repo-structure.md`
 is the Stage-3 planning tree and is historical — it predates six harness

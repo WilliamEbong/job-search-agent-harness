@@ -37,6 +37,19 @@ class Parsing(unittest.TestCase):
     def test_no_error_marker_falls_back_to_the_tail(self):
         self.assertIn("last words", latex_build.first_error("a\nb\nlast words\n"))
 
+    def test_layout_flags_stranded_heading_and_one_word_lines(self):
+        source = ("\\section{Education}\n"
+                  "\\cventry{2020-2024}{Senior Technician}{Northwind}{Winnipeg}{}{}\n")
+        pages = [["- Reworked the sample intake process and cut average turnaround",
+                  "time.", "Education"],
+                 ["Senior Technician  Northwind", "- Trained new technicians."]]
+        flags = latex_build.flags_for(pages, source)
+        self.assertIn("page 1 ends with 'Education'", flags)
+        self.assertIn("one-word lines: 'time.'", flags)
+        clean = [["- One full bullet that ends where it should.", "Education"][:1],
+                 ["Education", "Senior Technician  Northwind"]]
+        self.assertEqual([], latex_build.flags_for(clean, source))
+
     def test_engine_by_folder(self):
         self.assertEqual("xelatex", latex_build.engine_for(Path("cover_letters/cover_x.tex")))
         self.assertEqual("lualatex", latex_build.engine_for(Path("cv/main_x.tex")))

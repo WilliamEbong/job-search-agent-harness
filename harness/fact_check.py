@@ -215,14 +215,27 @@ def employment_spans(reg: dict) -> list[tuple[str, int, int]]:
     """(label, first_year, last_year) for employers, degrees, research, roles."""
     spans: list[tuple[str, int, int]] = []
     for employer in reg.get("employers", []) or []:
+        own = []
         for title in employer.get("titles", []) or []:
             start, end = str(title.get("start", "")), str(title.get("end", ""))
             if start[:4].isdigit():
-                spans.append((
+                own.append((
                     employer.get("name", "?"),
                     int(start[:4]),
                     int(end[:4]) if end[:4].isdigit() else 9999,
                 ))
+        spans += own
+        # Back-to-back titles at one employer are one tenure: a promotion from
+        # 2020-2022 to 2022-2024 makes "Northwind, 2020 - 2024" true, and that
+        # line used to red-line. Only touching spans merge (next start no later
+        # than the year after the previous end), so a real gap is never bridged.
+        merged: list[tuple[str, int, int]] = []
+        for label, s, x in sorted(own, key=lambda span: span[1]):
+            if merged and s <= merged[-1][2] + 1:
+                merged[-1] = (label, merged[-1][1], max(merged[-1][2], x))
+            else:
+                merged.append((label, s, x))
+        spans += [span for span in merged if span not in own]
     for section in ("education", "research", "leadership"):
         for item in reg.get(section, []) or []:
             start, end = str(item.get("start", "")), str(item.get("end", ""))

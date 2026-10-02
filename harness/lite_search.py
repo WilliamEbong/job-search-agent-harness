@@ -75,7 +75,8 @@ COUNTRY = {
 
 TIMEOUT_S = 60
 PAUSE_S = 5        # between one board's own calls: jobbank-ca's Crawl-delay, the strictest
-MAX_ROWS = 25      # printed rows; the rest stay in the saved list for --show
+MAX_ROWS = 15      # printed rows; the rest stay in the saved list for --show
+MIN_SHOWN = 40     # a weaker title match is noise in the table (still saved for --show)
 RECORD_TOP = 10    # shortlist rows per --record: lite presents at most 10 jobs
 LAST_SEARCH = Path("state") / "lite-last-search.json"
 STOPWORDS = {"a", "an", "and", "at", "for", "in", "of", "on", "or", "the", "to", "with"}
@@ -99,6 +100,14 @@ def fold(text) -> str:
 def clip(text, width: int) -> str:
     text = fold(text)
     return text if len(text) <= width else text[:width - 3] + "..."
+
+
+def place(location, width: int = 30) -> str:
+    """Clipped location that never loses its remote/hybrid/onsite tag."""
+    location = str(location or "")
+    match = re.search(r"\s*\((remote|hybrid|onsite)\)\s*$", location, re.I)
+    tag = f" ({match[1].lower()})" if match else ""
+    return clip(location[:match.start()] if match else location, width - len(tag)) + tag
 
 
 def iso_date(value) -> str:
@@ -145,6 +154,19 @@ def home_country(tokens: list[str]) -> str:
     return next((country for country, names in COUNTRY.items() if names & set(tokens)), "")
 
 
+COUNTRY_WORDS = {"canada", "denmark", "danmark", "usa", "us", "united states", "uk",
+                 "united kingdom", "ireland", "germany", "france", "netherlands", "sweden",
+                 "norway", "australia", "new zealand", "india"}
+
+
+def split_home(tokens: list[str]) -> tuple[list[str], str]:
+    """(city and region, country). A country names a market, not a commute: matching
+    it let 'North Vancouver, BC, Canada' through for a Winnipeg home."""
+    if len(tokens) >= 3 or (len(tokens) == 2 and tokens[1] in COUNTRY_WORDS):
+        return tokens[:-1], tokens[-1]
+    return tokens, ""
+
+
 def other_market(boards: list[str], tokens: list[str]) -> list[str]:
     """Single-country boards for a country that is not home; none when home is unknown."""
     country = home_country(tokens)
@@ -152,15 +174,21 @@ def other_market(boards: list[str], tokens: list[str]) -> list[str]:
 
 
 def near_home(location, tokens: list[str], remote_ok: bool) -> bool:
-    """A whole-word match on any part of home, or a remote listing when remote is accepted.
+    """A whole-word match on home's city or region; or, when remote is accepted, a
+    remote listing that is open to home's country (or names no other place).
 
     Hybrid does not bypass the check: a hybrid role still has an office, and when that
     office is near home its city matches anyway.
     """
+    places, country = split_home(tokens)
     text = f" {norm(location)} "
-    if remote_ok and " remote " in text:
+    if any(f" {token} " in text for token in places):
         return True
-    return any(f" {token} " in text for token in tokens)
+    if not (remote_ok and " remote " in text):
+        return False
+    rest = text.replace(" remote ", " ").strip()
+    return (not rest or (country and f" {country} " in text)
+            or any(f" {w} " in text for w in ("worldwide", "anywhere", "global")))
 
 
 def words(text) -> set[str]:
@@ -439,9 +467,10 @@ def search(args) -> int:
     write_json(root / LAST_SEARCH, {"date": today, "home": home,
                                     "positions": [p["title"] for p in positions],
                                     "results": fresh})
+    shown = [job for job in fresh if job["score"] >= MIN_SHOWN][:MAX_ROWS]
     recorded = []
     if args.record:
-        for job in fresh[:RECORD_TOP]:
+        for job in shown[:RECORD_TOP]:
             rationale = f"lite title match: {job['position']}" \
                 + (f"; trial: {job['position']}" if job["trial"] else "")
             shortlist_row.append({
@@ -450,7 +479,7 @@ def search(args) -> int:
                 "score": job["score"], "verdict": "not-resolved", "rationale": rationale,
                 "deadline": job["deadline"]}, root / "shortlist.csv")
         log_runs(root / "run_log.csv", runs, queries)
-        recorded = [f"{min(len(fresh), RECORD_TOP)} shortlist row(s) (not-resolved)",
+        recorded = [f"{min(len(shown), RECORD_TOP)} shortlist row(s) (not-resolved)",
                     f"{len(runs)} run-log row(s)"]
     # Every board failing is "could not search", never "no new jobs".
     failed = all(run["error"] and not run["found"] for run in runs)
@@ -481,13 +510,13 @@ def search(args) -> int:
         print(f"  skipped (disabled): {', '.join(disabled)}")
     if elsewhere:
         print(f"  skipped (another country): {', '.join(elsewhere)}")
-    if fresh:
-        print("\n  #  fit     sc  title | company | location | posted | board")
-    for job in fresh[:MAX_ROWS]:
-        print(f"{job['n']:>3}  {job['fit']:<6} {job['score']:>3}  {clip(job['title'], 55)}"
-              f" | {clip(job['company'], 28)} | {clip(job['location'], 30)}"
+    if shown:
+        print("\n  # match  title | company | location | posted | board")
+    for job in shown:
+        print(f"{job['n']:>3} {job['score']:>5}  {clip(job['title'], 55)}"
+              f" | {clip(job['company'], 28)} | {place(job['location'])}"
               f" | {job['date'] or '-'} | {job['board'].removesuffix('-search')}")
-    more = f" (showing {MAX_ROWS})" if len(fresh) > MAX_ROWS else ""
+    more = f" (showing {len(shown)}, title match {MIN_SHOWN}+)" if len(shown) < len(fresh) else ""
     store = f"{seen_path.name} +{added}" if writable else f"{seen_path.name} NOT updated"
     if failed:
         print("\nEvery board failed, so nothing was searched. This is not 'no new jobs'.")
@@ -517,8 +546,8 @@ def show(args) -> int:
         return 0
     print(f"#{args.show} {fold(job['title'])} | {fold(job['company'])} | "
           f"{fold(job['location'])}   (search of {data.get('date')})")
-    print(f"posted {job['date'] or '-'}, closes {job['deadline'] or '-'}, fit "
-          f"{job['fit']} ({job['score']}, title match: {fold(job['position'])})")
+    print(f"posted {job['date'] or '-'}, closes {job['deadline'] or '-'}, title match "
+          f"{job['score']} against {fold(job['position'])}")
     print(f"url: {fold(job['url']) or '-'}")
     if job["id"]:
         print(f"posting text: bun run .agents/skills/{job['board']}/cli/src/cli.ts "

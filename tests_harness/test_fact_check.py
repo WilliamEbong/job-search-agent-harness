@@ -192,6 +192,21 @@ class DateRanges(unittest.TestCase):
             code, out = run_checker(draft)
         self.assertEqual(code, 0, out)
 
+    def test_back_to_back_titles_cover_the_whole_tenure(self):
+        """Technician 2020-2022 then Senior 2022-2024 at one employer: "2020 - 2024"
+        is true and red-lined ("does not fit the registered span") until the
+        spans were merged. Found by the lite-mode end-to-end run."""
+        with WriteDraft("Northwind Analytical Services, 2020 - 2024.\n") as draft:
+            code, out = run_checker(draft)
+        self.assertEqual(code, 0, out)
+
+    def test_a_gap_between_titles_is_never_bridged(self):
+        sys.path.insert(0, str(ROOT / "harness"))
+        import fact_check
+        spans = fact_check.employment_spans({"employers": [{"name": "Acme", "titles": [
+            {"start": "2015-01", "end": "2016-06"}, {"start": "2019-01", "end": "2020-01"}]}]})
+        self.assertEqual([("Acme", 2015, 2016), ("Acme", 2019, 2020)], spans)
+
 
 class MetricQualifiers(unittest.TestCase):
     """`qualifier_required` on a metric is enforced, not just documented.

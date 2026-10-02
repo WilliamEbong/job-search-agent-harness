@@ -12,8 +12,9 @@ else lualatex (pdflatex fails on fontawesome5 under modern MiKTeX). `--pages` is
 target; a cover letter is always 1. Build files (.aux/.log/.out) are removed after a
 clean compile, as /apply Step 5e does.
 
-Exit 0 = every PDF built at its page target; 1 = a compile failed or a page count is
-off; 2 = a source file is missing or the engine is not installed.
+Exit 0 = every PDF built at its page target (layout notes, if any, follow "fix:");
+1 = a compile failed or a page count is off; 2 = a source file is missing or the
+engine is not installed.
 """
 
 from __future__ import annotations
@@ -27,7 +28,50 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ats_check  # noqa: E402  (its pdftotext decoder handles MiKTeX's xpdf)
+
 TIMEOUT_S = 600  # a fresh MiKTeX installs packages on first use, which takes minutes
+PAGE_NUMBER = re.compile(r"^\d+\s*/\s*\d+$")
+
+
+def norm(text: str) -> str:
+    return " ".join(re.findall(r"\w+", text.lower()))
+
+
+def layout_flags(pdf: Path, tex: Path) -> list[str]:
+    """Defects a reader sees that a page count cannot: a heading or entry title left
+    at the foot of a page, and one-word last lines. Needs pdftotext (-layout keeps
+    visual lines; pypdf merges them); without it the visual check covers these."""
+    exe = shutil.which("pdftotext")
+    if not exe:
+        return []
+    raw = subprocess.run([exe, "-layout", "-enc", "UTF-8", str(pdf), "-"],
+                         capture_output=True).stdout
+    pages = [[line.strip() for line in page.splitlines()
+              if line.strip() and not PAGE_NUMBER.match(line.strip())]
+             for page in ats_check.decode(raw).split("\f")]
+    return flags_for([page for page in pages if page],
+                     tex.read_text(encoding="utf-8", errors="replace"))
+
+
+def flags_for(pages: list[list[str]], source: str) -> list[str]:
+    """`pages`: each page's non-empty visual lines, page numbers removed."""
+    headings = {norm(h) for h in re.findall(r"\\section\*?\{([^{}]*)\}", source)}
+    entries = {norm(part) for pair in re.findall(
+        r"\\cventry\{[^{}]*\}\{([^{}]*)\}\{([^{}]*)\}", source) for part in pair} - {""}
+    flags = []
+    for number, page in enumerate(pages[:-1], 1):
+        last = page[-1]
+        if norm(last) in headings or (not last.startswith("-")
+                                      and any(e in norm(last) for e in entries)):
+            flags.append(f"page {number} ends with '{last[:40]}'")
+    widows = [line for page in pages for before, line in zip(page, page[1:])
+              if len(line.split()) == 1 and len(before) >= 40 and line[-1] in ".%)"
+              and norm(line) not in headings]
+    if widows:
+        flags.append("one-word lines: " + ", ".join(f"'{w}'" for w in widows[:4]))
+    return flags
 
 
 def engine_for(tex: Path) -> str:
@@ -65,11 +109,10 @@ def build(tex: Path, pages: int) -> tuple[bool, str]:
             break
     pdf = tex.with_suffix(".pdf")
     count = len(PdfReader(pdf).pages)
-    # Sub-5pt overflows are invisible and moderncv produces them routinely.
-    overfull = sum(float(w) > 5 for w in re.findall(r"Overfull \\hbox \(([\d.]+)pt", text))
     for suffix in (".aux", ".log", ".out"):
         tex.with_suffix(suffix).unlink(missing_ok=True)
-    note = f"; {overfull} line(s) past the margin" if overfull else ""
+    flags = layout_flags(pdf, tex)
+    note = f"; fix: {'; '.join(flags)}" if flags else ""
     if count != pages:
         return False, f"{pdf}: {count} pages, target {pages} - cut content, never shrink fonts or margins{note}"
     return True, f"{pdf}: {count} page{'s' if count != 1 else ''} OK{note}"

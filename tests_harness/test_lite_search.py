@@ -85,9 +85,23 @@ class Location(unittest.TestCase):
     def test_whole_words_only(self):
         self.assertFalse(ls.near_home("Mumbai, India", ls.home_tokens("Winnipeg, MB"), False))
 
-    def test_remote_passes_only_when_accepted(self):
-        self.assertTrue(ls.near_home("Berlin (remote)", self.TOKENS, True))
-        self.assertFalse(ls.near_home("Berlin (remote)", self.TOKENS, False))
+    def test_the_country_alone_is_not_near(self):
+        """End-to-end run: Winnipeg home listed North Vancouver and Thunder Bay jobs."""
+        self.assertFalse(ls.near_home("North Vancouver, BC, Canada", self.TOKENS, False))
+        self.assertEqual((["winnipeg", "mb"], ""), ls.split_home(ls.home_tokens("Winnipeg, MB")))
+
+    def test_remote_passes_only_when_accepted_and_open_to_home(self):
+        self.assertTrue(ls.near_home("Remote", self.TOKENS, True))
+        self.assertTrue(ls.near_home("Canada (remote)", self.TOKENS, True))
+        self.assertTrue(ls.near_home("Worldwide (remote)", self.TOKENS, True))
+        self.assertFalse(ls.near_home("Remote", self.TOKENS, False))
+        # A remote job tied to another country (e2e: a US campus job) is not open to home.
+        self.assertFalse(ls.near_home("Atlanta, GA, United States (remote)", self.TOKENS, True))
+        self.assertFalse(ls.near_home("Berlin (remote)", self.TOKENS, True))
+
+    def test_place_keeps_the_remote_tag_when_clipped(self):
+        self.assertTrue(ls.place("Emory Campus-Clifton Corridor, Atlanta, GA (remote)")
+                        .endswith("(remote)"))
 
     def test_hybrid_elsewhere_does_not_pass(self):
         self.assertFalse(ls.near_home("Berlin (hybrid)", self.TOKENS, True))

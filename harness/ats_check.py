@@ -507,8 +507,14 @@ def missing(result: dict, priority: str) -> list[str]:
 
 
 def render_brief(result: dict) -> str:
+    """Summary, then what to act on: synonym hits (an ATS often matches literally, so
+    use the posting's term where it is true) and misses."""
     lines = [result["summary"]]
     for priority in WEIGHT:
+        near = [f'{r["keyword"]} (as "{r["matched"]}")' for r in result["keywords"]
+                if r["priority"] == priority and r["status"] == "synonym-only"]
+        if near:
+            lines.append(f"synonym-only {priority}: " + "; ".join(near))
         if missing(result, priority):
             lines.append(f"missing {priority}: " + "; ".join(missing(result, priority)))
     if result["parse"]["warnings"]:

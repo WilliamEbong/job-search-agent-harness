@@ -57,10 +57,11 @@ letter class are under the SIL Open Font Licence and are inherited unchanged.
 Where this project reuses upstream's work, it reuses it in place rather than
 reimplementing it: `/rank`, `/outcome`, the templates, the guards
 and the tests are upstream's files, run unchanged, and the harness adds wrappers
-and new files alongside them. Fifteen upstream files carry deliberate
+and new files alongside them. Sixteen upstream files carry deliberate
 modifications — `/apply`, `/interview`, `/add-template`, `/add-portal`, `/expand`,
 the job-scraper skill and its query file (portal glob only), four job-application skill
-files, the CV template, `AGENTS.md`, `CLAUDE.md` and the README. Each change and its reason is
+files, the CV template, the cover-letter class (one bold-face line), `AGENTS.md`,
+`CLAUDE.md` and the README. Each change and its reason is
 listed in `docs/REVIEW-HANDOFF.md` §4.1.
 
 One documented exception in the tests: `tests/test_readme_assets.py` no longer asserts the

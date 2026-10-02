@@ -83,5 +83,29 @@ class RealCompile(unittest.TestCase):
             self.assertIn("no PDF produced", line)
 
 
+@unittest.skipUnless(shutil.which("xelatex"), "xelatex not installed")
+class CoverLetterBold(unittest.TestCase):
+    def test_textbf_labels_embed_a_bold_face(self):
+        """Raleway-Medium is loaded by file name, so \\textbf{Label:} used to print
+        at body weight: the PDF carried no bold face at all."""
+        try:
+            from pypdf import PdfReader
+        except ImportError:
+            self.skipTest("pypdf not installed")
+        source = Path(__file__).resolve().parent.parent / "cover_letters"
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp) / "cover_letters"
+            work.mkdir()
+            shutil.copy(source / "cover.cls", work)
+            shutil.copy(source / "cover_example.tex", work / "cover_t.tex")
+            shutil.copytree(source / "OpenFonts", work / "OpenFonts")
+            ok, line = latex_build.build(work / "cover_t.tex", 1)
+            self.assertTrue(ok, line)
+            page = PdfReader(work / "cover_t.pdf").pages[0]
+            fonts = [str(f.get_object()["/BaseFont"])
+                     for f in page["/Resources"]["/Font"].values()]
+            self.assertTrue(any("Raleway-Bold" in f for f in fonts), fonts)
+
+
 if __name__ == "__main__":
     unittest.main()

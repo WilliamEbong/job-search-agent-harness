@@ -15,6 +15,9 @@
 \usepackage{titlesec}
 \usepackage[absolute]{textpos}
 \usepackage{fontspec,xltxtra,xunicode}
+% Body text loads Raleway-Medium by file name, which brings no bold face:
+% name one, or \textbf{Label:} in a bullet prints at the body weight.
+\defaultfontfeatures[Raleway-Medium]{BoldFont = Raleway-Bold}
 
 % Publications
 \usepackage{cite}

@@ -345,7 +345,7 @@ class PdfBesideTheSource(unittest.TestCase):
     def test_pdf_next_to_the_tex_is_packaged_when_build_dir_is_empty(self):
         folder, written = apply_package.build_package(
             "Acme", "Data Analyst", self.cv, self.letter,
-            self.tmp / "empty-build", Path(apply_package.REGISTER),
+            self.tmp / "empty-build", REGISTER,
             self.tmp / "applications",
         )
         pdfs = [f for f in written if f.endswith(".pdf")]
@@ -357,7 +357,7 @@ class PdfBesideTheSource(unittest.TestCase):
         """An interrupted compile must not destroy the rest of the package."""
         folder, written = apply_package.build_package(
             "Acme", "Data Analyst", self.cv, self.letter,
-            self.tmp / "empty-build", Path(apply_package.REGISTER),
+            self.tmp / "empty-build", REGISTER,
             self.tmp / "applications",
         )
         self.assertTrue(any(f.endswith(".tex") for f in written), sorted(written))

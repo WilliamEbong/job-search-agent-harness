@@ -145,18 +145,34 @@ def needs_recruiter_pass(root: Path = ROOT) -> bool:
     else would ever tell them. A missing preferences.yaml is left to onboarding,
     and an unreadable one is already reported by trial_families().
     """
+    prefs = read_prefs(root)
+    if prefs is None:
+        return False
+    # Read exactly as lite_search.load_positions reads it: a bare list is allowed,
+    # and a missing or differently-cased status counts as active.
+    block = prefs.get("target_positions")
+    positions = block.get("positions") if isinstance(block, dict) else block
+    return not any(isinstance(p, dict)
+                   and str(p.get("status") or "active").strip().lower() == "active"
+                   for p in (positions if isinstance(positions, list) else []))
+
+
+def read_prefs(root: Path = ROOT) -> dict | None:
+    """preferences.yaml as a dict; None when missing or unreadable."""
     path = root / "preferences.yaml"
     if not path.is_file():
-        return False
+        return None
     try:
         import yaml
         prefs = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except Exception:
-        return False
-    block = prefs.get("target_positions") if isinstance(prefs, dict) else None
-    positions = block.get("positions") if isinstance(block, dict) else None
-    return not any(isinstance(p, dict) and p.get("status") == "active"
-                   for p in positions or [])
+        return None
+    return prefs if isinstance(prefs, dict) else None
+
+
+def usage_mode(root: Path = ROOT) -> str:
+    usage = (read_prefs(root) or {}).get("usage")
+    return str(usage.get("mode", "")) if isinstance(usage, dict) else ""
 
 
 def collect(today: date | None = None, root: Path = ROOT) -> dict:
@@ -169,7 +185,15 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
 
     followups = []
     waiting = []
+    listed = set()
     for row in open_rows:
+        # A company + role can hold two rows (a drafted one and a submitted one
+        # from older flows); listing it twice reads as two applications.
+        key = ((row.get("company") or "").strip().lower(),
+               (row.get("role") or "").strip().lower())
+        if key in listed:
+            continue
+        listed.add(key)
         quiet = days_quiet(row, today)
         entry = {
             "company": row.get("company", ""),
@@ -208,17 +232,27 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
             last_run = found
     search_age = (today - last_run).days if last_run else None
 
-    # Deadlines worth naming, from whichever rows carry one.
-    deadlines = []
+    # Deadlines worth naming, from whichever rows carry one - except a job that
+    # failed a gate or was judged not worth drafting (a lite search records the
+    # title-level row first and the verdict after it), or one already applied to.
+    ruled_out = {((r.get("company") or "").strip().lower(),
+                  (r.get("role") or "").strip().lower()) for r in shortlist
+                 if r.get("verdict") in ("gate-fail", "not-drafted")}
+    deadlines, named = [], set()
     for row in shortlist:
         due = parse_date(row.get("deadline"))
-        if due and 0 <= (due - today).days <= 14:
+        key = ((row.get("company") or "").strip().lower(),
+               (row.get("role") or "").strip().lower())
+        if (due and 0 <= (due - today).days <= 14 and key not in ruled_out
+                and key not in applied_keys and key not in named):
+            named.add(key)
             deadlines.append({"company": row.get("company", ""),
-                              "role": row.get("role", ""),
+                              "role": row.get("role", ""), "url": row.get("url", ""),
                               "closes_in": (due - today).days})
 
     return {
         "date": today.isoformat(),
+        "lite": usage_mode(root) == "lite",
         "onboarded": (root / "evidence" / "register.yaml").exists(),
         "needs_positions": needs_recruiter_pass(root),
         "trials": trial_families(shortlist, root),
@@ -240,6 +274,9 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
 # does one more thing tonight. Ranges, because honest beats precise-looking.
 # `who` separates what the system does from what only the human can do.
 MINUTES = {
+    "/lite setup": ("5-10 min", "together"),
+    "/lite search": ("1-2 min", "I search"),
+    "/lite apply": ("10-15 min", "I draft, you submit"),
     "/setup-harness": ("about 15 min", "together"),
     "/recruiter": ("about 5 min", "I propose, you strike"),
     "/outcome": ("2-3 min", "you decide, I write"),
@@ -262,6 +299,11 @@ def actions(state: dict) -> list[dict]:
     items: list[dict] = []
 
     def add(label: str, command: str) -> None:
+        if state.get("lite"):  # usage.mode: lite routes the same actions to /lite
+            for full, lite in (("/setup-harness", "/lite setup"), ("/scrape", "/lite search"),
+                               ("apply ", "/lite apply ")):
+                if command.startswith(full):
+                    command = lite + command[len(full):]
         items.append({"label": label, "command": command, **_annotate(command)})
 
     if not state["onboarded"]:
@@ -276,7 +318,7 @@ def actions(state: dict) -> list[dict]:
             f"/outcome {entry['company']}")
     for entry in state["deadlines"][:2]:
         add(f"{entry['company']} closes in {entry['closes_in']} days",
-            f"apply {entry['company']} {entry['role']}")
+            f"apply {entry.get('url') or entry['company'] + ' ' + entry['role']}")
     for entry in state["undrafted"][:2]:
         score = f" (scored {entry['score']})" if entry.get("score") else ""
         add(f"Apply to {entry['company']} - {entry['role']}{score}",
@@ -351,7 +393,7 @@ def render(state: dict) -> str:
         for number, item in enumerate(menu, 1):
             tail = " · ".join(p for p in (item.get("minutes"), item.get("who")) if p)
             lines.append(f"  {number}. {item['label']}"
-                         + (f"   [{tail}]" if tail else ""))
+                         + (f"   [{tail}]" if tail else "") + f"   {item['command']}")
         lines.append("")
         lines.append("Say a number, or just tell me what you want to do.")
     else:
@@ -365,6 +407,7 @@ def main(argv=None) -> int:
                         help="emit the raw state plus the action list")
     parser.add_argument("--root", default=str(ROOT))
     args = parser.parse_args(argv)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # "·" was "�" on Windows
 
     state = collect(root=Path(args.root))
     if args.json:

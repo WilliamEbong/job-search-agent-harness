@@ -19,7 +19,7 @@ This command is a **thin wrapper**. It resolves the posting, then runs the upstr
 
 Run the standing first-run check ("Before any harness workflow runs" in `AGENTS.md` /
 `CLAUDE.md`): no `evidence/register.yaml` or `preferences.yaml` means offer
-`/setup-harness` in one line and stop. Never read the shipped `.example.yaml` as though
+onboarding as that check words it (`/lite setup` or `/setup-harness`) and stop. Never read the shipped `.example.yaml` as though
 it were the user's.
 
 ## Step 1: Resolve the posting
@@ -125,7 +125,8 @@ drafts.
   travel, salary or accommodation question — those go in `provenance.md` under "Notes to
   act on". The humanizer is a safety net, not where this gets fixed.
 - Template-prescribed conventions are **not** AI tells: the cover letter's
-  `\textbf{Label:}` bullet style and LaTeX `--` date ranges stay.
+  `\textbf{Label:}` bullet style stays, and `\cventry` date ranges keep one ASCII
+  hyphen (`2020-2024`, never `--`: an ATS import drops en-dash dates).
 - If the documents already read as human, record `humanizer: no edits required` rather
   than editing for editing's sake.
 

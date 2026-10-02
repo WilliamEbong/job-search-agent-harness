@@ -211,11 +211,20 @@ def registered_numerals(reg: dict) -> set[str]:
     return vals
 
 
+def month_index(value: str, first: bool) -> int:
+    """'2022-09' -> 2022*12 + 8. A bare year counts as January for a start and as
+    December for an end, the widest reading that still never invents a gap away."""
+    text = str(value)
+    month = text[5:7]
+    number = int(month) if month.isdigit() and 1 <= int(month) <= 12 else (1 if first else 12)
+    return int(text[:4]) * 12 + number - 1
+
+
 def employment_spans(reg: dict) -> list[tuple[str, int, int]]:
     """(label, first_year, last_year) for employers, degrees, research, roles."""
     spans: list[tuple[str, int, int]] = []
     for employer in reg.get("employers", []) or []:
-        own = []
+        own, months = [], []
         for title in employer.get("titles", []) or []:
             start, end = str(title.get("start", "")), str(title.get("end", ""))
             if start[:4].isdigit():
@@ -224,18 +233,26 @@ def employment_spans(reg: dict) -> list[tuple[str, int, int]]:
                     int(start[:4]),
                     int(end[:4]) if end[:4].isdigit() else 9999,
                 ))
+                months.append((month_index(start, first=True),
+                               month_index(end, first=False) if end[:4].isdigit()
+                               else 9999 * 12))
         spans += own
         # Back-to-back titles at one employer are one tenure: a promotion from
-        # 2020-2022 to 2022-2024 makes "Northwind, 2020 - 2024" true, and that
-        # line used to red-line. Only touching spans merge (next start no later
-        # than the year after the previous end), so a real gap is never bridged.
-        merged: list[tuple[str, int, int]] = []
-        for label, s, x in sorted(own, key=lambda span: span[1]):
-            if merged and s <= merged[-1][2] + 1:
-                merged[-1] = (label, merged[-1][1], max(merged[-1][2], x))
+        # 2020-08..2022-09 to 2022-10..2024-02 makes "Northwind, 2020 - 2024"
+        # true, and that line used to red-line. Titles merge only when the next
+        # starts by the month after the previous ends, so a gap is never bridged
+        # (years alone would merge 2019-01 and 2020-12, a 23-month gap).
+        tenure: list[list[int]] = []
+        for s, x in sorted(months):
+            if tenure and s <= tenure[-1][1] + 1:
+                tenure[-1][1] = max(tenure[-1][1], x)
             else:
-                merged.append((label, s, x))
-        spans += [span for span in merged if span not in own]
+                tenure.append([s, x])
+        name = employer.get("name", "?")
+        for s, x in tenure:
+            span = (name, s // 12, 9999 if x >= 9999 * 12 else x // 12)
+            if span not in spans:
+                spans.append(span)
     for section in ("education", "research", "leadership"):
         for item in reg.get(section, []) or []:
             start, end = str(item.get("start", "")), str(item.get("end", ""))

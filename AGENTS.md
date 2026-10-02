@@ -1,5 +1,5 @@
 ---
-framework_version: 1.1.0
+framework_version: 1.1.1
 ---
 
 # Agent Guidelines: AI Job Search
@@ -15,9 +15,8 @@ To prevent duplication and configuration drift across different AI agent framewo
 2. **Canonical Workflow Specifications:**
    - The step-by-step instructions and triggers for tasks (setup, scrape, rank, apply, upskill, interview) are defined in the [.claude/](.claude/) directory (specifically under `.claude/skills/` and `.claude/commands/`).
    - Do not duplicate these rules or specifications. Treat `.claude/` files as the single source of truth.
-3. **Portal Search Skills and Workflow Pointers:**
+3. **Portal Search Skills:**
    - Job-portal search CLIs live under [.agents/skills/](.agents/skills/) as `*-search/` folders in the portable Agent Skills format (with a `SKILL.md` per portal). Codex and Antigravity discover these automatically; the `/scrape` workflow in [.claude/skills/job-scraper/](.claude/skills/job-scraper/) orchestrates them.
-   - The same folder holds one thin pointer skill per harness workflow (never named `*-search`), so Codex can run `$scrape`, `$apply-any` and the rest. A pointer only names its `.claude/` spec file.
 
 <!-- harness:begin -->
 ## Job Search Agent Harness layer
@@ -32,7 +31,7 @@ runs as a sequential fresh pass (§2), and usage percentages are never printed (
 
 | Where | What lives there |
 |---|---|
-| `evidence/register.yaml` | The truth store. What may be claimed. Every entry carries a `source:`. Written only by `/setup-harness` and `/fact`. |
+| `evidence/register.yaml` | The truth store. What may be claimed. Every entry carries a `source:`. Written only by `/setup-harness`, `/lite setup` and `/fact`. |
 | `preferences.yaml` | What jobs are worth the user's attention. Hard constraints are checked before scoring. |
 | `companies.yaml` | Employers worth checking directly. A living list. |
 | `state/` | `HANDOFF.md`, `session-log.md`, `telemetry.json` — the continuity spine. |
@@ -108,22 +107,17 @@ model should treat them as equivalent:
 | "prep me for the interview" | `/interview` |
 | "lite mode", "save tokens", "cheap mode" ("switch to lite mode" also sets `usage.mode: lite` in `preferences.yaml`) | `/lite` |
 
-**Lite mode is sticky.** When `preferences.yaml` sets `usage.mode: lite`, plain
-language routes to lite instead: "set me up" → `/lite setup`, "find me jobs" →
-`/lite search`, "apply to this" → `/lite apply`, "what's next" → `/lite`. An explicitly
-typed `/scrape` under mode `lite` runs as `focused`.
+**Lite is sticky.** Under `usage.mode: lite`, "set me up", "find me jobs", "apply to
+this", "what's next" and "I applied" / "I got rejected by X" run `/lite setup`,
+`/lite search`, `/lite apply`, `/lite` and `/lite applied <Company>`.
 
 **Before any harness workflow runs, check the user is set up.** If
 `evidence/register.yaml` or `preferences.yaml` is missing, do not fail into
 undefined behaviour and do not read the `.example.yaml` as if it were theirs.
-(`/setup-harness`, `/lite setup` and `/recruiter` are exempt: they are how a user
-gets set up, and `/recruiter` needs only the register.) Say so in one line and
-offer onboarding, recommending by plan: use `usage.plan` from `preferences.yaml` if
-the installer recorded it, otherwise ask.
-
-> You have not set up a profile yet. On a plan below ChatGPT Pro or Claude Max,
-> start with lite mode: `/lite setup`, 5-10 minutes, a fraction of the usage. On
-> those plans `/setup-harness` runs the full system. Which plan are you on?
+(Exempt: `/setup-harness`, `/lite setup`, `/recruiter`.) Say so in one line and
+offer onboarding: `usage.mode: lite` → `/lite setup`; another recorded mode →
+`/setup-harness`; none → ask their plan and recommend lite (`/lite setup`, 5-10
+minutes, a fraction of the usage) below ChatGPT Pro or Claude Max.
 
 **`/apply` is upstream's inner workflow.** If the user types it directly, they
 skip posting intake, the hard-constraint gate, the humanizer pass, the fact

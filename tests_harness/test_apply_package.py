@@ -442,6 +442,32 @@ class AtsReportGate(unittest.TestCase):
         self.assertIn("email not in the text layer", out)
         self.assertIn("FAIL", (self.folder / "ats_report.md").read_text(encoding="utf-8"))
 
+    def test_a_pdf_older_than_its_source_blocks(self):
+        """The fact gate reads the .tex; a PDF built before the last edit can still
+        carry the claim the gate made you remove (review finding)."""
+        import os
+        text_pdf(self.cv.with_suffix(".pdf"), self.CV_LINES)
+        later = self.cv.with_suffix(".pdf").stat().st_mtime + 60
+        os.utime(self.cv, (later, later))
+        code, out = self.run_main()
+        self.assertNotEqual(code, 0)
+        self.assertIn("PDF OLDER THAN ITS SOURCE", out)
+
+    def test_a_rerun_refreshes_the_unsubmitted_tracker_row(self):
+        from unittest import mock
+        text_pdf(self.cv.with_suffix(".pdf"), self.CV_LINES)
+        tracker = self.tmp / "tracker.csv"
+        argv = ["--company", self.COMPANY, "--role", self.ROLE, "--cv", str(self.cv),
+                "--letter", str(self.letter), "--build", str(self.tmp / "build"),
+                "--register", str(REGISTER), "--applications", str(self.applications)]
+        with mock.patch.object(apply_package.tracker_row, "TRACKER_CSV", tracker), \
+             contextlib.redirect_stdout(io.StringIO()):
+            apply_package.main(argv + ["--score", "70"])
+            apply_package.main(argv + ["--score", "82"])
+        rows, _ = apply_package.tracker_row.read_rows(tracker)
+        self.assertEqual(1, len(rows))
+        self.assertEqual("82", rows[0]["fit_rating"])
+
     def test_a_missing_cv_pdf_blocks_and_leaves_no_stale_report(self):
         (self.folder / "ats_report.md").write_text("ATS: parse OK (old)", encoding="utf-8")
         code, out = self.run_main()

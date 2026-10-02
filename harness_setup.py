@@ -201,8 +201,8 @@ MODES_EXPLANATION = """\
   application spends your plan's usage. Two ways to run it:
 
   lite      One compact procedure (/lite) and scripts that do the checking.
-            Onboarding takes 5-10 minutes, and an application loads under
-            10 KB of instructions instead of about 170 KB. It keeps the fact
+            Onboarding takes 5-10 minutes, and an application reads about
+            7 KB of instructions instead of about 160 KB. It keeps the fact
             gate, the ATS check, compiling and the page checks. It drops the
             humanizer and second-reviewer passes, company research and
             interview prep; each is still there as its full command.

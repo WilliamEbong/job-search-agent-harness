@@ -24,7 +24,7 @@ page, sometimes days earlier, sometimes exclusively.
 
 Run the standing first-run check ("Before any harness workflow runs" in `AGENTS.md` /
 `CLAUDE.md`): no `evidence/register.yaml` or `preferences.yaml` means offer
-`/setup-harness` in one line and stop. Never read the shipped `.example.yaml` as though
+onboarding as that check words it (`/lite setup` or `/setup-harness`) and stop. Never read the shipped `.example.yaml` as though
 it were the user's.
 
 ## Step 1: Show what is there

@@ -1,7 +1,7 @@
 ---
 name: recruiter
 description: >-
-  Harness workflow $recruiter: name the 20 positions the user is most credibly hireable for. Use for "what jobs am I a good fit for", "act as a recruiter".
+  Job search: the 20 positions your CV fits. "what jobs fit me".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/recruiter.md` in full and follow it exactly,

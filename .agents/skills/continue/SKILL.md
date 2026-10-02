@@ -1,7 +1,7 @@
 ---
 name: continue
 description: >-
-  Harness workflow $continue: resume job-search work from state/HANDOFF.md after a break or a runtime switch. Use for "continue", "pick up where we left off".
+  Job search: resume interrupted work from the saved state. "continue".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/continue.md` in full and follow it exactly,

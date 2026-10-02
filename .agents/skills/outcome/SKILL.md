@@ -1,7 +1,7 @@
 ---
 name: outcome
 description: >-
-  Harness workflow $outcome: record what happened to an application. Use for "I applied", "I got rejected by X", "I had the interview", "they offered me the job".
+  Job search: record a result. "I applied", "I got rejected".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/outcome.md` in full and follow it exactly,

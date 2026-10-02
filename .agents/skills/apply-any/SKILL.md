@@ -1,7 +1,7 @@
 ---
 name: apply-any
 description: >-
-  Harness workflow $apply-any: tailored CV and cover letter for a posting given as a link, screenshot, PDF or pasted text. Use for "apply to this", "apply".
+  Job search: tailored CV and letter from any posting. "apply to this".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/apply-any.md` in full and follow it exactly,

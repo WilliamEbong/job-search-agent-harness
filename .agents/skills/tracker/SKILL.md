@@ -1,7 +1,7 @@
 ---
 name: tracker
 description: >-
-  Harness workflow $tracker: regenerate the tracker workbook and archive submitted applications. Use for "check my spreadsheet", "update the tracker".
+  Job search: rebuild the tracker workbook. "update the tracker".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/tracker.md` in full and follow it exactly,

@@ -1,7 +1,7 @@
 ---
 name: interview
 description: >-
-  Harness workflow $interview: prepare for a scheduled interview on a tracked application. Use for "prep me for the interview", "interview prep".
+  Job search: interview prep pack. "prep me for the interview".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/interview.md` in full and follow it exactly,

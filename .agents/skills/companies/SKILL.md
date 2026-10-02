@@ -1,7 +1,7 @@
 ---
 name: companies
 description: >-
-  Harness workflow $companies: manage the employers worth checking directly. Use for "watch this company", "add employer".
+  Job search: employers to watch directly. "watch this company".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/companies.md` in full and follow it exactly,

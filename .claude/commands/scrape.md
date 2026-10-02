@@ -20,15 +20,17 @@ tells the user **what the run will cost** before it starts.
 
 Run the standing first-run check ("Before any harness workflow runs" in `AGENTS.md` /
 `CLAUDE.md`): no `evidence/register.yaml` or `preferences.yaml` means offer
-`/setup-harness` in one line and stop. Never read the shipped `.example.yaml` as though
+onboarding as that check words it (`/lite setup` or `/setup-harness`) and stop. Never read the shipped `.example.yaml` as though
 it were the user's.
 
 **First search after a quick start.** Quick start skips the preference interview, so
 `preferences.yaml` may hold little more than `target_positions`. If it has no `location`,
 ask the two questions a search genuinely needs, in one message: where they can work
 (home, commute radius, remote / hybrid / onsite) and anything they refuse outright. Write
-the answers into `preferences.yaml` in `examples/preferences.example.yaml`'s shape
-(`location`, `exclusions`), keep every other key, and continue. Ask nothing else here;
+the answers into `preferences.yaml` as
+`location: {home: "City, Region, Country", commute_radius_km: 30, arrangements: [hybrid, remote, onsite]}`
+and `exclusions: {occupations: [], industries: [], schedules: []}`, keep every other
+key, and continue. Ask nothing else here;
 pay and the rest wait for `/setup-harness --interview`.
 
 ## Step 1: Resolve scope and mode

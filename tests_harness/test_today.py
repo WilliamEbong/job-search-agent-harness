@@ -60,6 +60,37 @@ class DailyBrief(unittest.TestCase):
     def collect(self):
         return today_mod.collect(today=TODAY, root=self.tmp)
 
+    # ---------------------------------------------------------------- lite
+
+    def test_a_job_that_failed_a_gate_is_never_offered_as_closing_soon(self):
+        """A lite search records a not-resolved row with its deadline, then the
+        model adds gate-fail for the same job: /today offered to apply anyway."""
+        due = "2026-08-10"
+        self.write("shortlist.csv", SHORTLIST_HEADER, [
+            {"company": "Acme", "role": "Data Analyst", "verdict": "not-resolved",
+             "deadline": due, "url": "https://example.com/acme"},
+            {"company": "Acme", "role": "Data Analyst", "verdict": "gate-fail"},
+            {"company": "Birch", "role": "Analyst", "verdict": "not-resolved",
+             "deadline": due, "url": "https://example.com/birch"}])
+        state = self.collect()
+        self.assertEqual(["Birch"], [d["company"] for d in state["deadlines"]])
+        commands = [a["command"] for a in today_mod.actions(state)]
+        self.assertIn("apply https://example.com/birch", commands)
+
+    def test_lite_mode_menu_names_the_lite_commands(self):
+        (self.tmp / "preferences.yaml").write_text(
+            "usage:\n  mode: lite\ntarget_positions:\n  positions:\n"
+            "    - {title: Analyst, status: active}\n", encoding="utf-8")
+        commands = [a["command"] for a in today_mod.actions(self.collect())]
+        self.assertIn("/lite search", commands)
+        self.assertNotIn("/scrape", commands)
+
+    def test_one_application_with_two_tracker_rows_is_listed_once(self):
+        row = {"company": "Acme", "role": "Analyst", "status": "in_progress",
+               "date": "2026-06-01"}
+        self.write("job_search_tracker.csv", TRACKER_HEADER, [row, dict(row)])
+        self.assertEqual(1, len(self.collect()["followups"]))
+
     # ---------------------------------------------------------------- setup
 
     def test_new_user_is_offered_onboarding_not_an_empty_dashboard(self):

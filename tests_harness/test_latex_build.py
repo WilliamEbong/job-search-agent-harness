@@ -43,12 +43,17 @@ class Parsing(unittest.TestCase):
         pages = [["- Reworked the sample intake process and cut average turnaround",
                   "time.", "Education"],
                  ["Senior Technician  Northwind", "- Trained new technicians."]]
-        flags = latex_build.flags_for(pages, source)
-        self.assertIn("page 1 ends with 'Education'", flags)
-        self.assertIn("one-word lines: 'time.'", flags)
+        flags = " | ".join(latex_build.flags_for(pages, source))
+        # Each flag carries its own remedy, so the spec only says "act on each fix:".
+        self.assertIn("page 1 ends with 'Education' - add \\needspace{5\\baselineskip}", flags)
+        self.assertIn("one-word lines 'time.' - reword", flags)
         clean = [["- One full bullet that ends where it should.", "Education"][:1],
                  ["Education", "Senior Technician  Northwind"]]
         self.assertEqual([], latex_build.flags_for(clean, source))
+        # A wrapped bullet that ends a page and mentions an entry word is not a heading.
+        wrapped = [["- Trained process engineers on the internal QC tooling",
+                    "at Northwind for the senior technician team."], ["x"]]
+        self.assertEqual([], latex_build.flags_for(wrapped, source))
 
     def test_engine_by_folder(self):
         self.assertEqual("xelatex", latex_build.engine_for(Path("cover_letters/cover_x.tex")))
@@ -70,6 +75,12 @@ class RealCompile(unittest.TestCase):
             ok, line = latex_build.build(tex, 2)
             self.assertFalse(ok)
             self.assertIn("target 2", line)
+            # No pages of output: an error, not a crash, and not the old PDF's count.
+            tex.write_text("\\documentclass{article}\\begin{document}\\end{document}\n",
+                           encoding="utf-8")
+            ok, line = latex_build.build(tex, 1)
+            self.assertFalse(ok)
+            self.assertIn("no PDF produced", line)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 ---
 name: career-review
 description: >-
-  Harness workflow $career-review: review public work (GitHub, portfolio, writing) and suggest CV improvements. Use for "look at my GitHub", "review my portfolio".
+  Job search: review your portfolio or GitHub as a hiring manager would.
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/career-review.md` in full and follow it exactly,

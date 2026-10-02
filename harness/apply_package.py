@@ -386,8 +386,15 @@ def main(argv=None) -> int:
         written.append(ATS_REPORT)
 
     print(f"package: {folder.relative_to(ROOT) if folder.is_relative_to(ROOT) else folder}")
+    # One line per document with its formats: the long friendly names repeated
+    # four times each were most of this output, on every re-run.
+    formats: dict[str, list[str]] = {}
     for filename in sorted(written):
-        print(f"  {filename}")
+        stem, _, ext = filename.rpartition(".")
+        formats.setdefault(stem or filename, []).append(ext if stem else "")
+    for stem, exts in formats.items():
+        print(f"  {stem}." + (f"{{{','.join(exts)}}}" if len(exts) > 1 else exts[0])
+              if exts[0] else f"  {stem}")
 
     missing = [fmt for fmt in ("docx",)
                if not any(f.endswith(fmt) for f in written)]
@@ -397,7 +404,7 @@ def main(argv=None) -> int:
     print(ats_summary)
 
     if not args.no_tracker:
-        result = tracker_row.append({
+        row = {
             "company": args.company, "role": args.role,
             "status": "in_progress", "fit_rating": args.score,
             "source": args.url, "location": args.location,
@@ -405,7 +412,22 @@ def main(argv=None) -> int:
             "sector": args.sector,
             "cv_file": args.cv, "cover_letter_file": args.letter,
             "notes": "drafted, not yet submitted",
-        })
+        }
+        # A blocked package is fixed and re-run; each run used to append another
+        # row for the same job. Refresh the unsubmitted row instead.
+        tracker = tracker_row.TRACKER_CSV  # read at call time, so tests can redirect it
+        rows, _ = tracker_row.read_rows(tracker)
+        drafted = [r for r in rows
+                   if (r.get("company") or "").strip().lower() == args.company.strip().lower()
+                   and (r.get("role") or "").strip().lower() == args.role.strip().lower()
+                   and not (r.get("submitted_date") or "").strip()]
+        if drafted:
+            tracker_row.update(args.company, args.role,
+                               {k: v for k, v in row.items() if k not in ("company", "role")},
+                               tracker)
+            result = "updated"
+        else:
+            result = tracker_row.append(row, tracker)
         print(f"tracker: {result}")
 
     blocked = False
@@ -431,7 +453,24 @@ def main(argv=None) -> int:
         for gap in ats_failures:
             print(f"  {gap}")
         blocked = True
+    stale = stale_pdfs([Path(args.cv), Path(args.letter)], Path(args.build))
+    if stale:
+        # The fact gate read the .tex; the package ships the PDF. A PDF compiled
+        # before the last edit can still carry the claim the gate made you remove.
+        print("PDF OLDER THAN ITS SOURCE - recompile, then re-run:")
+        for gap in stale:
+            print(f"  {gap}")
+        blocked = True
     return 2 if blocked else 0
+
+
+def stale_pdfs(sources: list[Path], build_dir: Path) -> list[str]:
+    out = []
+    for source in sources:
+        pdf = compiled_pdf(source, build_dir)
+        if pdf.is_file() and source.is_file() and pdf.stat().st_mtime < source.stat().st_mtime:
+            out.append(f"{pdf.name} was built before the last edit to {source.name}")
+    return out
 
 
 if __name__ == "__main__":

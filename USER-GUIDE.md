@@ -26,7 +26,7 @@ On a plan below ChatGPT Pro or Claude Max, use [lite mode](#lite-mode) instead:
 
 ```
 /lite               every morning - status and the one thing to do next
-/lite search        new jobs for your 20 target positions
+/lite search        new jobs for your top 5 target positions
 /lite apply <#>     one checked CV and cover letter
 ```
 
@@ -91,13 +91,13 @@ inside it until you allow it. The doctor shows a `Codex network` row; the fix is
 /lite setup                 # once: your CV, five questions, your 20 best-fit positions
 /lite search [N]            # boards for your top N positions (default 5)
 /lite apply <# | url | text | file>
-/lite applied <company>     # after you submit it yourself
+/lite applied              # after you submit it yourself
 /lite                       # status and the next thing to do
 ```
 
 Lite mode is the same system with the expensive parts removed. Every search and every
 application spends your plan's usage, and the standard workflows are thorough: one
-`/apply-any` loads about 170 KB of instructions. Lite loads one procedure under 10 KB, lets
+`/apply-any` reads about 160 KB of instructions. A lite application reads about 7 KB, lets
 scripts do the mechanical work (searching, deduplicating, compiling, the ATS check, the
 fact gate, packaging) and leaves the model only the judgement.
 
@@ -113,8 +113,9 @@ interview prep, the workbook refresh and the session handoff. Each one is still 
 its full command (`/apply-any`, `/interview`, `/tracker`, `/continue`) when you want it.
 
 **Onboarding is short.** Give it your CV, answer five numbered questions in one reply
-(where you can work, work authorization, what you refuse, skills a job must not require,
-and the one gap that most changes what you may claim), strike any of the 20 positions
+(where you can work and your work authorization, your minimum pay, what you refuse,
+skills a job must not require, and the one gap that most changes what you may claim),
+strike any of the 20 positions
 you do not want, and you are searching. It takes 5-10 minutes.
 
 **Switching.** Lite writes the same files in the same formats as the standard
@@ -468,7 +469,7 @@ right one runs. The list is here for when you want it.
 | Command | Does |
 |---|---|
 | `/today` | **Start here.** What needs doing, ending in a numbered list you pick from |
-| `/lite` | The same, in [lite mode](#lite-mode): `/lite search`, `/lite apply <#>`, `/lite applied <company>` |
+| `/lite` | The same, in [lite mode](#lite-mode): `/lite search`, `/lite apply <#>`, `/lite applied` |
 | `apply <anything>` | Apply from a link, screenshot, PDF or pasted text |
 | `/outcome <company>` | Record what happened — rejection, interview, offer, or a follow-up |
 

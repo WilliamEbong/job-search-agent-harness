@@ -1,7 +1,7 @@
 ---
 name: discover
 description: >-
-  Harness workflow $discover: find role families the evidence supports that the user has not searched. Use for "what else could I do", "other careers".
+  Job search: job families your evidence supports. "what else could I do".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/discover.md` in full and follow it exactly,

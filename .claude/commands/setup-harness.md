@@ -72,7 +72,7 @@ in plain words:
 > **Lite mode** (recommended on any plan below ChatGPT Pro or Claude Max: ChatGPT Free,
 > Go or Plus; Claude Free or Pro; an API key you pay per token). One compact procedure
 > and scripts that do the checking. Onboarding takes 5–10 minutes, and an application
-> loads under 10 KB of instructions instead of about 170 KB. The fact gate, ATS check,
+> reads about 7 KB of instructions instead of about 160 KB. The fact gate, ATS check,
 > compiling and page checks all stay. It drops the humanizer and second-reviewer passes,
 > company research and interview prep, and each stays available as its full command.
 >
@@ -256,8 +256,7 @@ Cover, in `examples/preferences.example.yaml`'s shape:
   number, or *adaptive* (the drafter picks 1 or 2 per posting and says why). Default 2 if
   they have no opinion. Record as `presentation.cv_pages`. Changeable later without
   redoing onboarding — a one-line edit to `preferences.yaml` or a re-run of this step.
-- **Usage mode** — explain the three modes in terms of cost and control, and default new
-  users to `focused`.
+- **Usage mode** — recorded in Step 0; read it back, never re-ask.
 
 Write `preferences.yaml`. Read the whole thing back in plain language and let them
 correct it.

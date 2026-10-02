@@ -1,7 +1,7 @@
 ---
 name: fact
 description: >-
-  Harness workflow $fact: record a career fact the user states or confirms, so it becomes claimable evidence. Use for "remember that I ...", "I actually did X".
+  Job search: record a confirmed career fact. "remember that I...".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/fact.md` in full and follow it exactly,

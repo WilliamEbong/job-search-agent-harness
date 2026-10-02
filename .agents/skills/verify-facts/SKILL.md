@@ -1,7 +1,7 @@
 ---
 name: verify-facts
 description: >-
-  Harness workflow $verify-facts: the blocking fact check of a finished application package against evidence/register.yaml. Use for "check the facts".
+  Job search: run the fact gate on a draft.
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/verify-facts.md` in full and follow it exactly,

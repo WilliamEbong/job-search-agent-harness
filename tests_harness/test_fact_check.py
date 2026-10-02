@@ -203,9 +203,18 @@ class DateRanges(unittest.TestCase):
     def test_a_gap_between_titles_is_never_bridged(self):
         sys.path.insert(0, str(ROOT / "harness"))
         import fact_check
-        spans = fact_check.employment_spans({"employers": [{"name": "Acme", "titles": [
-            {"start": "2015-01", "end": "2016-06"}, {"start": "2019-01", "end": "2020-01"}]}]})
-        self.assertEqual([("Acme", 2015, 2016), ("Acme", 2019, 2020)], spans)
+
+        def spans(*titles):
+            return fact_check.employment_spans({"employers": [{"name": "Acme", "titles": [
+                {"start": s, "end": e} for s, e in titles]}]})
+
+        self.assertNotIn(("Acme", 2015, 2020), spans(("2015-01", "2016-06"), ("2019-01", "2020-01")))
+        # Adjacent years but a 23-month gap: a year-only merge bridged this.
+        self.assertNotIn(("Acme", 2015, 2023), spans(("2015-03", "2019-01"), ("2020-12", "2023-06")))
+        # The month after the previous end is back-to-back, and merges.
+        self.assertIn(("Acme", 2020, 2024), spans(("2020-08", "2022-09"), ("2022-10", "2024-02")))
+        # An open-ended second title keeps the merged tenure open.
+        self.assertIn(("Acme", 2010, 9999), spans(("2010-01", "2012-01"), ("2012-02", "")))
 
 
 class MetricQualifiers(unittest.TestCase):

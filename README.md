@@ -93,7 +93,7 @@ Then, in Claude Code (in Codex, type `$` where you see `/`):
 
 ```
 /lite setup         # lite: your CV, five questions, your 20 best-fit positions
-/lite search        # jobs for those positions, near you, deduplicated
+/lite search        # jobs for your top 5 positions, near you, deduplicated
 /lite apply <#>     # one tailored, fact-checked, ATS-checked CV and cover letter
 ```
 
@@ -139,8 +139,8 @@ learning plan for the rest. `/rank` triages found jobs by fit so effort goes whe
 odds are.
 
 **Lite mode for ordinary plans.** The standard workflows are thorough, and one
-application through them loads about 170 KB of instructions. `/lite` runs the same core
-loop — setup, search, one checked package at a time — from a single procedure under 10 KB,
+application through them reads about 160 KB of instructions. `/lite` runs the same core
+loop — setup, search, one checked package at a time — and an application reads about 7 KB,
 with scripts doing the searching, compiling, ATS check, fact gate and packaging. It
 keeps every truth and safety check and drops the expensive extras (humanizer and
 second-reviewer passes, company research, interview prep), each still available as its

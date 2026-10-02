@@ -1,7 +1,7 @@
 ---
 name: gmail-sync
 description: >-
-  Harness workflow $gmail-sync: read application replies from Gmail (needs the Gmail MCP) and update the tracker after approval. Use for "check my email for replies".
+  Job search: read application updates from Gmail.
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/gmail-sync.md` in full and follow it exactly,

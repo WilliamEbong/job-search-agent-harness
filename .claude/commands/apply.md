@@ -285,9 +285,13 @@ After all edits are applied, the two files on disk are the final drafts.
 Use `<CV_COMPILE>` and `<COVER_COMPILE>` resolved in Step 2 (the active template's declared compile command, or the stock defaults below if no custom template is active):
 
 ```bash
-cd cv && lualatex -interaction=nonstopmode main_<company>_<role>.tex
-cd ../cover_letters && xelatex -interaction=nonstopmode cover_<company>_<role>.tex
+python harness/latex_build.py cv/main_<company>_<role>.tex cover_letters/cover_<company>_<role>.tex --pages <n>
 ```
+
+For the stock templates this runs lualatex for the CV and xelatex for the letter, prints
+one line per PDF (page count against the target, layout notes after `fix:`, or the first
+TeX error) instead of the full TeX transcript, and removes `.aux`/`.log`/`.out`, so 5e is
+already done.
 
 - **Stock CV** uses **lualatex** — pdflatex fails on modern MiKTeX with fontawesome5 font-expansion errors. lualatex handles the same sources cleanly.
 - **Stock cover letter** uses **xelatex** — cover.cls requires fontspec.

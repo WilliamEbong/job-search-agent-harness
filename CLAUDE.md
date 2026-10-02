@@ -141,11 +141,9 @@ Both documents MUST be compiled and visually inspected via the Read tool on the 
 - [ ] **Cover letter bullet font matches body font** - `\lettercontent{}` must not wrap `\begin{itemize}...\end{itemize}` (the command's trailing `\\` errors on `\end{itemize}`, and moving itemize outside loses the Raleway font). Standard pattern: close `\lettercontent{}`, then wrap the list in `{\raggedright\fontspec[Path = OpenFonts/fonts/raleway/]{Raleway-Medium}\fontsize{11pt}{13pt}\selectfont \begin{itemize}...\end{itemize}\par}`
 
 ### ATS & keyword verification (CV)
-ATS parsers read the PDF's embedded text layer, not the rendered page. `python harness/ats_check.py --cv <cv.pdf> --tex <cv source> --keywords cv/main_<company>_<role>.keywords.txt --posting <job_posting.md>` extracts it (`pdftotext -layout`, or pypdf when poppler is absent) and checks what a parser sees; exit 1 is a parse failure. `harness/apply_package.py` runs the same check and writes `ats_report.md` into every package.
-- [ ] CV text layer extracts cleanly - no `(cid:*)` markers, `�` replacement characters, or text visible in the PDF but absent from the extraction (the script reports `parse OK`)
-- [ ] Email and phone appear as **literal text** in the extraction - the script checks the source's `\email`/`\phone` (icon-glyph noise like `MOBILE-ALT`/`Envelope` is harmless, but a contact detail carried only by an icon or hyperlink is invisible to ATS)
-- [ ] Reading order of the extracted text matches the visual order - the script warns when section headings come out of source order (single-column stock template is safe; multi-column custom templates are where this breaks)
-- [ ] Posting keywords covered or honestly absent - every `missing` row classified as have-it (added truthfully, preferring experience bullets) or gap (left visible and **never stuffed**); synonym-only matches tightened to the posting's exact term where truthfully applicable
+ATS parsers read the PDF's text layer, not the rendered page. `harness/ats_check.py` (`/apply` Step 5d; `apply_package.py` re-runs it into `ats_report.md`) checks what a parser sees.
+- [ ] It reports `parse OK`: text extracts cleanly, email and phone are literal text, every year is present; a section-order warning on a multi-column template means extraction is scrambled
+- [ ] Every `missing` keyword is have-it (added truthfully, preferring experience bullets) or gap (left visible, **never stuffed**); synonym-only matches tightened to the posting's exact term where true
 
 <!-- harness:begin -->
 ## Job Search Agent Harness layer
@@ -168,6 +166,9 @@ Harness workflows: `/setup-harness`, `/recruiter`, `/career-review`, `/companies
 The Verification Checklist above still governs every generated document. The harness adds
 one blocking step to it: **`/verify-facts` runs on the final text, after any humanizer
 edit and after the final compile.** A package with an open red line is not presented.
+In lite mode (`/lite`, `usage.mode: lite`) the lite steps are the verification and replace
+this checklist's report: build, page and layout checks, the ATS check and the fact gate,
+with company facts taken only from the posting, so there is nothing to research.
 
 ### Saying it in plain language
 
@@ -190,22 +191,17 @@ model should treat them as equivalent:
 | "prep me for the interview" | `/interview` |
 | "lite mode", "save tokens", "cheap mode" ("switch to lite mode" also sets `usage.mode: lite` in `preferences.yaml`) | `/lite` |
 
-**Lite mode is sticky.** When `preferences.yaml` sets `usage.mode: lite`, plain
-language routes to lite instead: "set me up" → `/lite setup`, "find me jobs" →
-`/lite search`, "apply to this" → `/lite apply`, "what's next" → `/lite`. An explicitly
-typed `/scrape` under mode `lite` runs as `focused`.
+**Lite is sticky.** Under `usage.mode: lite`, "set me up", "find me jobs", "apply to
+this", "what's next" and "I applied" / "I got rejected by X" run `/lite setup`,
+`/lite search`, `/lite apply`, `/lite` and `/lite applied <Company>`.
 
 **Before any harness workflow runs, check the user is set up.** If
 `evidence/register.yaml` or `preferences.yaml` is missing, do not fail into
 undefined behaviour and do not read the `.example.yaml` as if it were theirs.
-(`/setup-harness`, `/lite setup` and `/recruiter` are exempt: they are how a user
-gets set up, and `/recruiter` needs only the register.) Say so in one line and
-offer onboarding, recommending by plan: use `usage.plan` from `preferences.yaml` if
-the installer recorded it, otherwise ask.
-
-> You have not set up a profile yet. On a plan below ChatGPT Pro or Claude Max,
-> start with lite mode: `/lite setup`, 5-10 minutes, a fraction of the usage. On
-> those plans `/setup-harness` runs the full system. Which plan are you on?
+(Exempt: `/setup-harness`, `/lite setup`, `/recruiter`.) Say so in one line and
+offer onboarding: `usage.mode: lite` → `/lite setup`; another recorded mode →
+`/setup-harness`; none → ask their plan and recommend lite (`/lite setup`, 5-10
+minutes, a fraction of the usage) below ChatGPT Pro or Claude Max.
 
 **`/apply` is upstream's inner workflow.** If the user types it directly, they
 skip posting intake, the hard-constraint gate, the humanizer pass, the fact

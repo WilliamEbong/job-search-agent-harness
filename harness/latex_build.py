@@ -29,7 +29,7 @@ from pathlib import Path
 from pypdf import PdfReader
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import ats_check  # noqa: E402  (its pdftotext decoder handles MiKTeX's xpdf)
+import ats_check  # noqa: E402  (shares its pdftotext text extraction)
 
 TIMEOUT_S = 600  # a fresh MiKTeX installs packages on first use, which takes minutes
 PAGE_NUMBER = re.compile(r"^\d+\s*/\s*\d+$")
@@ -43,14 +43,15 @@ def layout_flags(pdf: Path, tex: Path) -> list[str]:
     """Defects a reader sees that a page count cannot: a heading or entry title left
     at the foot of a page, and one-word last lines. Needs pdftotext (-layout keeps
     visual lines; pypdf merges them); without it the visual check covers these."""
-    exe = shutil.which("pdftotext")
-    if not exe:
+    try:
+        text, extractor = ats_check.pdf_text(pdf)
+    except ats_check.InputError:
         return []
-    raw = subprocess.run([exe, "-layout", "-enc", "UTF-8", str(pdf), "-"],
-                         capture_output=True).stdout
+    if not extractor.startswith("pdftotext"):
+        return []
     pages = [[line.strip() for line in page.splitlines()
               if line.strip() and not PAGE_NUMBER.match(line.strip())]
-             for page in ats_check.decode(raw).split("\f")]
+             for page in text.split("\f")]
     return flags_for([page for page in pages if page],
                      tex.read_text(encoding="utf-8", errors="replace"))
 
@@ -63,14 +64,19 @@ def flags_for(pages: list[list[str]], source: str) -> list[str]:
     flags = []
     for number, page in enumerate(pages[:-1], 1):
         last = page[-1]
-        if norm(last) in headings or (not last.startswith("-")
-                                      and any(e in norm(last) for e in entries)):
-            flags.append(f"page {number} ends with '{last[:40]}'")
+        words = f" {norm(last)} "
+        # Whole words, on a line that is not the end of a sentence: "Intern" inside
+        # "...the internal QC tooling." is a wrapped bullet, not a stranded entry.
+        if norm(last) in headings or (not last.startswith("-") and not last.endswith(".")
+                                      and any(f" {e} " in words for e in entries)):
+            flags.append(f"page {number} ends with '{last[:40]}' - "
+                         "add \\needspace{5\\baselineskip} before it")
     widows = [line for page in pages for before, line in zip(page, page[1:])
               if len(line.split()) == 1 and len(before) >= 40 and line[-1] in ".%)"
               and norm(line) not in headings]
     if widows:
-        flags.append("one-word lines: " + ", ".join(f"'{w}'" for w in widows[:4]))
+        flags.append("one-word lines " + ", ".join(f"'{w}'" for w in widows[:4])
+                     + " - reword those sentences")
     return flags
 
 
@@ -95,7 +101,8 @@ def build(tex: Path, pages: int) -> tuple[bool, str]:
     if not engine:
         return False, f"{tex}: {engine_for(tex)} is not installed (python harness_setup.py --doctor)"
     command = [engine, "-interaction=nonstopmode", "-halt-on-error", tex.name]
-    log = tex.with_suffix(".log")
+    log, pdf = tex.with_suffix(".log"), tex.with_suffix(".pdf")
+    pdf.unlink(missing_ok=True)  # an old PDF must never be counted as this build's
     for _ in range(2):  # a second pass only when TeX asks for one (cross-references)
         try:
             proc = subprocess.run(command, cwd=tex.parent, capture_output=True, text=True,
@@ -107,7 +114,8 @@ def build(tex: Path, pages: int) -> tuple[bool, str]:
             return False, f"{tex}: compile failed\n{first_error(text)}"
         if "Rerun to get" not in text:
             break
-    pdf = tex.with_suffix(".pdf")
+    if not pdf.is_file():
+        return False, f"{tex}: no PDF produced (the document has no pages?)\n{first_error(text)}"
     count = len(PdfReader(pdf).pages)
     for suffix in (".aux", ".log", ".out"):
         tex.with_suffix(suffix).unlink(missing_ok=True)
@@ -123,6 +131,7 @@ def main(argv=None) -> int:
     parser.add_argument("tex", nargs="+", help="LaTeX sources (CV and/or cover letter)")
     parser.add_argument("--pages", type=int, default=2, help="CV page target (default 2)")
     args = parser.parse_args(argv)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # non-cp1252 titles crashed it
     missing = [t for t in args.tex if not Path(t).is_file()]
     if missing:
         print(f"latex_build: no such file: {', '.join(missing)}")

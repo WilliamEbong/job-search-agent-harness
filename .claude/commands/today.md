@@ -22,7 +22,7 @@ offer to start:
 > I read your CV, ask a few questions, name the 20 positions you fit best, and then I
 > can start finding jobs.
 
-If they say yes, run `/setup-harness`. Do not print an empty dashboard at someone who has
+If they say yes, run `/lite setup` below ChatGPT Pro or Claude Max, otherwise `/setup-harness`. Do not print an empty dashboard at someone who has
 nothing in it yet.
 
 ## Step 2: Gather the state

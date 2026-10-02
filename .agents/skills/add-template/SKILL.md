@@ -1,7 +1,7 @@
 ---
 name: add-template
 description: >-
-  Harness workflow $add-template: register your own CV or cover letter template (LaTeX, Typst or other). Use for "use my own CV template", "add a template".
+  Job search: register your own CV or cover letter template.
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/add-template.md` in full and follow it exactly,

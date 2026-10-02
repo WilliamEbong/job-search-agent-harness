@@ -3,11 +3,12 @@
 
 `/lite search` runs this in place of the job-scraper skill. The full route has the model
 read the scrape command, the job-scraper skill and every portal SKILL.md, then parse raw
-CLI JSON itself. Here the board quirks live in three small tables below, and the model
-reads at most 25 numbered rows.
+CLI JSON itself. Here the board quirks live in small tables below, and the model reads
+at most 12 numbered rows.
 
     python harness/lite_search.py --top 5 --record
     python harness/lite_search.py --show 3     # one row, plus the command for its full text
+    python harness/lite_search.py --save 3     # fetch and archive row 3 for /lite apply
 
 Exit 0 = searched (even when nothing was new), 1 = every board failed, 2 = nothing to
 search with (no preferences, positions, boards or bun); one printed line says which.
@@ -36,7 +37,6 @@ import shutil
 import subprocess
 import sys
 import time
-import unicodedata
 from datetime import date
 from pathlib import Path
 
@@ -75,14 +75,11 @@ COUNTRY = {
 
 TIMEOUT_S = 60
 PAUSE_S = 5        # between one board's own calls: jobbank-ca's Crawl-delay, the strictest
-MAX_ROWS = 15      # printed rows; the rest stay in the saved list for --show
+MAX_ROWS = 12      # printed rows; the rest stay in the saved list for --show
 MIN_SHOWN = 40     # a weaker title match is noise in the table (still saved for --show)
 RECORD_TOP = 10    # shortlist rows per --record: lite presents at most 10 jobs
 LAST_SEARCH = Path("state") / "lite-last-search.json"
 STOPWORDS = {"a", "an", "and", "at", "for", "in", "of", "on", "or", "the", "to", "with"}
-FOLD = str.maketrans({"ø": "o", "Ø": "O", "æ": "ae", "Æ": "AE", "ß": "ss", "ł": "l",
-                      "Ł": "L", "–": "-", "—": "-", "‘": "'",
-                      "’": "'", "“": '"', "”": '"'})
 
 
 def norm(text) -> str:
@@ -90,15 +87,8 @@ def norm(text) -> str:
     return " ".join(re.findall(r"\w+", str(text or "").lower()))
 
 
-def fold(text) -> str:
-    """ASCII for printing, so no console encoding ever chokes on a posting's title."""
-    text = unicodedata.normalize("NFKD", str(text or "").translate(FOLD))
-    text = "".join(c for c in text if not unicodedata.combining(c))
-    return text.encode("ascii", "replace").decode()
-
-
 def clip(text, width: int) -> str:
-    text = fold(text)
+    text = str(text or "")
     return text if len(text) <= width else text[:width - 3] + "..."
 
 
@@ -224,7 +214,10 @@ def load_positions(prefs: dict, top: int) -> list[dict]:
     out = []
     for position in active:
         title = str(position["title"]).strip()
-        terms = [str(t).strip() for t in position.get("search_terms") or [] if str(t).strip()]
+        listed_terms = position.get("search_terms") or []
+        if isinstance(listed_terms, str):  # one term written without list brackets
+            listed_terms = [listed_terms]
+        terms = [str(t).strip() for t in listed_terms if str(t).strip()]
         terms = terms or [title]
         out.append({"title": title, "query": terms[0], "phrases": [title] + terms,
                     "trial": False})
@@ -307,7 +300,7 @@ def read_seen(path: Path) -> tuple[dict, bool]:
     try:
         data = json.loads(path.read_text(encoding="utf-8") or "{}")
     except (OSError, ValueError) as exc:
-        print(f"WARNING: {path} is unreadable ({fold(exc)}); not deduplicating against "
+        print(f"WARNING: {path} is unreadable ({str(exc)}); not deduplicating against "
               "it and not updating it")
         return {"seen": {}}, False
     if not isinstance(data, dict) or not isinstance(data.setdefault("seen", {}), dict):
@@ -328,12 +321,12 @@ def cli_error(proc: subprocess.CompletedProcess) -> str:
     """The CLI's own message; by the portal contract stderr is {"error": ..., "code": ...}."""
     text = (proc.stderr or "").strip()
     try:
-        return fold(json.loads(text.splitlines()[-1])["error"])[:120]
+        return str(json.loads(text.splitlines()[-1])["error"])[:120]
     except (ValueError, IndexError, KeyError, TypeError):
         pass
     if proc.returncode == 0:
         return "output was not JSON"
-    return fold(text.splitlines()[-1] if text else f"exit code {proc.returncode}")[:120]
+    return str(text.splitlines()[-1] if text else f"exit code {proc.returncode}")[:120]
 
 
 def run_board(bun: str, root: Path, board: str, queries: list[str], home: str,
@@ -358,7 +351,7 @@ def run_board(bun: str, root: Path, board: str, queries: list[str], home: str,
             run["error"] = f"{where} timed out after {TIMEOUT_S}s"
             break
         except OSError as exc:
-            run["error"] = f"{where}: {fold(exc)}"
+            run["error"] = f"{where}: {str(exc)}"
             break
         try:
             payload = json.loads(proc.stdout) if proc.returncode == 0 else None
@@ -395,7 +388,7 @@ def search(args) -> int:
     try:
         prefs = yaml.safe_load(prefs_path.read_text(encoding="utf-8")) or {}
     except yaml.YAMLError as exc:
-        print(f"lite_search: {prefs_path.name} does not parse ({fold(exc)})")
+        print(f"lite_search: {prefs_path.name} does not parse ({str(exc)})")
         return 2
     positions = load_positions(prefs if isinstance(prefs, dict) else {}, args.top)
     if not positions:
@@ -436,9 +429,13 @@ def search(args) -> int:
             lambda board: run_board(bun, root, board, queries, home, args.limit), boards))
 
     pooled = []
+    country = home_country(tokens)
     for run in runs:
         jobs = [job for job in run["jobs"] if job["title"]]
-        if run["post_filter"] and tokens:
+        # A home-country national board without a place flag (the Danish ones) lists
+        # places in its own language ("København K" for a "Copenhagen" home), so its
+        # rows go to the model's location screen instead of being dropped here.
+        if run["post_filter"] and tokens and MARKET.get(run["board"]) != country:
             jobs = [job for job in jobs if near_home(job["location"], tokens, remote_ok)]
         run["near"] = len(jobs)
         pooled += jobs
@@ -464,9 +461,10 @@ def search(args) -> int:
     added = remember(data, fresh, today) if writable else 0
     if added:
         write_json(seen_path, data)
-    write_json(root / LAST_SEARCH, {"date": today, "home": home,
-                                    "positions": [p["title"] for p in positions],
-                                    "results": fresh})
+    if fresh:  # a repeat search with nothing new keeps the list --show/--save refer to
+        write_json(root / LAST_SEARCH, {"date": today, "home": home,
+                                        "positions": [p["title"] for p in positions],
+                                        "results": fresh})
     shown = [job for job in fresh if job["score"] >= MIN_SHOWN][:MAX_ROWS]
     recorded = []
     if args.record:
@@ -484,18 +482,10 @@ def search(args) -> int:
     # Every board failing is "could not search", never "no new jobs".
     failed = all(run["error"] and not run["found"] for run in runs)
 
-    if args.json:
-        print(json.dumps({"date": today, "home": home, "positions": positions,
-                          "boards": [{k: v for k, v in run.items() if k != "jobs"}
-                                     for run in runs],
-                          "disabled": disabled, "results": fresh}, indent=1))
-        return 1 if failed else 0
-    where = fold(home) + (" (+remote)" if remote_ok else "") if home \
+    where = str(home) + (" (+remote)" if remote_ok else "") if home \
         else "not set, so results are not location-filtered"
     print(f"lite search {today} - {len(positions)} position(s), {len(runs)} board(s), "
           f"home: {where}")
-    print("searched: " + "; ".join(f"{i} {clip(p['query'], 40)}"
-                                   for i, p in enumerate(positions, 1)))
     for run in runs:
         name = run["board"].ljust(19)
         if run["error"] and not run["found"]:
@@ -511,11 +501,10 @@ def search(args) -> int:
     if elsewhere:
         print(f"  skipped (another country): {', '.join(elsewhere)}")
     if shown:
-        print("\n  # match  title | company | location | posted | board")
+        print("\n  # match  title | company | location")
     for job in shown:
         print(f"{job['n']:>3} {job['score']:>5}  {clip(job['title'], 55)}"
-              f" | {clip(job['company'], 28)} | {place(job['location'])}"
-              f" | {job['date'] or '-'} | {job['board'].removesuffix('-search')}")
+              f" | {clip(job['company'], 28)} | {place(job['location'])}")
     more = f" (showing {len(shown)}, title match {MIN_SHOWN}+)" if len(shown) < len(fresh) else ""
     store = f"{seen_path.name} +{added}" if writable else f"{seen_path.name} NOT updated"
     if failed:
@@ -523,37 +512,158 @@ def search(args) -> int:
         return 1
     print(f"\n{len(fresh)} new job(s){more}; {store}"
           + (f"; recorded {', '.join(recorded)}" if recorded else ""))
-    if fresh:
-        print("One row in full: python harness/lite_search.py --show <#>")
     return 0
 
 
-def show(args) -> int:
-    path = Path(args.root) / LAST_SEARCH
+def last_row(root: Path, number: int) -> tuple[dict, str] | None:
+    """(row, search date) from the saved list; None, with the reason printed."""
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads((root / LAST_SEARCH).read_text(encoding="utf-8"))
         rows = data["results"]
     except (OSError, ValueError, KeyError, TypeError):
         print("lite_search: no saved search - run /lite search first")
-        return 2
-    if not 1 <= args.show <= len(rows):
-        print(f"lite_search: no row {args.show}; the search of {data.get('date')} "
+        return None
+    if not 1 <= number <= len(rows):
+        print(f"lite_search: no row {number}; the search of {data.get('date')} "
               f"has {len(rows)}")
+        return None
+    return rows[number - 1], data.get("date")
+
+
+def save(args) -> int:
+    """Fetch row N's posting with its board's `detail` command and archive it the way
+    apply_package.py requires (posting_source/, job_posting.md, provenance.md), then
+    print the text. The model reads the posting once and never has to retype it."""
+    root = Path(args.root)
+    found = last_row(root, args.save)
+    if not found:
         return 2
-    job = rows[args.show - 1]
-    if args.json:
-        print(json.dumps(job, indent=1))
-        return 0
-    print(f"#{args.show} {fold(job['title'])} | {fold(job['company'])} | "
-          f"{fold(job['location'])}   (search of {data.get('date')})")
+    job = found[0]
+    bun = shutil.which("bun")
+    if not bun or not job["id"]:
+        print(f"lite_search: no {'bun' if not bun else 'job id'} to fetch the text with; "
+              f"fetch {job['url'] or 'the posting'} instead")
+        return 1
+    cli = root / ".agents" / "skills" / job["board"] / "cli" / "src" / "cli.ts"
+    try:
+        proc = subprocess.run([bun, "run", str(cli), "detail", str(job["id"]), "--format",
+                               "plain"], cwd=root, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", timeout=TIMEOUT_S)
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        print(f"lite_search: detail failed ({exc}); fetch {job['url']} instead")
+        return 1
+    import apply_package  # only here: it is the owner of the folder name
+    body = (proc.stdout or "").strip()
+    if proc.returncode != 0 or len(body) < apply_package.MIN_POSTING_CHARS:
+        why = cli_error(proc) if proc.returncode else "the text came back nearly empty"
+        print(f"lite_search: detail failed ({why}); fetch {job['url']} instead")
+        return 1
+    folder = (root / "documents" / "applications"
+              / apply_package.folder_name(job["company"], job["title"]))
+    today = date.today().isoformat()
+    (folder / "posting_source").mkdir(parents=True, exist_ok=True)
+    (folder / "posting_source" / f"{job['board']}_detail.md").write_text(
+        f"tool: {job['board']} detail\njob id: {job['id']}\nfetched: {today}\n\n{body}\n",
+        encoding="utf-8")
+    (folder / "job_posting.md").write_text(
+        f"# {job['title']} - {job['company']}\n\n{job['location']} | {job['url']}\n\n{body}\n",
+        encoding="utf-8")
+    (folder / "provenance.md").write_text(
+        f"# Provenance\n\n- date: {today}\n- input: /lite search row {args.save}\n"
+        f"- source: {job['board']} detail {job['id']}\n- url: {job['url']}\n"
+        "- posting_state: verified\n", encoding="utf-8")
+    meta = {"company": job["company"], "role": job["title"], "url": job["url"],
+            "location": job["location"], "channel": job["board"],
+            "deadline": job.get("deadline", "")}
+    return start(root, meta, body)
+
+
+# The posting being applied to. Company, role and URL come from a posting, which is
+# untrusted text: they travel from this file into the recording scripts as Python
+# values, never through a shell command line where `$`, backticks or `$(...)` would
+# be expanded.
+APPLYING = Path("state") / "lite-apply.json"
+
+
+def start(root: Path, meta: dict | None = None, body: str = "") -> int:
+    """Fix the application folder and slug for the posting in APPLYING (or `meta`)."""
+    import apply_package  # the owner of the folder name
+    if meta is None:
+        try:
+            meta = json.loads((root / APPLYING).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            print(f"lite_search: write {APPLYING.as_posix()} first (company, role, url, "
+                  "location, channel)")
+            return 2
+    if not (str(meta.get("company") or "").strip() and str(meta.get("role") or "").strip()):
+        print(f"lite_search: {APPLYING.as_posix()} needs a company and a role")
+        return 2
+    folder = (root / "documents" / "applications"
+              / apply_package.folder_name(meta["company"], meta["role"]))
+    (folder / "posting_source").mkdir(parents=True, exist_ok=True)
+    meta.update(folder=folder.relative_to(root).as_posix(),
+                slug=apply_package.slugify(meta["company"], meta["role"]))
+    write_json(root / APPLYING, meta)
+    print(f"folder: {meta['folder']}\nslug: {meta['slug']}\n"
+          f"company: {meta['company']}\nrole: {meta['role']}"
+          + (f"\n\n{body}" if body else ""))
+    return 0
+
+
+def applying(root: Path) -> dict | None:
+    try:
+        meta = json.loads((root / APPLYING).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        meta = {}
+    if not meta.get("folder"):
+        print("lite_search: no posting in progress - run --save N or --start first")
+        return None
+    return meta
+
+
+def record(root: Path, meta: dict, verdict: str, score, rationale: str) -> None:
+    shortlist_row.append({
+        "company": meta["company"], "role": meta["role"],
+        "location": meta.get("location", ""), "source": meta.get("channel", ""),
+        "url": meta.get("url", ""), "score": score or "", "verdict": verdict,
+        "rationale": rationale, "deadline": meta.get("deadline", "")},
+        root / "shortlist.csv")
+    print(f"shortlist: {verdict} - {meta['company']} - {meta['role']}")
+
+
+def package(root: Path, score, rationale: str) -> int:
+    """apply_package.py for the posting in progress, then its `qualified` row."""
+    import apply_package
+    meta = applying(root)
+    if not meta:
+        return 2
+    folder = root / meta["folder"]
+    source = folder / "posting_source"
+    if (folder / "job_posting.md").is_file() and not any(source.glob("*")):
+        # A pasted or fetched posting: its text is the raw artifact the archive needs.
+        shutil.copy(folder / "job_posting.md", source / "posting.md")
+    code = apply_package.main([
+        "--company", meta["company"], "--role", meta["role"],
+        "--cv", f"cv/main_{meta['slug']}.tex",
+        "--letter", f"cover_letters/cover_{meta['slug']}.tex",
+        "--url", meta.get("url", ""), "--score", str(score or ""),
+        "--location", meta.get("location", ""), "--channel", meta.get("channel", ""),
+        "--rationale", rationale])
+    if code == 0:
+        record(root, meta, "qualified", score, rationale)
+    return code
+
+
+def show(args) -> int:
+    found = last_row(Path(args.root), args.show)
+    if not found:
+        return 2
+    job, searched = found
+    print(f"#{args.show} {str(job['title'])} | {str(job['company'])} | "
+          f"{str(job['location'])}   (search of {searched})")
     print(f"posted {job['date'] or '-'}, closes {job['deadline'] or '-'}, title match "
-          f"{job['score']} against {fold(job['position'])}")
-    print(f"url: {fold(job['url']) or '-'}")
-    if job["id"]:
-        print(f"posting text: bun run .agents/skills/{job['board']}/cli/src/cli.ts "
-              f"detail {fold(job['id'])} --format plain")
-    else:
-        print("posting text: this board gave no id - fetch the url instead")
+          f"{job['score']} against {str(job['position'])}")
+    print(f"url: {str(job['url']) or '-'}")
     return 0
 
 
@@ -574,10 +684,61 @@ def main(argv=None) -> int:
                         "and one run_log.csv row per board")
     parser.add_argument("--show", type=int, metavar="N",
                         help="print row N of the last search and the command for its text")
-    parser.add_argument("--json", action="store_true", help="machine-readable output")
+    parser.add_argument("--save", type=int, metavar="N",
+                        help="fetch row N's posting and archive it for /lite apply")
+    parser.add_argument("--start", action="store_true",
+                        help=f"folder and slug for the posting in {APPLYING.as_posix()}")
+    parser.add_argument("--gate-fail", type=int, metavar="N",
+                        help="record search row N as gate-fail (with --rationale)")
+    parser.add_argument("--verdict", choices=shortlist_row.VERDICTS,
+                        help="record the posting in progress with this verdict")
+    parser.add_argument("--package", action="store_true",
+                        help="build the package for the posting in progress, then record "
+                        "it as qualified")
+    parser.add_argument("--applied", nargs="?", const="in_progress", metavar="STATUS",
+                        help="the posting in progress was submitted today (or set STATUS, "
+                        "e.g. rejected)")
+    parser.add_argument("--score", help="fit score for --verdict / --package")
+    parser.add_argument("--rationale", default="",
+                        help="one line in your own words (no quotes, $ or backticks)")
     args = parser.parse_args(argv)
     if args.top < 1 or args.limit < 1:
         parser.error("--top and --limit must be at least 1")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # postings are not ASCII
+    root = Path(args.root)
+    if args.save is not None:
+        return save(args)
+    if args.start:
+        return start(root)
+    if args.gate_fail is not None:
+        found = last_row(root, args.gate_fail)
+        if not found:
+            return 2
+        job = found[0]
+        record(root, {"company": job["company"], "role": job["title"],
+                      "location": job["location"], "channel": job["board"],
+                      "url": job["url"]}, "gate-fail", job.get("score"), args.rationale)
+        return 0
+    if args.verdict:
+        meta = applying(root)
+        if not meta:
+            return 2
+        record(root, meta, args.verdict, args.score, args.rationale)
+        return 0
+    if args.package:
+        return package(root, args.score, args.rationale)
+    if args.applied:
+        meta = applying(root)
+        if not meta:
+            return 2
+        changes = {"status": args.applied}
+        if args.applied == "in_progress":
+            changes["submitted_date"] = date.today().isoformat()
+        updated = tracker_row.update(meta["company"], meta["role"], changes,
+                                     tracker_row.TRACKER_CSV)
+        print(f"tracker: {updated} row(s) - {meta['company']} - {meta['role']}: {args.applied}"
+              if updated else "lite_search: no tracker row for it - run --package first")
+        return 0 if updated else 1
     return show(args) if args.show is not None else search(args)
 
 

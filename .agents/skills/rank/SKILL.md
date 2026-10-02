@@ -1,7 +1,7 @@
 ---
 name: rank
 description: >-
-  Harness workflow $rank: batch-score scraped jobs into a ranked shortlist. Use for "rank the new jobs", "score these jobs".
+  Job search: re-score the jobs the last search found.
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/rank.md` in full and follow it exactly,

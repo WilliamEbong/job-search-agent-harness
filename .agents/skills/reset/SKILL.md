@@ -1,7 +1,7 @@
 ---
 name: reset
 description: >-
-  Harness workflow $reset: wipe candidate profile data back to blank (destructive; asks first). Use for "reset my profile", "clear my data".
+  Job search: clear the profile and start again.
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/reset.md` in full and follow it exactly,

@@ -1,7 +1,7 @@
 ---
 name: scrape
 description: >-
-  Harness workflow $scrape: search the installed job boards and watched companies, then shortlist new postings. Use for "find me jobs", "any new jobs", "search".
+  Job search: find new jobs on your boards. "find me jobs".
 ---
 
 Harness workflow pointer (not a job portal). Read `.claude/commands/scrape.md` in full and follow it exactly,

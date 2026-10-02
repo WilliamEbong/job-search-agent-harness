@@ -13,7 +13,7 @@ then step 4 unless active `target_positions` exist.
    CV gap that most changes what may be claimed (unstated number, credential status,
    date, tool hands-on vs AI-assisted) [unclaimed].
 3. **Write [me]:** `evidence/register.yaml`, shape of `evidence/register.example.yaml`
-   (its entries fictional), every entry with `source:` (CV path or
+   (shape only: never copy its entries, names or dates), every entry with `source:` (CV path or
    `owner-confirmed <YYYY-MM-DD>`). `preferences.yaml`: keep every existing key, merging
    into existing mappings (`usage.plan` stays), and add:
    ```yaml
@@ -26,9 +26,10 @@ then step 4 unless active `target_positions` exist.
    usage: {mode: lite}
    ```
    Fill placeholders left in `cv/main_example.tex` (`\name{[First]}{[Last]}`, contact,
-   entries) and in the header of `cover_letters/cover_example.tex` (name, email, phone,
-   links) from the register. Dates `2020-2024`, ASCII hyphen, never `--`. Warn: git
+   entries; remove sections the register cannot fill) and in
+   `cover_letters/cover_example.tex` (header and `\signature`) from the register. Dates `2020-2024`, ASCII hyphen, never `--`. Warn: git
    tracks both files, never push them to a public fork.
 4. **Recruiter pass:** follow `.claude/commands/recruiter.md`, judging from register, not
-   files it cites in `.claude/skills/`; `because` and `gap` 10 words max each. Show 20,
-   user strikes any [you], save `target_positions`.
+   files it cites in `.claude/skills/`; no plan line; why, `because` and `gap` 10 words
+   max each; 20 or fewer, never padded. User strikes any [you]; save
+   `target_positions`.

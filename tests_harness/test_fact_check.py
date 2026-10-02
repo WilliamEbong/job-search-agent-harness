@@ -217,6 +217,32 @@ class DateRanges(unittest.TestCase):
         self.assertIn(("Acme", 2010, 9999), spans(("2010-01", "2012-01"), ("2012-02", "")))
 
 
+class LiteNegativeControl(unittest.TestCase):
+    """The lite end-to-end run planted three fabrications the gate let through. In
+    lite mode this gate is the only check, so each is pinned here."""
+
+    def test_a_banned_phrasing_the_register_declares_blocks(self):
+        # The demo register's management_claims constraint bans "managed a team of".
+        with WriteDraft("Managed a team of 12 volunteers at the watershed alliance.\n") as draft:
+            code, out = run_checker(draft)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("banned phrasing", out)
+
+    def test_an_unregistered_employer_in_an_entry_header_blocks(self):
+        entry = "\\cventry{2020--2022}{Laboratory Technician}{Acme Laboratories Ltd}{Winnipeg}{}{}\n"
+        with WriteDraft(entry, suffix=".tex") as draft:
+            code, out = run_checker(draft)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("employer or institution is not in the register", out)
+
+    def test_registered_employers_and_institutions_pass(self):
+        entries = ("\\cventry{2020--2022}{Laboratory Technician}{Northwind Analytical Services}"
+                   "{Winnipeg}{}{}\n\\cventry{2016--2020}{BSc}{University of Northern Lakes}{}{}{}\n")
+        with WriteDraft(entries, suffix=".tex") as draft:
+            code, out = run_checker(draft)
+        self.assertEqual(code, 0, out)
+
+
 class MetricQualifiers(unittest.TestCase):
     """`qualifier_required` on a metric is enforced, not just documented.
 

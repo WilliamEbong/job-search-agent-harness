@@ -312,6 +312,15 @@ def active_constraints(reg: dict, config: dict) -> list[tuple[str, str, str, lis
     }
     families = config.get("constraint_patterns", {}) or {}
     active = []
+    # The candidate's own `banned_phrasings` are blocking too. They were recorded
+    # in the register and then never read, so "managed a team of" passed for a
+    # candidate who had declared it banned (found by the lite end-to-end run).
+    for constraint in reg.get("positioning_constraints", []) or []:
+        for phrase in constraint.get("banned_phrasings", []) or []:
+            if str(phrase).strip():
+                active.append((str(constraint.get("id", "constraint")),
+                               r"(?<!\w)" + re.escape(norm(phrase)) + r"(?!\w)",
+                               f'banned phrasing "{norm(phrase)}"', []))
     for constraint_id, family in families.items():
         if constraint_id not in declared:
             continue
@@ -507,6 +516,18 @@ def check(paths, posting_text: str = "", register_path: str = REGISTER,
                     where, match.group(0).strip(),
                     f"{constraint_id} constraint: {description}",
                 ))
+
+        # 7. Every \cventry employer or institution must be a registered one. An
+        #    invented employer in an entry header passed every check above (found
+        #    by the lite end-to-end run's negative control).
+        if path.lower().endswith(".tex"):
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                raw = fh.read()
+            for org in re.findall(r"\\cventry\{[^{}]*\}\{[^{}]*\}\{((?:[^{}]|\{[^{}]*\})*)\}", raw):
+                name = norm(strip_latex(org)).strip(" ,.")
+                if name and not any(n in name or name in n for n in names):
+                    red.append((where, strip_latex(org).strip(),
+                                "employer or institution is not in the register"))
 
     return red, reg
 

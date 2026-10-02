@@ -102,8 +102,8 @@ def folder_name(company: str, role: str) -> str:
 def friendly(kind: str, role: str, company: str, name: str) -> str:
     """Human-readable stem, e.g. `resume Data Analyst Acme - Riley Chen`."""
     def part(text: str) -> str:
-        cleaned = re.sub(r'[\\/:*?"<>|]', "", (text or "").strip())
-        return cleaned[:MAX_PART].rstrip(" .")
+        cleaned = " ".join(re.sub(r'[\\/:*?"<>|]', "", text or "").split())
+        return cleaned[:MAX_PART].rstrip(" .,-")
     return f"{kind} {part(role)} {part(company)} - {part(name)}".strip()
 
 

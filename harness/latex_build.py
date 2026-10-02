@@ -71,12 +71,14 @@ def flags_for(pages: list[list[str]], source: str) -> list[str]:
                                       and any(f" {e} " in words for e in entries)):
             flags.append(f"page {number} ends with '{last[:40]}' - "
                          "add \\needspace{5\\baselineskip} before it")
-    widows = [line for page in pages for before, line in zip(page, page[1:])
+    # Each widow with the words before it, so a word that ends two bullets is findable.
+    widows = [" ".join(before.split()[-4:] + [line]) for page in pages
+              for before, line in zip(page, page[1:])
               if len(line.split()) == 1 and len(before) >= 40 and line[-1] in ".%)"
               and norm(line) not in headings]
     if widows:
-        flags.append("one-word lines " + ", ".join(f"'{w}'" for w in widows[:4])
-                     + " - reword those sentences")
+        flags.append("one-word lines '..." + "', '...".join(widows[:4])
+                     + "' - reword those sentences")
     return flags
 
 

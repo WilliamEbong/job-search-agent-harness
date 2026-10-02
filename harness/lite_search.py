@@ -75,7 +75,7 @@ COUNTRY = {
 
 TIMEOUT_S = 60
 PAUSE_S = 5        # between one board's own calls: jobbank-ca's Crawl-delay, the strictest
-MAX_ROWS = 12      # printed rows; the rest stay in the saved list for --show
+MAX_ROWS = 10      # printed rows (lite shows 10); the rest stay in the saved list
 MIN_SHOWN = 40     # a weaker title match is noise in the table (still saved for --show)
 RECORD_TOP = 10    # shortlist rows per --record: lite presents at most 10 jobs
 LAST_SEARCH = Path("state") / "lite-last-search.json"
@@ -558,24 +558,53 @@ def save(args) -> int:
         why = cli_error(proc) if proc.returncode else "the text came back nearly empty"
         print(f"lite_search: detail failed ({why}); fetch {job['url']} instead")
         return 1
-    folder = (root / "documents" / "applications"
-              / apply_package.folder_name(job["company"], job["title"]))
-    today = date.today().isoformat()
-    (folder / "posting_source").mkdir(parents=True, exist_ok=True)
-    (folder / "posting_source" / f"{job['board']}_detail.md").write_text(
-        f"tool: {job['board']} detail\njob id: {job['id']}\nfetched: {today}\n\n{body}\n",
-        encoding="utf-8")
-    (folder / "job_posting.md").write_text(
-        f"# {job['title']} - {job['company']}\n\n{job['location']} | {job['url']}\n\n{body}\n",
-        encoding="utf-8")
-    (folder / "provenance.md").write_text(
-        f"# Provenance\n\n- date: {today}\n- input: /lite search row {args.save}\n"
-        f"- source: {job['board']} detail {job['id']}\n- url: {job['url']}\n"
-        "- posting_state: verified\n", encoding="utf-8")
     meta = {"company": job["company"], "role": job["title"], "url": job["url"],
             "location": job["location"], "channel": job["board"],
             "deadline": job.get("deadline", "")}
+    return archive(root, meta, body, f"{job['board']}_detail.md",
+                   f"/lite search row {args.save}: {job['board']} detail {job['id']}",
+                   "verified")
+
+
+def archive(root: Path, meta: dict, body: str, raw_name: str, source: str,
+            state: str) -> int:
+    """Write what apply_package.py's archive check needs (the raw text in
+    posting_source/, job_posting.md, provenance.md), then start the application."""
+    import apply_package  # the owner of the folder name
+    folder = (root / "documents" / "applications"
+              / apply_package.folder_name(meta["company"], meta["role"]))
+    today = date.today().isoformat()
+    (folder / "posting_source").mkdir(parents=True, exist_ok=True)
+    (folder / "posting_source" / raw_name).write_text(
+        f"source: {source}\nsaved: {today}\n\n{body}\n", encoding="utf-8")
+    (folder / "job_posting.md").write_text(
+        f"# {meta['role']} - {meta['company']}\n\n{meta.get('location', '')} | "
+        f"{meta.get('url', '')}\n\n{body}\n", encoding="utf-8")
+    (folder / "provenance.md").write_text(
+        f"# Provenance\n\n- date: {today}\n- source: {source}\n- url: {meta.get('url', '')}\n"
+        f"- posting_state: {state}\n", encoding="utf-8")
     return start(root, meta, body)
+
+
+def start_from(root: Path, path: str) -> int:
+    """A URL, pasted or file posting: archive its text from `path`, so the model writes
+    the posting at most once (a URL's or a paste's text) and never in two formats."""
+    import apply_package
+    meta = load_meta(root)
+    if meta is None:
+        return 2
+    try:
+        body = Path(path).read_text(encoding="utf-8", errors="replace").strip()
+    except OSError as exc:
+        print(f"lite_search: cannot read {path} ({exc})")
+        return 2
+    if len(body) < apply_package.MIN_POSTING_CHARS:
+        print(f"lite_search: {path} holds {len(body)} characters - too little for a "
+              "posting; ask for the full text")
+        return 2
+    return archive(root, meta, body, "posting.md",
+                   f"{meta.get('channel') or 'file'}: {Path(path).name}",
+                   meta.get("posting_state") or "unverified")
 
 
 # The posting being applied to. Company, role and URL come from a posting, which is
@@ -583,6 +612,30 @@ def save(args) -> int:
 # values, never through a shell command line where `$`, backticks or `$(...)` would
 # be expanded.
 APPLYING = Path("state") / "lite-apply.json"
+
+
+def load_meta(root: Path) -> dict | None:
+    """The JSON the model wrote for a posting that did not come from a search row."""
+    try:
+        meta = json.loads((root / APPLYING).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        print(f"lite_search: write {APPLYING.as_posix()} first (company, role, url, "
+              "location, channel)")
+        return None
+    return meta if isinstance(meta, dict) else None
+
+
+def mark_seen(root: Path, url: str, status: str) -> None:
+    """Keep the shared seen_jobs.json (read by /rank and /upskill) in step with a
+    lite verdict; a job not in it (a pasted posting) is left alone."""
+    path = root / "job_scraper" / "seen_jobs.json"
+    if not url or not path.is_file():
+        return
+    data, writable = read_seen(path)
+    entry = data["seen"].get(url)
+    if writable and isinstance(entry, dict):
+        entry["status"] = status
+        write_json(path, data)
 
 
 def start(root: Path, meta: dict | None = None, body: str = "") -> int:
@@ -651,7 +704,41 @@ def package(root: Path, score, rationale: str) -> int:
         "--rationale", rationale])
     if code == 0:
         record(root, meta, "qualified", score, rationale)
+        mark_seen(root, meta.get("url", ""), "evaluated")
     return code
+
+
+def applied(root: Path, status: str, match: str = "") -> int:
+    """Record a submission (status in_progress) or an outcome. Without `match` it is
+    the posting in progress; with it, the one tracker row whose company contains the
+    word, so an older application needs no company name typed into a shell."""
+    if match:
+        rows, _ = tracker_row.read_rows(tracker_row.TRACKER_CSV)
+        hits = sorted({(r.get("company", ""), r.get("role", "")) for r in rows
+                       if match.lower() in (r.get("company") or "").lower()})
+        if len(hits) != 1:
+            print(f"lite_search: {len(hits)} tracker rows match '{match}'"
+                  + "".join(f"\n  {c} - {r}" for c, r in hits)
+                  + ("\nuse a word only one company has" if hits else ""))
+            return 1
+        meta = {"company": hits[0][0], "role": hits[0][1]}
+    else:
+        meta = applying(root)
+        if not meta:
+            return 2
+    changes = {"status": status}
+    if status == "in_progress":
+        today = date.today().isoformat()
+        changes.update(submitted_date=today, notes=f"submitted {today}")
+    updated = tracker_row.update(meta["company"], meta["role"], changes,
+                                 tracker_row.TRACKER_CSV)
+    if not updated:
+        print("lite_search: no tracker row for it - run --package first")
+        return 1
+    print(f"tracker: {meta['company']} - {meta['role']}: {status}")
+    if not match:
+        (root / APPLYING).unlink(missing_ok=True)  # done with; the next posting starts clean
+    return 0
 
 
 def show(args) -> int:
@@ -688,6 +775,10 @@ def main(argv=None) -> int:
                         help="fetch row N's posting and archive it for /lite apply")
     parser.add_argument("--start", action="store_true",
                         help=f"folder and slug for the posting in {APPLYING.as_posix()}")
+    parser.add_argument("--from", dest="from_file", metavar="FILE",
+                        help="with --start: archive the posting text in FILE")
+    parser.add_argument("--match", metavar="WORD",
+                        help="with --applied: the tracker row whose company contains WORD")
     parser.add_argument("--gate-fail", type=int, metavar="N",
                         help="record search row N as gate-fail (with --rationale)")
     parser.add_argument("--verdict", choices=shortlist_row.VERDICTS,
@@ -709,7 +800,7 @@ def main(argv=None) -> int:
     if args.save is not None:
         return save(args)
     if args.start:
-        return start(root)
+        return start_from(root, args.from_file) if args.from_file else start(root)
     if args.gate_fail is not None:
         found = last_row(root, args.gate_fail)
         if not found:
@@ -718,27 +809,22 @@ def main(argv=None) -> int:
         record(root, {"company": job["company"], "role": job["title"],
                       "location": job["location"], "channel": job["board"],
                       "url": job["url"]}, "gate-fail", job.get("score"), args.rationale)
+        mark_seen(root, job["url"], "skipped")
         return 0
     if args.verdict:
         meta = applying(root)
         if not meta:
             return 2
         record(root, meta, args.verdict, args.score, args.rationale)
+        if args.verdict in ("gate-fail", "not-drafted"):  # nothing more will happen to it
+            mark_seen(root, meta.get("url", ""),
+                      "skipped" if args.verdict == "gate-fail" else "evaluated")
+            (root / APPLYING).unlink(missing_ok=True)
         return 0
     if args.package:
         return package(root, args.score, args.rationale)
     if args.applied:
-        meta = applying(root)
-        if not meta:
-            return 2
-        changes = {"status": args.applied}
-        if args.applied == "in_progress":
-            changes["submitted_date"] = date.today().isoformat()
-        updated = tracker_row.update(meta["company"], meta["role"], changes,
-                                     tracker_row.TRACKER_CSV)
-        print(f"tracker: {updated} row(s) - {meta['company']} - {meta['role']}: {args.applied}"
-              if updated else "lite_search: no tracker row for it - run --package first")
-        return 0 if updated else 1
+        return applied(root, args.applied, args.match or "")
     return show(args) if args.show is not None else search(args)
 
 

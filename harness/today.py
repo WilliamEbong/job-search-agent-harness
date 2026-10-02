@@ -185,6 +185,7 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
 
     followups = []
     waiting = []
+    drafted = []
     listed = set()
     for row in open_rows:
         # A company + role can hold two rows (a drafted one and a submitted one
@@ -194,6 +195,13 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
         if key in listed:
             continue
         listed.add(key)
+        if (not (row.get("submitted_date") or "").strip()
+                and "not yet submitted" in (row.get("notes") or "")):
+            # Packaged but never sent (apply_package.py's own note; an older tracker's
+            # in_progress rows lack submitted_date entirely, so that alone proves
+            # nothing): the next step is the user's, not the employer's.
+            drafted.append({"company": row.get("company", ""), "role": row.get("role", "")})
+            continue
         quiet = days_quiet(row, today)
         entry = {
             "company": row.get("company", ""),
@@ -257,6 +265,7 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
         "needs_positions": needs_recruiter_pass(root),
         "trials": trial_families(shortlist, root),
         "followups": followups,
+        "drafted": drafted,
         "interviews": interviews and [
             {"company": r.get("company", ""), "role": r.get("role", ""),
              "notes": (r.get("notes") or "")[:80]} for r in interviews] or [],
@@ -312,6 +321,10 @@ def actions(state: dict) -> list[dict]:
 
     if state.get("needs_positions"):
         add("Name the 20 positions your evidence fits (recruiter pass)", "/recruiter")
+    for entry in state.get("drafted", [])[:2]:
+        add(f"Submit {entry['company']} - {entry['role']} yourself (package ready), "
+            "then say you applied",
+            "/lite applied" if state.get("lite") else f"/outcome {entry['company']}")
     for entry in state["followups"][:3]:
         add(f"Follow up with {entry['company']} "
             f"({entry['days_quiet']} days quiet)",
@@ -342,6 +355,11 @@ def render(state: dict) -> str:
         lines += ["You have not set up a profile yet, so there is nothing to "
                   "report.", ""]
     else:
+        if state.get("drafted"):
+            lines.append(f"Ready to submit ({len(state['drafted'])}):")
+            for entry in state["drafted"]:
+                lines.append(f"  - {entry['company']} - {entry['role']}")
+            lines.append("")
         if state["followups"]:
             lines.append(f"Follow-ups due ({len(state['followups'])}):")
             for entry in state["followups"]:

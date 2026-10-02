@@ -85,6 +85,18 @@ class DailyBrief(unittest.TestCase):
         self.assertIn("/lite search", commands)
         self.assertNotIn("/scrape", commands)
 
+    def test_a_package_never_submitted_is_offered_as_the_users_next_step(self):
+        """The e2e run: /lite said "nothing needs your attention" while a finished
+        package sat unsent."""
+        self.write("job_search_tracker.csv", TRACKER_HEADER, [
+            {"company": "Stantec", "role": "Water Quality Specialist", "status": "in_progress",
+             "date": "2026-08-01", "notes": "drafted, not yet submitted"}])
+        (self.tmp / "preferences.yaml").write_text("usage:\n  mode: lite\n", encoding="utf-8")
+        state = self.collect()
+        self.assertEqual(["Stantec"], [d["company"] for d in state["drafted"]])
+        self.assertEqual([], state["followups"])
+        self.assertIn("/lite applied", [a["command"] for a in today_mod.actions(state)])
+
     def test_one_application_with_two_tracker_rows_is_listed_once(self):
         row = {"company": "Acme", "role": "Analyst", "status": "in_progress",
                "date": "2026-06-01"}

@@ -46,7 +46,7 @@ class Parsing(unittest.TestCase):
         flags = " | ".join(latex_build.flags_for(pages, source))
         # Each flag carries its own remedy, so the spec only says "act on each fix:".
         self.assertIn("page 1 ends with 'Education' - add \\needspace{5\\baselineskip}", flags)
-        self.assertIn("one-word lines 'time.' - reword", flags)
+        self.assertIn("average turnaround time.' - reword", flags)
         clean = [["- One full bullet that ends where it should.", "Education"][:1],
                  ["Education", "Senior Technician  Northwind"]]
         self.assertEqual([], latex_build.flags_for(clean, source))

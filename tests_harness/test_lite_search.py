@@ -306,10 +306,26 @@ class Driver(unittest.TestCase):
                             "status": "in_progress"}, tracker)
         with mock.patch.object(tracker_row, "TRACKER_CSV", tracker):
             self.assertEqual(0, self.run_main("--applied"))
-            self.assertEqual(0, self.run_main("--applied", "rejected"))
-        row = tracker_row.read_rows(tracker)[0][0]
-        self.assertTrue(row["submitted_date"])
-        self.assertEqual("rejected", row["status"])
+            row = tracker_row.read_rows(tracker)[0][0]
+            self.assertTrue(row["submitted_date"])
+            self.assertTrue(row["notes"].startswith("submitted"))
+            # Submission ends the in-progress posting; a later outcome names it by a word.
+            self.assertFalse((self.tmp / "state" / "lite-apply.json").exists())
+            self.assertEqual(0, self.run_main("--applied", "rejected", "--match", "acme"))
+            self.assertEqual(1, self.run_main("--applied", "rejected", "--match", "zzz"))
+        self.assertEqual("rejected", tracker_row.read_rows(tracker)[0][0]["status"])
+
+    def test_start_from_archives_a_posting_file(self):
+        posting = self.tmp / "posting.txt"
+        posting.write_text("Data analyst wanted. Requirements: SQL and Excel. " * 12,
+                           encoding="utf-8")
+        self.assertEqual(0, self.run_main("--start", "--from", str(posting)))
+        meta = self.json.loads((self.tmp / "state" / "lite-apply.json").read_text(encoding="utf-8"))
+        folder = self.tmp / meta["folder"]
+        self.assertIn("Requirements: SQL", (folder / "job_posting.md").read_text(encoding="utf-8"))
+        self.assertIn("posting_state: unverified",
+                      (folder / "provenance.md").read_text(encoding="utf-8"))
+        self.assertTrue((folder / "posting_source" / "posting.md").is_file())
 
 
 class LiteSpec(unittest.TestCase):

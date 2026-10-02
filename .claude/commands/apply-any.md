@@ -153,7 +153,9 @@ that writes PDFs somewhere else.)
 
 That one call builds the whole folder — both documents and the combined
 cover-letter-then-resume in `.tex`/`.md`/`.docx`/`.pdf`, the canonical copies
-`/interview` and `/outcome` read, the `.created` stamp the archiver needs, and the
+`/interview` and `/outcome` read, the `.created` stamp the archiver needs,
+`ats_report.md` (the ATS check on the compiled CV, using the drafter's
+`cv/main_<slug>.keywords.txt`, copied in as `ats_keywords.txt`), and the
 tracker row with `status=in_progress` and an empty `submitted_date`. **Read its output**
 rather than restating it here: it names every file it wrote, and says plainly when
 pandoc is absent and the `.docx` files were skipped.
@@ -165,6 +167,13 @@ resolved (the canonical posting text, the provenance record, the raw artifacts),
 re-run the same command. Never present a package while this check is failing: the
 archived posting is the only record of what was applied to once the posting goes
 offline, and it is what `/interview` reads weeks later when the original is gone.
+
+**It also exits non-zero on an ATS parse failure**, or when the CV has no compiled PDF to
+check: the text layer an ATS reads has lost the email, phone or a `\cventry` year, or
+carries `(cid:)`/`�` garbage. `ats_report.md` names what failed; fix it in the CV source
+as `/apply` Step 5d describes, recompile, and re-run the same command. Never present a
+package while this check is failing either. Keyword coverage never fails packaging; a
+low score can be an honest gap.
 
 **Build sources keep their slug names** (`cv/main_<slug>.tex`,
 `cover_letters/cover_<slug>.tex`) because `fact_check.py`, the compile loop and the
@@ -224,6 +233,10 @@ Present in upstream `/apply`'s output format, then add:
 
 ### Tier-1 fact check
 <the /verify-facts result block, run on the FINAL text>
+
+### ATS
+<the ATS: summary line from the packaging output>
+Missing required: <the top missing required keywords in ats_report.md - honest gaps by now - or "none">
 ```
 
 If `posting_state` is `unverified`, say so in plain language in the summary itself, not

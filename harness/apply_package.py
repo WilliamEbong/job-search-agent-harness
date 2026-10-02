@@ -28,6 +28,8 @@ Produces, in `documents/applications/<Company>_<Role>/`:
     resume <Role> <Company> - <Name>.{tex,pdf,md,docx}
     cover letter <Role> <Company> - <Name>.{tex,pdf,md,docx}
     Resume & Cover Letter ... .{pdf,md,docx}
+    ats_keywords.txt                    the drafter's cv/<cv-stem>.keywords.txt, if any
+    ats_report.md                       harness/ats_check.py on the compiled CV
     cv_draft.tex, cover_letter.tex      canonical copies
 
 Those last two matter: upstream's `/interview` and `/outcome` look for exactly
@@ -58,9 +60,13 @@ REGISTER = ROOT / "evidence" / "register.yaml"
 MIN_POSTING_CHARS = 400
 
 sys.path.insert(0, str(HARNESS_DIR))
+import ats_check  # noqa: E402
 import tex_to_md  # noqa: E402
 import tracker_row  # noqa: E402
 from archive_applications import CREATED_MARKER  # noqa: E402
+
+ATS_REPORT = "ats_report.md"
+ATS_KEYWORDS = "ats_keywords.txt"
 
 # Keep names readable in a file picker. A 200-character posting title in a
 # filename is a Windows path-length failure waiting to happen.
@@ -121,6 +127,12 @@ def candidate_name(register: Path = REGISTER) -> str:
 
 def have(tool: str) -> bool:
     return shutil.which(tool) is not None
+
+
+def compiled_pdf(source: Path, build_dir: Path) -> Path:
+    """Where the PDF for `source` is: under --build, else beside the source."""
+    pdf = build_dir / (source.stem + ".pdf")
+    return pdf if pdf.is_file() else source.with_suffix(".pdf")
 
 
 def write_markdown(tex: Path, target: Path, register: Path) -> None:
@@ -206,9 +218,7 @@ def build_package(company: str, role: str, cv_tex: Path, letter_tex: Path,
         # directory, and with the documented `--build build` they were under
         # none: every package shipped .tex/.md/.docx and no PDF at all. Look
         # beside the source as well.
-        pdf = build_dir / (source.stem + ".pdf")
-        if not pdf.is_file():
-            pdf = source.with_suffix(".pdf")
+        pdf = compiled_pdf(source, build_dir)
         if pdf.is_file():
             shutil.copy2(pdf, folder / f"{stem}.pdf")
             record(folder / f"{stem}.pdf")
@@ -228,6 +238,13 @@ def build_package(company: str, role: str, cv_tex: Path, letter_tex: Path,
     shutil.copy2(cv_tex, folder / "cv_draft.tex")
     shutil.copy2(letter_tex, folder / "cover_letter.tex")
     written += ["cv_draft.tex", "cover_letter.tex"]
+
+    # The drafter's ATS keyword list (`/apply` Step 1) travels with the package,
+    # so the report - and anyone re-running it - uses the posting's exact terms.
+    keywords = cv_tex.with_name(cv_tex.stem + ".keywords.txt")
+    if keywords.is_file():
+        shutil.copy2(keywords, folder / ATS_KEYWORDS)
+        written.append(ATS_KEYWORDS)
 
     # Combined document: cover letter first, resume on a new page.
     combined = friendly("Resume & Cover Letter", role, company, name)
@@ -308,6 +325,35 @@ def training_gaps(folder: Path) -> list[str]:
     return []
 
 
+def ats_report(folder: Path, cv_source: Path, build_dir: Path) -> tuple[str, list[str]]:
+    """Run the ATS check on the compiled CV, write ats_report.md.
+
+    Returns (summary line, parse failures). `/apply` Step 5d runs the same
+    check, but a step can be skipped and a package cannot: every package
+    carries the report. A parse failure blocks - a CV whose text layer drops
+    the email or garbles its fonts is not sendable - and so does a missing CV
+    PDF, which leaves nothing to check. Keyword coverage never does; a low
+    score can be an honest gap.
+    """
+    report = folder / ATS_REPORT
+    report.unlink(missing_ok=True)  # never leave a stale verdict beside a new CV
+    posting = folder / "job_posting.md"
+    if not posting.is_file():
+        return "ATS: not run - no job_posting.md (see below)", []
+    pdf = compiled_pdf(cv_source, build_dir)
+    if not pdf.is_file():
+        return ("ATS: not run - no compiled CV PDF",
+                [f"no compiled PDF for {cv_source.name} - compile it, then re-run"])
+    keywords = folder / ATS_KEYWORDS
+    try:
+        result = ats_check.check(pdf, posting, keywords if keywords.is_file() else None,
+                                 cv_source)
+    except ats_check.InputError as exc:
+        return f"ATS: not run - {exc}", [str(exc)]
+    report.write_text(ats_check.render_markdown(result), encoding="utf-8")
+    return result["summary"], result["parse"]["failures"]
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--company", required=True)
@@ -327,11 +373,17 @@ def main(argv=None) -> int:
     parser.add_argument("--no-tracker", action="store_true",
                         help="build the package without touching the tracker")
     args = parser.parse_args(argv)
+    if hasattr(sys.stdout, "reconfigure"):
+        # On a cp1252 pipe the ATS summary's middle dot arrives as mojibake.
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     folder, written = build_package(
         args.company, args.role, Path(args.cv), Path(args.letter),
         Path(args.build), Path(args.register), Path(args.applications),
     )
+    ats_summary, ats_failures = ats_report(folder, Path(args.cv), Path(args.build))
+    if (folder / ATS_REPORT).is_file():
+        written.append(ATS_REPORT)
 
     print(f"package: {folder.relative_to(ROOT) if folder.is_relative_to(ROOT) else folder}")
     for filename in sorted(written):
@@ -342,6 +394,7 @@ def main(argv=None) -> int:
     if missing:
         print("  note: .docx not produced (pandoc missing) - the other formats "
               "are complete")
+    print(ats_summary)
 
     if not args.no_tracker:
         result = tracker_row.append({
@@ -370,6 +423,12 @@ def main(argv=None) -> int:
         print("TRAINING REQUIRED - complete the exercise, record the skill "
               "with /fact, delete the file, then re-run:")
         for gap in training:
+            print(f"  {gap}")
+        blocked = True
+    if ats_failures:
+        print("ATS PARSE FAILURE - an ATS cannot read the CV as sent; fix the CV "
+              "source, recompile, then re-run:")
+        for gap in ats_failures:
             print(f"  {gap}")
         blocked = True
     return 2 if blocked else 0

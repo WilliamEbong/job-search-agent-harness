@@ -234,12 +234,13 @@ class RuntimeMap(unittest.TestCase):
     def test_lists_what_must_not_be_forked(self):
         self.assertIn("explicitly identical", self.text)
 
-    def test_codex_stubs_exist_for_every_harness_workflow(self):
-        stubs = {p.stem for p in (ROOT / ".codex" / "prompts").glob("*.md")}
+    def test_codex_pointer_skills_exist_for_every_harness_workflow(self):
+        # Codex never loads a project .codex/prompts/; it runs repo skills via $name.
         for workflow in ("setup-harness", "scrape", "apply-any", "verify-facts",
                          "fact", "tracker", "continue", "companies",
                          "career-review", "discover"):
-            self.assertIn(workflow, stubs)
+            self.assertTrue(
+                (ROOT / ".agents" / "skills" / workflow / "SKILL.md").is_file(), workflow)
 
 
 class Attribution(unittest.TestCase):

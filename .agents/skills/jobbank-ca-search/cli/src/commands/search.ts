@@ -26,13 +26,12 @@ const PROVINCES: Record<string, string> = {
   saskatchewan: "SK", yukon: "YT",
 }
 
+// Any comma-separated part may name the province: "Manitoba", "Winnipeg, MB",
+// "Winnipeg, Manitoba, Canada" (the harness's own preferences format).
 export function provinceCode(location: string): string | null {
-  const trimmed = location.trim().toLowerCase()
-  if (PROVINCES[trimmed]) return PROVINCES[trimmed]
-  const code = location.match(/,\s*([A-Za-z]{2})\.?\s*$/)
-  if (code) {
-    const upper = code[1].toUpperCase()
-    if (Object.values(PROVINCES).includes(upper)) return upper
+  for (const part of location.split(",").map((s) => s.trim().toLowerCase().replace(/\.$/, ""))) {
+    if (PROVINCES[part]) return PROVINCES[part]
+    if (Object.values(PROVINCES).includes(part.toUpperCase())) return part.toUpperCase()
   }
   return null
 }

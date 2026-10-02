@@ -61,27 +61,53 @@ fixed, and walk them through the rest.
 This step runs on first onboarding. For a returning user (register and preferences both
 exist), skip it unless something visibly fails.
 
-## Step 0: Offer a short path and a thorough one
+## Step 0: Walk them through the options, plan first
 
-Say what is about to happen, then let them choose — with the time cost stated, because
-"onboarding" with no end in sight is where people give up:
+Every search and every application spends the user's plan, so the first choice is how
+heavy a system to run. If `preferences.yaml` already records `usage.plan` and
+`usage.mode` (the installer asks), do not ask again: say which mode they chose and go on.
+Otherwise ask one question, *"Which plan do you run this on?"*, and explain the options
+in plain words:
+
+> **Lite mode** (recommended on any plan below ChatGPT Pro or Claude Max: ChatGPT Free,
+> Go or Plus; Claude Free or Pro; an API key you pay per token). One compact procedure
+> and scripts that do the checking. Onboarding takes 5–10 minutes, and an application
+> loads about 8 KB of instructions instead of about 170 KB. The fact gate, ATS check,
+> compiling and page checks all stay. It drops the humanizer and second-reviewer passes,
+> company research and interview prep, and each stays available as its full command.
+>
+> **Standard** (fine on ChatGPT Pro or Claude Max). The full workflows below: deeper
+> evaluation, research and review, at a much higher cost per application.
+
+Recommend by plan, and let them overrule it. Record `usage.plan` and `usage.mode` in
+`preferences.yaml` (`lite`, or `focused` for standard), creating the file if needed and
+never removing other keys. **Lite → run `/lite setup` instead of the steps below; it
+covers onboarding in its own short form.** For lite, check `claude plugin list` (Codex:
+`codex plugin list`): if Caveman or i-have-adhd is missing, explain in one line each that
+they shorten replies and never touch documents, and offer to install them with the
+commands in `RUNTIME-MAP.md` §6, only on a yes.
+
+For standard, say what is about to happen, then let them choose — with the time cost
+stated, because "onboarding" with no end in sight is where people give up:
 
 > Two ways to do this:
 >
-> **Quick start (about 5 minutes)** — I read your CV, ask a handful of questions about
-> the things a CV leaves out, and you can start searching. I'll ask about pay, location
-> and dealbreakers the first time you search, when they actually matter.
+> **Quick start (5–10 minutes)** — I read your CV, ask a handful of questions about
+> the things a CV leaves out, name the 20 positions you are most credibly hireable for
+> so you can strike any you don't want, and you can start searching. I'll ask about pay,
+> location and dealbreakers the first time you search, when they actually matter.
 >
-> **Full setup (15–20 minutes)** — the above plus preferences, a look at your public
+> **Full setup (20–25 minutes)** — the above plus preferences, a look at your public
 > work, a template choice, and a list of employers to watch.
 >
 > You can switch to the full version any time with `/setup-harness --interview`.
 
-**Quick start** runs Steps 1–3 only, then stops and says what was skipped and how to add
-it later. Everything skipped keeps a documented default (`focused` mode, boards scope,
-keep postings with no stated salary). The first `/scrape` then asks only the three
-questions it genuinely needs — location, role families, and anything they refuse
-outright — and writes them to `preferences.yaml`.
+**Quick start** runs Steps 1–3 and 3b only, then stops and says what was skipped and how
+to add it later. Everything skipped keeps a documented default (`focused` mode, boards
+scope, keep postings with no stated salary). The approved target positions already
+answer "role families", so the first `/scrape` then asks only the two questions it
+genuinely needs — location, and anything they refuse outright — and writes them to
+`preferences.yaml`.
 
 **Full setup** runs every step below.
 
@@ -175,6 +201,21 @@ one place in the flow where that nearly happens.
 what may be claimed; templates decide how claims are presented. Facts never enter the
 register from a template.
 
+## Step 3b: Recruiter pass (quick start and full setup)
+
+With the register built, run `/recruiter` (`.claude/commands/recruiter.md`). It reads the
+evidence the way an agency recruiter reads a CV, names the 20 positions the user is most
+credibly hireable for, lets them strike any by number, and saves the approved list as
+`target_positions` in `preferences.yaml`, creating the file if it does not exist yet.
+Those positions are what the first searches look for, which is why this runs before
+anything else is asked.
+
+`/recruiter` returns here rather than ending with its own next action. Two things carry
+forward into full setup: the approved positions answer "role families", so Step 5
+confirms them instead of asking again; and Step 5 adds to `preferences.yaml` without
+removing `target_positions`. If an exclusion or hard skip recorded in Step 5 rules out an
+approved position, set that position to `status: dropped` there.
+
 ## Step 4: Career review (offer, don't impose)
 
 Offer once: *"Want me to look at your portfolio, personal site or GitHub and suggest CV
@@ -249,6 +290,7 @@ Report what exists now, in plain language:
 Onboarding complete.
   evidence/register.yaml   — N facts across M sections, every one sourced
   preferences.yaml         — mode: focused, N hard constraints recorded
+  target positions         — N active (searched first by /scrape), N struck
   companies.yaml           — N employers (or: not started)
   template                 — stock (or: inferred from your résumé, compiled and checked)
 

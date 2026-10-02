@@ -5,6 +5,8 @@ their own evidence already supports. A computer scientist is often a credible bu
 analyst, a data steward, a solutions engineer or a technical writer, and nothing in the
 rest of this system will ever suggest it: `/scrape` searches the role families in
 `preferences.yaml`, and those came from the user, who was describing the job they had.
+`/recruiter` names the positions the evidence plainly fits; `/discover` looks for the
+families the user would not think to search.
 
 ```
 /discover                # propose adjacent role families from the evidence
@@ -35,7 +37,8 @@ Read, once:
   capabilities are recorded, and they are what makes an unexpected family defensible.
 - `evidence/framings.yaml` if it exists — the ways this evidence has already been worded
   is a map of which vocabularies it survives in.
-- `preferences.yaml` — `role_families` (what is already searched), `discovery`
+- `preferences.yaml` — `role_families` (what is already searched), `target_positions`
+  (the recruiter pass's positions, active or struck), `discovery`
   (what has already been proposed, kept or dropped), plus the constraints that decide
   whether a family is even worth proposing: `exclusions`, `hard_skips`, `location`,
   `seniority`, `employment_type`, `work_authorization`, `direction`.
@@ -57,6 +60,8 @@ application **today**, using the ladder's *strongly entailed*, *reasonably infer
 Exclude, silently:
 
 - families already in `role_families`;
+- families already covered by a `target_positions` entry, `active` or `dropped` — the
+  recruiter pass has already put them in the search or the user has struck them;
 - families already in `discovery.trial_families` at **any** status — including
   `dropped`. A dropped family was judged and rejected; re-proposing it is the fastest
   way to make this command annoying enough to stop using.

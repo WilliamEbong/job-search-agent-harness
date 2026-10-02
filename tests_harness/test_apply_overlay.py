@@ -90,6 +90,17 @@ class TexToMdMirror(unittest.TestCase):
         self.assertNotEqual(0, proc.returncode)
         self.assertIn("no evidence register", proc.stdout + proc.stderr)
 
+    def test_profile_statement_survives_its_size_wrapper(self):
+        """`\\small{...}` opened the profile paragraph, and every line starting
+        with a backslash was dropped: the profile lost its first line in every
+        .md/.docx and in the ATS check, and kept a stray closing brace."""
+        sys.path.insert(0, str(ROOT / "harness"))
+        import tex_to_md
+        out = tex_to_md.convert_cv("\\small{Analyst who owns the data,\n"
+                                   "from field collection to the report.}\n")
+        self.assertEqual(["Analyst who owns the data,",
+                          "from field collection to the report."], [l for l in out if l])
+
 
 class DraftingPromises(unittest.TestCase):
     """The two rules that decide what the drafter is allowed to be.

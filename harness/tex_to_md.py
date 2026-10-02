@@ -76,6 +76,13 @@ def convert_cv(body: str) -> list[str]:
     out: list[str] = []
     for raw in body.split("\n"):
         line = raw.strip()
+        # A size wrapper opening a paragraph (the profile statement is
+        # `\small{...}` over several lines) carries text: keep it, and drop the
+        # wrapper's closing brace where the paragraph ends.
+        line = re.sub(r"^\\(?:small|footnotesize|normalsize)\{", "", line)
+        if (line.endswith("}") and line.count("}") > line.count("{")
+                and re.search(r"[A-Za-z]", line)):
+            line = line[:-1].rstrip()
         if not line:
             out.append("")
             continue

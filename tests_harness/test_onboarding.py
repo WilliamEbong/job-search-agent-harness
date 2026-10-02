@@ -167,7 +167,8 @@ class PreferencesExample(unittest.TestCase):
             "meta", "compensation", "location", "driving", "exclusions",
             "remote_tradeoffs", "hard_skips", "role_families", "seniority",
             "employment_type", "work_authorization", "industries", "direction",
-            "discovery", "presentation", "usage", "default_search_scope",
+            "discovery", "target_positions", "presentation", "usage",
+            "default_search_scope",
         }
         self.assertEqual(expected, set(self.prefs))
 
@@ -189,9 +190,9 @@ class PreferencesExample(unittest.TestCase):
             self.assertIn("mandatory_only", skip, skip)
             self.assertIn("reason", skip, skip)
 
-    def test_three_usage_modes_with_caps(self):
+    def test_four_usage_modes_with_caps(self):
         modes = self.prefs["usage"]["modes"]
-        self.assertEqual({"focused", "balanced", "full"}, set(modes))
+        self.assertEqual({"focused", "balanced", "full", "lite"}, set(modes))
         for name, mode in modes.items():
             self.assertIn("max_evaluations", mode, name)
             self.assertIn("max_packages_per_run", mode, name)

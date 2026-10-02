@@ -196,7 +196,72 @@ def step(message: str) -> None:
     print(f"  {message}", flush=True)
 
 
-def offer_express() -> bool:
+MODES_EXPLANATION = """\
+  The harness runs inside your coding agent, so every search and every
+  application spends your plan's usage. Two ways to run it:
+
+  lite      One compact procedure (/lite) and scripts that do the checking.
+            Onboarding takes 5-10 minutes, and an application loads about
+            8 KB of instructions instead of about 170 KB. It keeps the fact
+            gate, the ATS check, compiling and the page checks. It drops the
+            humanizer and second-reviewer passes, company research and
+            interview prep; each is still there as its full command.
+  standard  The full workflows (/setup-harness, /scrape, /apply-any): deeper
+            evaluation, research and review. Heavy on usage.
+
+  Recommended: lite on any plan below ChatGPT Pro or Claude Max."""
+
+# (what the user picks, plan slug, recommended mode)
+PLANS = [
+    ("ChatGPT Free, Go or Plus", "chatgpt-plus", "lite"),
+    ("ChatGPT Pro", "chatgpt-pro", "standard"),
+    ("Claude Free or Pro", "claude-pro", "lite"),
+    ("Claude Max", "claude-max", "standard"),
+    ("An API key, a Team/Business seat, or not sure", "other", "lite"),
+]
+
+
+def ask_plan() -> tuple[str, str]:
+    """(plan slug, recommended mode). Unanswerable -> the cheapest safe choice."""
+    print("\nWhich plan do you run your coding agent on?")
+    for number, (label, _, _) in enumerate(PLANS, 1):
+        print(f"  {number}. {label}")
+    default = len(PLANS)
+    try:
+        answer = input(f"Number [{default}]: ").strip()
+    except EOFError:
+        answer = ""
+    index = int(answer) if answer.isdigit() and 1 <= int(answer) <= len(PLANS) else default
+    _, plan, mode = PLANS[index - 1]
+    return plan, mode
+
+
+def choose_mode() -> tuple[str, str]:
+    """Explain lite vs standard, recommend by plan, let the user override."""
+    print(f"\n{MODES_EXPLANATION}")
+    plan, recommended = ask_plan()
+    print(f"  Recommended for that plan: {recommended}.")
+    other = "standard" if recommended == "lite" else "lite"
+    mode = recommended if confirm(f"Use {recommended} mode? (no = {other})") else other
+    return plan, mode
+
+
+def seed_preferences(plan: str, mode: str, root: Path = ROOT) -> str:
+    """Record the choice so onboarding never re-asks it. Never touches an existing file."""
+    path = root / "preferences.yaml"
+    if path.exists():
+        return f"preferences.yaml already exists, left as it is (switch any time by saying \"switch to {mode} mode\")"
+    path.write_text(
+        "# Started by harness_setup.py. Onboarding (/lite setup or /setup-harness) adds\n"
+        "# the rest; examples/preferences.example.yaml documents every key.\n"
+        "usage:\n"
+        f"  mode: {'lite' if mode == 'lite' else 'focused'}\n"
+        f"  plan: {plan}\n",
+        encoding="utf-8")
+    return f"preferences.yaml started with mode {'lite' if mode == 'lite' else 'focused'}"
+
+
+def offer_express(mode: str = "lite") -> bool:
     """Ask once whether to take every recommended answer.
 
     The per-item prompts are 7 on one runtime and 13 on two, which is a lot of
@@ -206,11 +271,15 @@ def offer_express() -> bool:
         return AUTO_YES
     print("\nTwo ways to do this:")
     print("  express - take the recommended answer to everything (1 question)")
-    print("  custom  - decide each item yourself (8 questions, or 12 if you use")
+    print("  custom  - decide each item yourself (9 questions, or 14 if you use")
     print("            both Claude Code and Codex)")
     print("\nExpress installs: the Python packages, the job-board tools, Ponytail,")
-    print("the Playwright and Firecrawl browser tools, and the statusline. The only")
-    print("thing it declines for you is Caveman.")
+    print("the Playwright and Firecrawl browser tools, and the statusline.")
+    if mode == "lite":
+        print("For lite mode it also installs Caveman and i-have-adhd, which keep the")
+        print("agent's replies short.")
+    else:
+        print("It declines Caveman and i-have-adhd for you; both are optional.")
     return confirm("\nUse express setup?", default=True)
 
 
@@ -418,19 +487,61 @@ def detect_runtimes() -> list[Runtime]:
     return found
 
 
+CODEX_NETWORK_FIX = (
+    "add `[sandbox_workspace_write]` with `network_access = true` to "
+    "~/.codex/config.toml, or approve each board search when Codex asks to run "
+    "it outside the sandbox."
+)
+
+
+def check_codex_network(codex_home: Path | None = None) -> Check:
+    """Codex's default workspace-write sandbox has no network access.
+
+    The board CLIs, pip and every page fetch need it. Inside Codex they fail
+    with a connection error that is easy to misread as "no jobs found". This
+    only reads the config: a user's sandbox posture is theirs to change.
+    """
+    home = codex_home or Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+    config = home / "config.toml"
+    off = Check("Codex network", OPTIONAL, "off (the Codex default); board search needs it",
+                CODEX_NETWORK_FIX, required=False)
+    if not config.is_file():
+        return off
+    try:
+        import tomllib  # stdlib from 3.11; on 3.10 this is reported as unverified
+
+        data = tomllib.loads(config.read_text(encoding="utf-8"))
+    except (ImportError, ValueError, OSError):
+        return Check("Codex network", UNVERIFIED, f"could not read {config}",
+                     CODEX_NETWORK_FIX, required=False)
+    workspace = data.get("sandbox_workspace_write") or {}
+    if data.get("sandbox_mode") == "danger-full-access" or workspace.get("network_access") is True:
+        return Check("Codex network", OK, f"enabled in {config.name}", required=False)
+    if any(key in data for key in ("profile", "permissions", "default_permissions")):
+        return Check("Codex network", UNVERIFIED,
+                     "set by a profile or permission profile; not checked",
+                     CODEX_NETWORK_FIX, required=False)
+    return off
+
+
 def installed_plugins(runtime: Runtime) -> str:
     code, out = run([runtime.exe, "plugin", "list"], timeout=180)
     return out if code == 0 else ""
 
 
-def install_plugin(runtime: Runtime, repo: str, plugin: str) -> Check:
+def install_plugin(runtime: Runtime, repo: str, plugin: str,
+                   codex_ref: str = "") -> Check:
     """Add the marketplace, install, then prove it by re-listing.
 
     Both runtimes accept the same two-step marketplace flow (verified on
-    claude 2.1.x and codex-cli 0.144.6); only the install verb differs.
+    claude 2.1.x and codex-cli 0.144.6); only the install verb differs, and a
+    repo may ask Codex for an explicit `--ref`.
     """
     label = f"{plugin} ({runtime.name})"
-    code, out = run([runtime.exe, "plugin", "marketplace", "add", repo], timeout=300)
+    add = [runtime.exe, "plugin", "marketplace", "add", repo]
+    if codex_ref and runtime.name == "codex":
+        add += ["--ref", codex_ref]
+    code, out = run(add, timeout=300)
     if code != 0 and "already" not in out.lower():
         return Check(label, MISSING, "marketplace add failed", out.strip()[:200],
                      required=False)
@@ -447,9 +558,19 @@ def install_plugin(runtime: Runtime, repo: str, plugin: str) -> Check:
                  required=False)
 
 
-def offer_plugins(runtime: Runtime) -> list[Check]:
+ADHD_EXPLANATION = """\
+  i-have-adhd is OPTIONAL (ayghri/i-have-adhd, MIT). It makes every reply
+  action-first: the next step first, numbered steps, lists of five at most,
+  one concrete next action, no preamble or recap. Shorter replies, so it pairs
+  well with lite mode, and like Caveman it never touches your documents.
+  Start it in a session with /i-have-adhd ($i-have-adhd on Codex); say
+  "normal mode" to stop."""
+
+
+def offer_plugins(runtime: Runtime, mode: str = "standard") -> list[Check]:
     checks: list[Check] = []
     listing = installed_plugins(runtime)
+    lite = mode == "lite"
 
     if "ponytail" in listing:
         checks.append(Check(f"ponytail ({runtime.name})", OK, "already installed",
@@ -466,12 +587,25 @@ def offer_plugins(runtime: Runtime) -> list[Check]:
                             required=False))
     else:
         print(f"\n{CAVEMAN_EXPLANATION}\n")
-        if confirm(f"Install Caveman for {runtime.name}?", default=False):
+        if confirm(f"Install Caveman for {runtime.name}?", default=lite):
             checks.append(install_plugin(runtime, "JuliusBrussee/caveman", "caveman"))
-            print("  Installed. Say `/caveman lite` in a session to use the "
-                  "recommended lite mode.")
+            level = "full" if lite else "lite"
+            print(f"  Installed. Say `/caveman {level}` in a session "
+                  f"(`$caveman` on Codex){' for the biggest saving in lite mode' if lite else ''}.")
         else:
             checks.append(Check(f"caveman ({runtime.name})", OPTIONAL,
+                                "declined — nothing depends on it", required=False))
+
+    if "i-have-adhd" in listing:
+        checks.append(Check(f"i-have-adhd ({runtime.name})", OK, "already installed",
+                            required=False))
+    else:
+        print(f"\n{ADHD_EXPLANATION}\n")
+        if confirm(f"Install i-have-adhd for {runtime.name}?", default=lite):
+            checks.append(install_plugin(runtime, "ayghri/i-have-adhd", "i-have-adhd",
+                                         codex_ref="main"))
+        else:
+            checks.append(Check(f"i-have-adhd ({runtime.name})", OPTIONAL,
                                 "declined — nothing depends on it", required=False))
     return checks
 
@@ -486,7 +620,11 @@ STATUSLINE_COMMAND = "python harness/telemetry_statusline.py"
 # dialogs, several of them inside a multi-minute compile loop.
 HARNESS_PERMISSIONS = [
     "Bash(python harness/apply_package.py:*)",
+    "Bash(python harness/ats_check.py:*)",
     "Bash(python harness/fact_check.py:*)",
+    "Bash(python harness/latex_build.py:*)",
+    "Bash(python harness/lite_search.py:*)",
+    "Bash(python harness/shortlist_row.py:*)",
     "Bash(python harness/tracker_row.py:*)",
     "Bash(python harness/tracker_xlsx.py:*)",
     "Bash(python harness/archive_applications.py:*)",
@@ -794,11 +932,19 @@ def main(argv: list[str] | None = None) -> int:
 
     print("Job Search Agent Harness — setup")
     print(f"Repository: {ROOT}")
+    mode = "standard"
     if DOCTOR_ONLY:
         print("Mode: doctor only. Nothing will be installed or changed.")
-    elif offer_express():
-        AUTO_YES = True
-        print("\nExpress setup: taking the recommended answer to each item.")
+    else:
+        if not args.yes:
+            # Only a person can say which plan they are on; `--yes` (an agent
+            # running this mid-onboarding) leaves the question to /setup-harness.
+            section("How you will run it")
+            plan, mode = choose_mode()
+            print(f"  {seed_preferences(plan, mode)}")
+        if offer_express(mode):
+            AUTO_YES = True
+            print("\nExpress setup: taking the recommended answer to each item.")
 
     checks: list[Check] = []
 
@@ -851,11 +997,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  Found: {', '.join(r.name for r in runtimes)}")
         for runtime in runtimes:
             checks.append(Check(f"runtime: {runtime.name}", OK, runtime.exe))
+        if any(r.name == "codex" for r in runtimes):
+            checks.append(check_codex_network())
 
     if runtimes and not DOCTOR_ONLY:
         for runtime in runtimes:
             section(f"Plugins for {runtime.name}")
-            checks.extend(offer_plugins(runtime))
+            checks.extend(offer_plugins(runtime, mode))
             section(f"Optional MCP servers for {runtime.name}")
             checks.extend(offer_mcp(runtime))
             if runtime.name == "claude":
@@ -874,9 +1022,11 @@ def main(argv: list[str] | None = None) -> int:
             print("\nNext step: fix the item(s) above, then run this again:")
             print(f"    {sys.executable} harness_setup.py")
         else:
-            print("\nNext step: open this folder in your agent and run "
-                  "/setup-harness to build your evidence bank and preferences.")
-            print("Then /today will tell you what to do each morning.")
+            first = "lite setup" if mode == "lite" else "setup-harness"
+            print(f"\nNext step: open this folder in your agent and type /{first} "
+                  f"(${first} in Codex). It reads your CV, asks a few questions and "
+                  "names the 20 positions you fit best.")
+            print("Then /today (or /lite in lite mode) tells you what to do each morning.")
     return failures
 
 

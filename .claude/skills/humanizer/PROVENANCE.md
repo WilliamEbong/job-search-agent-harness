@@ -45,5 +45,5 @@ the skill:
    operation that pushes a claim past its evidence — "supported" becomes "led",
    and it reads better, which is why it survives a human proofread.
 
-On Codex, if `@`-invocation of the skill is unavailable, the fallback is to
-apply the skill's checklist inline, attributed — never to skip the step.
+On Codex, `.claude/skills/` is not auto-discovered: the workflow reads this
+skill's SKILL.md by path and applies its checklist, attributed — never skips the step.

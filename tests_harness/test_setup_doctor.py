@@ -224,6 +224,67 @@ class CavemanOffer(unittest.TestCase):
         repos = [call.args[1] for call in installer.call_args_list]
         self.assertIn("JuliusBrussee/caveman", repos)
 
+    def test_lite_mode_defaults_to_the_reply_shortening_plugins(self):
+        defaults = {}
+
+        def remember(question, default=True):
+            defaults[question.split()[1]] = default
+            return False
+
+        with mock.patch.object(setup, "installed_plugins", return_value=""), \
+             mock.patch.object(setup, "confirm", side_effect=remember), \
+             mock.patch("builtins.print"):
+            setup.offer_plugins(self.runtime, "lite")
+            lite = dict(defaults)
+            setup.offer_plugins(self.runtime, "standard")
+        self.assertTrue(lite["Caveman"] and lite["i-have-adhd"])
+        self.assertFalse(defaults["Caveman"] or defaults["i-have-adhd"])
+
+    def test_codex_gets_the_ref_the_adhd_repo_asks_for(self):
+        codex = setup.Runtime(name="codex", exe="/fake/codex", install_verb="add")
+        with mock.patch.object(setup, "run", return_value=(0, "")) as run, \
+             mock.patch.object(setup, "installed_plugins", return_value="i-have-adhd"):
+            setup.install_plugin(codex, "ayghri/i-have-adhd", "i-have-adhd", codex_ref="main")
+        self.assertEqual(["/fake/codex", "plugin", "marketplace", "add",
+                          "ayghri/i-have-adhd", "--ref", "main"], run.call_args_list[0].args[0])
+
+
+class PlanAndMode(unittest.TestCase):
+    """Setup recommends lite below ChatGPT Pro / Claude Max and records the choice."""
+
+    def pick(self, answer: str):
+        with mock.patch("builtins.input", return_value=answer), \
+             mock.patch("builtins.print"):
+            return setup.ask_plan()
+
+    def test_recommendation_follows_the_plan(self):
+        self.assertEqual(("chatgpt-plus", "lite"), self.pick("1"))
+        self.assertEqual(("chatgpt-pro", "standard"), self.pick("2"))
+        self.assertEqual(("claude-pro", "lite"), self.pick("3"))
+        self.assertEqual(("claude-max", "standard"), self.pick("4"))
+
+    def test_no_answer_takes_the_cheapest_safe_choice(self):
+        self.assertEqual(("other", "lite"), self.pick(""))
+        self.assertEqual(("other", "lite"), self.pick("9"))
+
+    def test_choice_is_recorded_once_and_never_overwrites(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            setup.seed_preferences("claude-pro", "lite", root)
+            text = (root / "preferences.yaml").read_text(encoding="utf-8")
+            self.assertIn("mode: lite", text)
+            self.assertIn("plan: claude-pro", text)
+            setup.seed_preferences("claude-max", "standard", root)
+            self.assertEqual(text, (root / "preferences.yaml").read_text(encoding="utf-8"))
+
+    def test_standard_is_recorded_as_the_focused_usage_mode(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            setup.seed_preferences("claude-max", "standard", Path(tmp))
+            self.assertIn("mode: focused",
+                          (Path(tmp) / "preferences.yaml").read_text(encoding="utf-8"))
+
 
 class FirecrawlSecrets(unittest.TestCase):
     """The API key is referenced by name, never copied into a config."""
@@ -393,6 +454,41 @@ class SeededPermissions(unittest.TestCase):
         """`pdftotext -layout` is a mandatory step of the Verification
         Checklist, so leaving it out costs one dialog on every application."""
         self.assertIn("Bash(pdftotext:*)", setup.HARNESS_PERMISSIONS)
+
+    def test_scripts_every_search_and_package_runs_are_pre_approved(self):
+        for script in ("ats_check", "lite_search", "shortlist_row"):
+            self.assertIn(f"Bash(python harness/{script}.py:*)", setup.HARNESS_PERMISSIONS)
+
+
+class CodexNetworkCheck(unittest.TestCase):
+    """Codex's workspace-write sandbox has no network unless the user enables
+    it, and a board CLI that cannot connect looks like a quiet board."""
+
+    def check(self, config: str | None):
+        import tempfile
+        with tempfile.TemporaryDirectory() as home:
+            if config is not None:
+                (Path(home) / "config.toml").write_text(config, encoding="utf-8")
+            return setup.check_codex_network(Path(home))
+
+    def test_no_config_means_the_default_which_is_off(self):
+        check = self.check(None)
+        self.assertEqual(check.status, setup.OPTIONAL)
+        self.assertIn("network_access = true", check.fix)
+        self.assertFalse(check.required)
+
+    def test_network_enabled_for_workspace_write_is_ok(self):
+        check = self.check('[sandbox_workspace_write]\nnetwork_access = true\n')
+        self.assertEqual(check.status, setup.OK)
+
+    def test_full_access_sandbox_is_ok(self):
+        self.assertEqual(self.check('sandbox_mode = "danger-full-access"\n').status, setup.OK)
+
+    def test_profiles_are_not_guessed_at(self):
+        self.assertEqual(self.check('profile = "work"\n').status, setup.UNVERIFIED)
+
+    def test_unreadable_config_is_unverified_not_ok(self):
+        self.assertEqual(self.check("this is = = not toml").status, setup.UNVERIFIED)
 
 
 if __name__ == "__main__":

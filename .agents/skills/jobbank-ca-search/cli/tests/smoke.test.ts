@@ -59,6 +59,8 @@ describe("flag validation (no network)", () => {
     expect(provinceCode("Manitoba")).toBe("MB");
     expect(provinceCode("Winnipeg, MB")).toBe("MB");
     expect(provinceCode("British Columbia")).toBe("BC");
+    expect(provinceCode("Winnipeg, Manitoba, Canada")).toBe("MB");
+    expect(provinceCode("Toronto, ON, Canada")).toBe("ON");
   });
 });
 

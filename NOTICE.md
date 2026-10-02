@@ -23,8 +23,8 @@ letter class are under the SIL Open Font Licence and are inherited unchanged.
 
 ## Original contributions of this project (MIT)
 
-- Claude Code / Codex portability layer — `RUNTIME-MAP.md`, `.codex/` adapters,
-  the `AGENTS.md` harness block.
+- Claude Code / Codex portability layer — `RUNTIME-MAP.md`, the Codex workflow
+  pointer skills in `.agents/skills/`, the `AGENTS.md` harness block.
 - Cross-runtime session-continuity engine — `state/`, the HANDOFF format,
   `/continue`, and the statusline telemetry mirror.
 - Deterministic truth tier — the evidence register schema and

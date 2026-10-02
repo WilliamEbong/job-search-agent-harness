@@ -136,6 +136,68 @@ role_families:
   - programme coordination
   - water quality monitoring
 
+# Target positions — the recruiter pass (`/recruiter`), run during onboarding
+# right after the register is built. Job titles as employers post them: the
+# positions a good agency recruiter, reading this evidence, would put the
+# candidate forward for today. Positions, not postings — `/scrape` turns the
+# `search_terms` of active entries into its title queries in rank order
+# (focused: top 5, balanced: top 10, full: all), `/lite search` takes the top
+# N, and `/discover` never proposes a family these already cover.
+#
+# A real run holds 20 (fewer only when the evidence honestly supports fewer);
+# three are shown here. `fit` sits inside its tier's band: core 85-100 (has
+# done this job), adjacent 65-84 (most duties evidenced, the title is new),
+# stretch 50-64 (credible, with one named gap). `because` names the register
+# entries the position rests on; `gap` is what such postings usually ask for
+# that the register does not show. `status: dropped` means the user struck it:
+# never searched, and kept on record so the next pass does not propose it again.
+target_positions:
+  generated: 2026-08-04
+  source: recruiter pass over evidence/register.yaml
+  positions:
+    - rank: 1
+      title: Environmental Program Coordinator
+      level: intermediate      # entry | intermediate | senior | lead
+      fit: 94                  # 0-100, the recruiter's estimate
+      tier: core               # core | adjacent | stretch
+      because: >-
+        Environmental Programs Coordinator at Prairie Water Stewardship Alliance
+        since 2024-03: six-site volunteer sampling programme, monthly board
+        report, municipal data-sharing liaison.
+      gap: none
+      search_terms:
+        - environmental program coordinator
+        - watershed program coordinator
+      status: active           # active | dropped
+    - rank: 10
+      title: Environmental Data Analyst
+      level: intermediate
+      fit: 76
+      tier: adjacent
+      because: >-
+        Watershed Monitoring Dashboard turns field data into the monthly board
+        report; Excel (advanced), R (working), statistics minor, thesis analysis.
+      gap: >-
+        Postings often require hands-on Python or SQL; the register holds both
+        as AI-assisted only, and Power BI as familiarity.
+      search_terms:
+        - environmental data analyst
+        - water quality data analyst
+      status: active
+    - rank: 18
+      title: LIMS Administrator
+      level: intermediate
+      fit: 58
+      tier: stretch
+      because: >-
+        Daily LIMS operator at Northwind (sample lifecycle, batching, chain of
+        custody); Sample Intake Redesign cut turnaround 22%.
+      gap: LIMS configuration and administration are not in evidence, only operator use.
+      search_terms:
+        - LIMS administrator
+        - LIMS analyst
+      status: dropped
+
 # Role families `/discover` proposed from the evidence and the user APPROVED as
 # experiments. They are searched alongside `role_families` above and flagged as
 # trials, so a run that spends effort on an experiment says so.
@@ -209,8 +271,13 @@ presentation:
 # Every run prints its cost posture BEFORE starting, in qualitative terms. The
 # harness never invents token arithmetic it cannot actually measure; it states
 # what will be searched and how many packages may be produced.
+#
+# `plan` is the subscription the agent runs on, asked once (by harness_setup.py
+# or /setup-harness) and never again. It decides the recommendation: `lite` on
+# any plan below ChatGPT Pro or Claude Max, a standard mode on those.
 usage:
-  mode: focused            # focused | balanced | full
+  plan: claude-max         # chatgpt-plus | chatgpt-pro | claude-pro | claude-max | other
+  mode: focused            # focused | balanced | full | lite
   modes:
     focused:
       description: >-
@@ -231,6 +298,15 @@ usage:
         can consume a large share of a session window.
       max_evaluations: 60
       max_packages_per_run: 3
+    # `mode: lite` is sticky: plain-language requests route to `/lite`
+    # ("find me jobs" → `/lite search`, "apply to this" → `/lite apply`), and
+    # an explicitly typed `/scrape` runs as `focused`.
+    lite:
+      description: >-
+        Ultra lite: one compact procedure (/lite), scripts do the checking, no research,
+        reviewer or humanizer passes. Lowest token cost per search and per package.
+      max_evaluations: 10
+      max_packages_per_run: 1
   auto_package_threshold: 80   # `full` only: match score at or above which a package is drafted
 
 # Which sources a bare `/scrape` searches. Overridable per run with

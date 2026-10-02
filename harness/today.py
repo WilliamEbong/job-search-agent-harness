@@ -137,6 +137,28 @@ def trial_families(shortlist: list[dict], root: Path = ROOT) -> list[dict]:
     return out
 
 
+def needs_recruiter_pass(root: Path = ROOT) -> bool:
+    """True when preferences.yaml exists but holds no active target position.
+
+    `/recruiter` writes `target_positions` during onboarding and `/scrape`
+    leads with them; a user onboarded before it existed has none, and nothing
+    else would ever tell them. A missing preferences.yaml is left to onboarding,
+    and an unreadable one is already reported by trial_families().
+    """
+    path = root / "preferences.yaml"
+    if not path.is_file():
+        return False
+    try:
+        import yaml
+        prefs = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return False
+    block = prefs.get("target_positions") if isinstance(prefs, dict) else None
+    positions = block.get("positions") if isinstance(block, dict) else None
+    return not any(isinstance(p, dict) and p.get("status") == "active"
+                   for p in positions or [])
+
+
 def collect(today: date | None = None, root: Path = ROOT) -> dict:
     today = today or date.today()
     tracker, _ = tracker_row.read_rows(root / "job_search_tracker.csv")
@@ -198,6 +220,7 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
     return {
         "date": today.isoformat(),
         "onboarded": (root / "evidence" / "register.yaml").exists(),
+        "needs_positions": needs_recruiter_pass(root),
         "trials": trial_families(shortlist, root),
         "followups": followups,
         "interviews": interviews and [
@@ -218,6 +241,7 @@ def collect(today: date | None = None, root: Path = ROOT) -> dict:
 # `who` separates what the system does from what only the human can do.
 MINUTES = {
     "/setup-harness": ("about 15 min", "together"),
+    "/recruiter": ("about 5 min", "I propose, you strike"),
     "/outcome": ("2-3 min", "you decide, I write"),
     "apply": ("10-15 min", "I draft, you submit"),
     "/scrape": ("5-10 min", "I search"),
@@ -244,6 +268,8 @@ def actions(state: dict) -> list[dict]:
         add("Set up your profile", "/setup-harness")
         return items
 
+    if state.get("needs_positions"):
+        add("Name the 20 positions your evidence fits (recruiter pass)", "/recruiter")
     for entry in state["followups"][:3]:
         add(f"Follow up with {entry['company']} "
             f"({entry['days_quiet']} days quiet)",

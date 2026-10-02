@@ -18,8 +18,9 @@ at the end.
 If `evidence/register.yaml` does not exist, this is a new user. Say so in one line and
 offer to start:
 
-> You have not set up a profile yet. Want to do that now? It takes about five minutes —
-> I read your CV, ask a few questions, and then I can start finding jobs.
+> You have not set up a profile yet. Want to do that now? It takes 5–10 minutes —
+> I read your CV, ask a few questions, name the 20 positions you fit best, and then I
+> can start finding jobs.
 
 If they say yes, run `/setup-harness`. Do not print an empty dashboard at someone who has
 nothing in it yet.
@@ -70,12 +71,16 @@ something new"). Either way, run the matching workflow:
 
 | They pick | You run |
 |---|---|
+| the recruiter pass | `/recruiter` |
 | a follow-up | `/outcome <company>` and go to its follow-up branch |
 | a closing-soon or shortlisted job | `/apply-any <url>` |
 | a new search | `/scrape` |
 | a trial family to judge | `/discover review` |
 | an offer to think about | `/offer <company>` |
 | set-up | `/setup-harness` |
+
+When `preferences.yaml` says `usage.mode: lite`, run the lite equivalents instead:
+`/lite search` for a search, `/lite apply <url>` for a job, `/lite setup` for set-up.
 
 Confirm what you are about to do in one line, then do it. Do not re-print the dashboard
 afterwards.

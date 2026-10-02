@@ -1,5 +1,5 @@
 ---
-framework_version: 1.0.0
+framework_version: 1.1.0
 ---
 
 # Agent Guidelines: AI Job Search
@@ -15,8 +15,9 @@ To prevent duplication and configuration drift across different AI agent framewo
 2. **Canonical Workflow Specifications:**
    - The step-by-step instructions and triggers for tasks (setup, scrape, rank, apply, upskill, interview) are defined in the [.claude/](.claude/) directory (specifically under `.claude/skills/` and `.claude/commands/`).
    - Do not duplicate these rules or specifications. Treat `.claude/` files as the single source of truth.
-3. **Portal Search Skills:**
-   - Job-portal search CLIs live under [.agents/skills/](.agents/skills/) in the portable Agent Skills format (with a `SKILL.md` per portal). Codex and Antigravity discover these automatically; the `/scrape` workflow in [.claude/skills/job-scraper/](.claude/skills/job-scraper/) orchestrates them.
+3. **Portal Search Skills and Workflow Pointers:**
+   - Job-portal search CLIs live under [.agents/skills/](.agents/skills/) as `*-search/` folders in the portable Agent Skills format (with a `SKILL.md` per portal). Codex and Antigravity discover these automatically; the `/scrape` workflow in [.claude/skills/job-scraper/](.claude/skills/job-scraper/) orchestrates them.
+   - The same folder holds one thin pointer skill per harness workflow (never named `*-search`), so Codex can run `$scrape`, `$apply-any` and the rest. A pointer only names its `.claude/` spec file.
 
 <!-- harness:begin -->
 ## Job Search Agent Harness layer
@@ -36,15 +37,24 @@ runs as a sequential fresh pass (§2), and usage percentages are never printed (
 | `companies.yaml` | Employers worth checking directly. A living list. |
 | `state/` | `HANDOFF.md`, `session-log.md`, `telemetry.json` — the continuity spine. |
 | `harness/` | Runtime-neutral Python: fact gate, tracker workbook, archiver, run log, `.md` mirror, telemetry. |
-| `.codex/prompts/` | Thin Codex stubs. They add no behaviour; the command files are the procedure. |
+| `.agents/skills/<workflow>/` | Thin Codex pointer skills, one per workflow (`$name`). They add no behaviour; the command files are the procedure. |
 | `docs/` | `board-intelligence.md`, `latex-gotchas.md`, and the build/plan record. |
 | `graphify-out/` | Optional, gitignored: a knowledge graph of this repo. When present, answer architecture questions from it (`graphify query "..."`) before grepping. |
 
 ### Harness workflows
 
-`/setup-harness` (onboarding, CV first) · `/career-review` · `/companies` · `/discover`
-(role families the evidence supports) · `/scrape` (five scopes, three modes) ·
-`/apply-any` (any input form) · `/verify-facts` · `/fact` · `/tracker` · `/continue`
+`/setup-harness` (onboarding, CV first) · `/recruiter` (the 20 positions the candidate
+is most credibly hireable for) · `/career-review` · `/companies` · `/discover` (role
+families the evidence supports) · `/scrape` (five scopes, three modes) · `/apply-any`
+(any input form) · `/verify-facts` · `/fact` · `/tracker` · `/continue` · `/lite` (ultra
+lite mode: the core loop at the lowest token cost)
+
+**Running a workflow on Codex.** `$name`, the plain-language phrase, or a typed `/name`
+that reaches you all mean the same thing: read `.claude/commands/<name>.md` in full and
+follow it, applying `RUNTIME-MAP.md` (`/upskill` lives at
+`.claude/skills/upskill/SKILL.md`). Full workflows also read `CLAUDE.md` once per
+session for the candidate profile and the Verification Checklist, which Codex does not
+load on its own; lite mode reads only what `lite.md` names.
 
 ### What this system is for
 
@@ -92,17 +102,28 @@ model should treat them as equivalent:
 | "check my spreadsheet", "update the tracker" | `/tracker` |
 | "look at my GitHub / portfolio" | `/career-review` |
 | "watch this company", "add employer" | `/companies` |
-| "what else could I do", "what jobs am I qualified for", "other careers" | `/discover` |
+| "what jobs am I a good fit for", "what positions fit my CV", "what jobs am I qualified for", "what should I be applying for", "act as a recruiter" | `/recruiter` |
+| "what else could I do", "other careers" | `/discover` |
 | "set me up", "start over with my CV" | `/setup-harness` |
 | "prep me for the interview" | `/interview` |
+| "lite mode", "save tokens", "cheap mode" ("switch to lite mode" also sets `usage.mode: lite` in `preferences.yaml`) | `/lite` |
+
+**Lite mode is sticky.** When `preferences.yaml` sets `usage.mode: lite`, plain
+language routes to lite instead: "set me up" → `/lite setup`, "find me jobs" →
+`/lite search`, "apply to this" → `/lite apply`, "what's next" → `/lite`. An explicitly
+typed `/scrape` under mode `lite` runs as `focused`.
 
 **Before any harness workflow runs, check the user is set up.** If
 `evidence/register.yaml` or `preferences.yaml` is missing, do not fail into
 undefined behaviour and do not read the `.example.yaml` as if it were theirs.
-Say so in one line and offer onboarding:
+(`/setup-harness`, `/lite setup` and `/recruiter` are exempt: they are how a user
+gets set up, and `/recruiter` needs only the register.) Say so in one line and
+offer onboarding, recommending by plan: use `usage.plan` from `preferences.yaml` if
+the installer recorded it, otherwise ask.
 
-> You have not set up a profile yet - want to do that now? It takes about five
-> minutes.
+> You have not set up a profile yet. On a plan below ChatGPT Pro or Claude Max,
+> start with lite mode: `/lite setup`, 5-10 minutes, a fraction of the usage. On
+> those plans `/setup-harness` runs the full system. Which plan are you on?
 
 **`/apply` is upstream's inner workflow.** If the user types it directly, they
 skip posting intake, the hard-constraint gate, the humanizer pass, the fact

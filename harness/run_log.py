@@ -24,26 +24,29 @@ LOG = os.path.join(
 COLUMNS = ["date", "portal", "query", "found", "new", "notes"]
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    for column in COLUMNS[1:]:
-        parser.add_argument("--" + column, default="")
-    args = parser.parse_args()
-
+def append(row: dict, path=None) -> None:
+    """Append one run; `date` defaults to today, missing columns are blank."""
+    path = path or LOG  # read at call time, so a patched LOG is honoured
     # An empty file needs the header just as much as a missing one. A zero-byte
     # run_log.csv (interrupted first write, a `touch`, an editor saving an empty
     # buffer) otherwise makes the first data row the header: `today.py` then
     # finds no `date` column and reports "no search has been run yet" after
     # every single search, permanently.
-    is_new = not os.path.exists(LOG) or os.path.getsize(LOG) == 0
-    with open(LOG, "a", newline="", encoding="utf-8") as handle:
+    is_new = not os.path.exists(path) or os.path.getsize(path) == 0
+    with open(path, "a", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         if is_new:
             writer.writerow(COLUMNS)
-        writer.writerow(
-            [datetime.date.today().isoformat()]
-            + [getattr(args, column) for column in COLUMNS[1:]]
-        )
+        writer.writerow([row.get("date") or datetime.date.today().isoformat()]
+                        + [row.get(column, "") for column in COLUMNS[1:]])
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    for column in COLUMNS[1:]:
+        parser.add_argument("--" + column, default="")
+    args = parser.parse_args()
+    append(vars(args))
     print("logged run to", LOG)
 
 

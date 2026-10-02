@@ -23,20 +23,31 @@ Run the standing first-run check ("Before any harness workflow runs" in `AGENTS.
 `/setup-harness` in one line and stop. Never read the shipped `.example.yaml` as though
 it were the user's.
 
+**First search after a quick start.** Quick start skips the preference interview, so
+`preferences.yaml` may hold little more than `target_positions`. If it has no `location`,
+ask the two questions a search genuinely needs, in one message: where they can work
+(home, commute radius, remote / hybrid / onsite) and anything they refuse outright. Write
+the answers into `preferences.yaml` in `examples/preferences.example.yaml`'s shape
+(`location`, `exclusions`), keep every other key, and continue. Ask nothing else here;
+pay and the rest wait for `/setup-harness --interview`.
+
 ## Step 1: Resolve scope and mode
 
 A bare `/scrape` should never require the user to choose. Resolve in this order:
 
 1. the scope and mode of the **last run**, from the newest `run_log.csv` row;
-2. `default_search_scope` and `usage.mode` in `preferences.yaml`;
+2. `default_search_scope` and `usage.mode` in `preferences.yaml` (`lite` runs as
+   `focused` here; see the modes table);
 3. `boards` + `focused`.
 
-Then print one line naming what you are about to search and the nearest
-alternative — so the fifteen scope-and-mode combinations stay available without
-anyone having to learn them:
+Then print one line naming what you are about to search — the sources, and the target
+positions from `preferences.yaml` that lead the queries (Step 3) — and the nearest
+alternative, so the fifteen scope-and-mode combinations stay available without anyone
+having to learn them:
 
-> Searching your 4 job boards (focused). Say "companies" to check your saved
-> employers instead, or "everything" for both.
+> Searching your 4 job boards (focused) for your top 5 target positions: Data Analyst,
+> Reporting Analyst, GIS Technician, Research Assistant, Project Coordinator. Say
+> "companies" to check your saved employers instead, or "everything" for both.
 
 Per-run flags override all of it; nothing is written back unless the user says
 "make that the default".
@@ -71,7 +82,7 @@ decided in `/discover review`, never here — this command searches, it does not
 
 | Mode | Depth | Caps |
 |---|---|---|
-| `focused` | One source per run, shallow fit screen, **no documents generated** | `max_evaluations`, `max_packages_per_run: 0` |
+| `focused` | One source per run, shallow fit screen, **no documents generated**. Also how `usage.mode: lite` runs a `/scrape` typed explicitly — lite's plain-language searches go to `/lite search` instead | `max_evaluations`, `max_packages_per_run: 0` |
 | `balanced` | All sources in scope, dedupe and rank, deeper evaluation for promising jobs | documents only on selection |
 | `full` | Deep evaluation and research, automatic packages above `auto_package_threshold` | `max_packages_per_run` |
 
@@ -113,6 +124,14 @@ for the boards in scope and let it run each board's CLI, deduplicate against
 `seen_jobs.json`, extract deadlines, flag mass-postings, and check portal health. Never
 write scraping code here; a board with no CLI gets one through upstream `/add-portal`,
 which handles robots/ToS checking, scaffolding and a live test.
+
+**Target positions lead the queries.** Pass the `search_terms` of every `status: active`
+entry in `preferences.yaml` `target_positions` (written by `/recruiter`) into that
+invocation as the primary title queries, in rank order, capped by mode: the top 5
+positions in `focused`, the top 10 in `balanced`, all active ones in `full`. The skill's
+query strategy already puts job titles in its first-priority tier, so they land in the
+right place without editing it. A `dropped` position is never searched, and
+`role_families` are still searched as before; target positions only go first.
 
 Pass any active trial families into that invocation as additional search terms — the
 skill's query strategy already has an adjacent-roles tier, so they land in the right

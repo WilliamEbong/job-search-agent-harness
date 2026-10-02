@@ -308,9 +308,9 @@ class Wave4Capabilities(unittest.TestCase):
         import re as _re
         return _re.sub(r"\s+", " ", path.read_text(encoding="utf-8").lower())
 
-    def test_offer_command_exists_with_a_codex_stub(self):
+    def test_offer_command_exists_with_a_codex_pointer(self):
         self.assertTrue((ROOT / ".claude" / "commands" / "offer.md").is_file())
-        self.assertTrue((ROOT / ".codex" / "prompts" / "offer.md").is_file())
+        self.assertTrue((ROOT / ".agents" / "skills" / "offer" / "SKILL.md").is_file())
 
     def test_offer_never_invents_a_competing_offer(self):
         text = self._flat(ROOT / ".claude" / "commands" / "offer.md")

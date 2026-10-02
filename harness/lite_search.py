@@ -1,0 +1,556 @@
+#!/usr/bin/env python3
+"""Lite job search: every enabled portal, one compact ranked list, one command.
+
+`/lite search` runs this in place of the job-scraper skill. The full route has the model
+read the scrape command, the job-scraper skill and every portal SKILL.md, then parse raw
+CLI JSON itself. Here the board quirks live in three small tables below, and the model
+reads at most 25 numbered rows.
+
+    python harness/lite_search.py --top 5 --record
+    python harness/lite_search.py --show 3     # one row, plus the command for its full text
+
+Exit 0 = searched (even when nothing was new), 1 = every board failed, 2 = nothing to
+search with (no preferences, positions, boards or bun); one printed line says which.
+
+In order: search terms from `target_positions` (the recruiter pass), or `role_families`
+plus trial families when there are none; each enabled `.agents/skills/*-search/` CLI once
+per term (boards in parallel, one board's own calls in sequence); results near
+`location.home`; repeats dropped (within the run, against `job_scraper/seen_jobs.json`,
+against the tracker); a 0-100 score on job-title overlap, which is triage, not judgement.
+
+It writes the full system's files in the full system's formats, so a user can move
+between lite and full at any time: new jobs join `job_scraper/seen_jobs.json` (the store
+`/rank` and `/upskill` read), the numbered list goes to `state/lite-last-search.json`, and
+`--record` appends `shortlist.csv` rows (verdict `not-resolved`, /scrape's word for
+title-level triage) and one `run_log.csv` row per board.
+"""
+
+from __future__ import annotations
+
+import argparse
+import concurrent.futures
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+import unicodedata
+from datetime import date
+from pathlib import Path
+
+import yaml
+
+HARNESS_DIR = Path(__file__).resolve().parent
+ROOT = HARNESS_DIR.parent
+sys.path.insert(0, str(HARNESS_DIR))
+import run_log  # noqa: E402
+import shortlist_row  # noqa: E402
+import tracker_row  # noqa: E402
+
+# Each board's SKILL.md documents its own flags. Most share `search -q <text> --limit N
+# --format json`; these are the documented exceptions. A board added later with
+# /add-portal gets the shared shape, and if that is wrong it fails on its own status line
+# without stopping the run.
+QUERY_FLAG = {"jobbank-search": "--key", "jobdanmark-search": "--text",
+              "jobnet-search": "--search-string"}
+# Only these document a free-text place flag. The others take region codes or nothing,
+# so their results are filtered here on the location text instead.
+LOCATION_FLAG = {"linkedin-search": "--location", "jobbank-ca-search": "--location"}
+# jobnet results carry no URL; its SKILL.md documents the posting page pattern.
+URL_TEMPLATE = {"jobnet-search": "https://jobnet.dk/job/{id}"}
+# Boards that list one country's jobs. A home naming one of these countries skips the
+# other countries' boards; a home naming none of them keeps every board.
+MARKET = {"jobbank-ca-search": "canada", "jobbank-search": "denmark",
+          "jobdanmark-search": "denmark", "jobindex-search": "denmark",
+          "jobnet-search": "denmark"}
+COUNTRY = {
+    "canada": {"canada", "ab", "bc", "mb", "nb", "nl", "ns", "nt", "nu", "on", "pe", "qc",
+               "sk", "yt", "alberta", "british columbia", "manitoba", "new brunswick",
+               "newfoundland and labrador", "nova scotia", "ontario",
+               "prince edward island", "quebec", "saskatchewan", "yukon"},
+    "denmark": {"denmark", "danmark", "dk"},
+}
+
+TIMEOUT_S = 60
+PAUSE_S = 5        # between one board's own calls: jobbank-ca's Crawl-delay, the strictest
+MAX_ROWS = 25      # printed rows; the rest stay in the saved list for --show
+RECORD_TOP = 10    # shortlist rows per --record: lite presents at most 10 jobs
+LAST_SEARCH = Path("state") / "lite-last-search.json"
+STOPWORDS = {"a", "an", "and", "at", "for", "in", "of", "on", "or", "the", "to", "with"}
+FOLD = str.maketrans({"ø": "o", "Ø": "O", "æ": "ae", "Æ": "AE", "ß": "ss", "ł": "l",
+                      "Ł": "L", "–": "-", "—": "-", "‘": "'",
+                      "’": "'", "“": '"', "”": '"'})
+
+
+def norm(text) -> str:
+    """Lowercase words joined by single spaces: the comparison form for every key."""
+    return " ".join(re.findall(r"\w+", str(text or "").lower()))
+
+
+def fold(text) -> str:
+    """ASCII for printing, so no console encoding ever chokes on a posting's title."""
+    text = unicodedata.normalize("NFKD", str(text or "").translate(FOLD))
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    return text.encode("ascii", "replace").decode()
+
+
+def clip(text, width: int) -> str:
+    text = fold(text)
+    return text if len(text) <= width else text[:width - 3] + "..."
+
+
+def iso_date(value) -> str:
+    """YYYY-MM-DD from ISO timestamps or jobdanmark's DD-MM-YYYY; '' for "ASAP" and the like."""
+    text = str(value or "").strip()
+    if re.match(r"\d{4}-\d{2}-\d{2}", text):
+        return text[:10]
+    match = re.match(r"(\d{2})-(\d{2})-(\d{4})", text)
+    return f"{match[3]}-{match[2]}-{match[1]}" if match else ""
+
+
+def normalise(raw: dict, board: str) -> dict:
+    """One result in the shared shape, whatever the board called its fields."""
+    def first(*keys) -> str:
+        for key in keys:
+            value = raw.get(key)
+            if value is not None and str(value).strip():
+                return str(value).strip()
+        return ""
+
+    job = {"title": first("title"),
+           "company": first("company", "companyName", "hiringOrgName"),
+           "location": first("location", "municipality", "postalDistrictName",
+                             "companyAddress", "workPlaceAddress", "country"),
+           "url": first("url"),
+           "date": iso_date(first("date", "publicationDate", "publishedDate", "posted")),
+           "deadline": iso_date(first("deadline", "applicationDeadline", "validThrough")),
+           "id": first("id", "jobAdId", "slug"),
+           "board": board}
+    mode = first("work_mode")  # freehire: remote | hybrid | onsite
+    if mode and mode.lower() not in job["location"].lower():
+        job["location"] = f"{job['location']} ({mode})".strip()
+    if not job["url"] and job["id"] and board in URL_TEMPLATE:
+        job["url"] = URL_TEMPLATE[board].format(id=job["id"])
+    return job
+
+
+def home_tokens(home) -> list[str]:
+    """'Winnipeg, Manitoba, Canada' -> ['winnipeg', 'manitoba', 'canada']; the city first."""
+    return [token for token in (norm(part) for part in str(home or "").split(",")) if token]
+
+
+def home_country(tokens: list[str]) -> str:
+    return next((country for country, names in COUNTRY.items() if names & set(tokens)), "")
+
+
+def other_market(boards: list[str], tokens: list[str]) -> list[str]:
+    """Single-country boards for a country that is not home; none when home is unknown."""
+    country = home_country(tokens)
+    return [b for b in boards if country and MARKET.get(b, country) != country]
+
+
+def near_home(location, tokens: list[str], remote_ok: bool) -> bool:
+    """A whole-word match on any part of home, or a remote listing when remote is accepted.
+
+    Hybrid does not bypass the check: a hybrid role still has an office, and when that
+    office is near home its city matches anyway.
+    """
+    text = f" {norm(location)} "
+    if remote_ok and " remote " in text:
+        return True
+    return any(f" {token} " in text for token in tokens)
+
+
+def words(text) -> set[str]:
+    return {word for word in norm(text).split() if word not in STOPWORDS}
+
+
+def score(title, phrases, location="", city="") -> int:
+    """0-100: the best share of any phrase's words found in the title (worth up to 90),
+    plus 10 when the location names the home city."""
+    have = words(title)
+    best = max((len(have & words(p)) / len(words(p)) for p in phrases if words(p)),
+               default=0.0)
+    bonus = 10 if city and f" {city} " in f" {norm(location)} " else 0
+    return min(100, round(best * 90) + bonus)
+
+
+def fit(points: int) -> str:
+    return "high" if points >= 70 else "medium" if points >= 40 else "low"
+
+
+def load_positions(prefs: dict, top: int) -> list[dict]:
+    """What to search, in priority order: [{title, query, phrases, trial}].
+
+    Active `target_positions` by rank, each searched on its first search term. With none,
+    `role_families` plus trial families, the /scrape fallback. Empty = nothing to search.
+    """
+    block = prefs.get("target_positions")
+    listed = block.get("positions") if isinstance(block, dict) else block
+    active = [p for p in (listed if isinstance(listed, list) else [])
+              if isinstance(p, dict) and str(p.get("title") or "").strip()
+              and str(p.get("status") or "active").strip().lower() == "active"]
+    active.sort(key=lambda p: p["rank"] if isinstance(p.get("rank"), int) else 10**6)
+    out = []
+    for position in active:
+        title = str(position["title"]).strip()
+        terms = [str(t).strip() for t in position.get("search_terms") or [] if str(t).strip()]
+        terms = terms or [title]
+        out.append({"title": title, "query": terms[0], "phrases": [title] + terms,
+                    "trial": False})
+    if not out:
+        families = prefs.get("role_families")
+        discovery = prefs.get("discovery")
+        trials = discovery.get("trial_families") if isinstance(discovery, dict) else None
+        named = [(str(f).strip(), False)
+                 for f in (families if isinstance(families, list) else []) if str(f).strip()]
+        named += [(str(t["name"]).strip(), True)
+                  for t in (trials if isinstance(trials, list) else [])
+                  if isinstance(t, dict) and t.get("status") == "trial" and t.get("name")]
+        out = [{"title": name, "query": name, "phrases": [name], "trial": trial}
+               for name, trial in named]
+    return out[:top]
+
+
+def board_enabled(skill_text: str) -> bool:
+    """A portal runs unless its SKILL.md frontmatter says `enabled: false`; missing = on."""
+    if not skill_text.startswith("---"):
+        return True
+    try:
+        meta = yaml.safe_load(skill_text.split("---", 2)[1])
+    except (yaml.YAMLError, IndexError):
+        return True
+    if not isinstance(meta, dict):
+        return True
+    return str(meta.get("enabled", True)).strip().lower() not in ("false", "no", "off", "0")
+
+
+def discover_boards(root: Path) -> tuple[list[str], list[str]]:
+    """(enabled, disabled) portal names. Only `*-search` folders are portals; the other
+    `.agents/skills/` entries are workflow pointer skills."""
+    enabled, disabled = [], []
+    for skill in sorted((root / ".agents" / "skills").glob("*-search/SKILL.md")):
+        text = skill.read_text(encoding="utf-8", errors="replace")
+        (enabled if board_enabled(text) else disabled).append(skill.parent.name)
+    return enabled, disabled
+
+
+def dedupe(jobs: list[dict], seen: dict, tracker_rows: list[dict]) -> list[dict]:
+    """Drop repeats within the run (URL, then company+title+location), then anything
+    seen_jobs.json holds (URL or company+title) or the tracker holds (company+role)."""
+    entries = [entry for entry in seen.values() if isinstance(entry, dict)]
+    seen_urls = set(seen) | {entry.get("url") for entry in entries}
+    seen_pairs = {(norm(e.get("company")), norm(e.get("title"))) for e in entries}
+    applied = {(norm(r.get("company")), norm(r.get("role"))) for r in tracker_rows}
+    out, urls, triples = [], set(), set()
+    for job in jobs:
+        pair = (norm(job["company"]), norm(job["title"]))
+        triple = (*pair, norm(job["location"]))
+        if (job["url"] and job["url"] in urls) or triple in triples:
+            continue
+        urls.add(job["url"])
+        triples.add(triple)
+        if (job["url"] and job["url"] in seen_urls) or pair in seen_pairs or pair in applied:
+            continue
+        out.append(job)
+    return out
+
+
+def remember(data: dict, jobs: list[dict], today: str) -> int:
+    """Add new jobs in the job-scraper's entry shape; existing entries are never touched."""
+    seen, added = data["seen"], 0
+    for job in jobs:
+        key = job["url"] or "_".join(norm(f"{job['company']} {job['title']}").split())
+        if key in seen:
+            continue
+        seen[key] = {"title": job["title"], "company": job["company"], "url": job["url"],
+                     "first_seen": today, "fit": job["fit"], "status": "new",
+                     "portal": job["board"]}
+        added += 1
+    return added
+
+
+def read_seen(path: Path) -> tuple[dict, bool]:
+    """(data, writable). An unreadable store is reported, and never overwritten."""
+    if not path.exists():
+        return {"seen": {}}, True
+    try:
+        data = json.loads(path.read_text(encoding="utf-8") or "{}")
+    except (OSError, ValueError) as exc:
+        print(f"WARNING: {path} is unreadable ({fold(exc)}); not deduplicating against "
+              "it and not updating it")
+        return {"seen": {}}, False
+    if not isinstance(data, dict) or not isinstance(data.setdefault("seen", {}), dict):
+        print(f"WARNING: {path} has no 'seen' mapping; left untouched")
+        return {"seen": {}}, False
+    return data, True
+
+
+def write_json(path: Path, data) -> None:
+    """Atomic: a crash mid-write never leaves half a file behind."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def cli_error(proc: subprocess.CompletedProcess) -> str:
+    """The CLI's own message; by the portal contract stderr is {"error": ..., "code": ...}."""
+    text = (proc.stderr or "").strip()
+    try:
+        return fold(json.loads(text.splitlines()[-1])["error"])[:120]
+    except (ValueError, IndexError, KeyError, TypeError):
+        pass
+    if proc.returncode == 0:
+        return "output was not JSON"
+    return fold(text.splitlines()[-1] if text else f"exit code {proc.returncode}")[:120]
+
+
+def run_board(bun: str, root: Path, board: str, queries: list[str], home: str,
+              limit: int) -> dict:
+    """One board's queries in order. Stops at the first error: a blocked or rate-limited
+    board fails every call the same way, and retrying it is impolite as well as slow."""
+    cli = root / ".agents" / "skills" / board / "cli" / "src" / "cli.ts"
+    run = {"board": board, "jobs": [], "found": 0, "error": "", "note": "",
+           "post_filter": not (home and board in LOCATION_FLAG)}
+    for number, query in enumerate(queries, 1):
+        if number > 1:
+            time.sleep(PAUSE_S)
+        cmd = [bun, "run", str(cli), "search", QUERY_FLAG.get(board, "-q"), query,
+               "--limit", str(limit), "--format", "json"]
+        if home and board in LOCATION_FLAG:
+            cmd += [LOCATION_FLAG[board], home]
+        where = f"query {number}/{len(queries)}"
+        try:
+            proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace", timeout=TIMEOUT_S)
+        except subprocess.TimeoutExpired:
+            run["error"] = f"{where} timed out after {TIMEOUT_S}s"
+            break
+        except OSError as exc:
+            run["error"] = f"{where}: {fold(exc)}"
+            break
+        try:
+            payload = json.loads(proc.stdout) if proc.returncode == 0 else None
+        except ValueError:
+            payload = None
+        if not isinstance(payload, dict):
+            run["error"] = f"{where}: {cli_error(proc)}"
+            break
+        meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
+        if "none" in str(meta.get("location_filter", "")).lower():
+            # jobbank-ca says so when it could not turn the place into a province filter.
+            run["post_filter"], run["note"] = True, f"board: {meta['location_filter']}"
+        rows = [row for row in payload.get("results") or [] if isinstance(row, dict)]
+        run["found"] += len(rows)
+        run["jobs"] += [normalise(row, board) for row in rows]
+    return run
+
+
+def log_runs(path: Path, runs: list[dict], queries: list[str]) -> None:
+    """One run_log.csv row per board."""
+    for run in runs:
+        notes = "lite" + (f"; error: {run['error']}" if run["error"] else "") \
+            + (f"; {run['note']}" if run["note"] else "")
+        run_log.append({"portal": run["board"], "query": "; ".join(queries),
+                        "found": run["found"], "new": run["new"], "notes": notes}, path)
+
+
+def search(args) -> int:
+    root = Path(args.root)
+    prefs_path = Path(args.preferences) if args.preferences else root / "preferences.yaml"
+    if not prefs_path.is_file():
+        print(f"lite_search: no preferences at {prefs_path} - run /lite setup first")
+        return 2
+    try:
+        prefs = yaml.safe_load(prefs_path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as exc:
+        print(f"lite_search: {prefs_path.name} does not parse ({fold(exc)})")
+        return 2
+    positions = load_positions(prefs if isinstance(prefs, dict) else {}, args.top)
+    if not positions:
+        print("lite_search: preferences.yaml has no active target_positions and no "
+              "role_families - run /recruiter first")
+        return 2
+
+    location = prefs.get("location") if isinstance(prefs.get("location"), dict) else {}
+    home = str(location.get("home") or "").strip()
+    tokens = home_tokens(home)
+    remote_ok = "remote" in [str(a).strip().lower() for a in location.get("arrangements") or []]
+
+    enabled, disabled = discover_boards(root)
+    elsewhere = other_market(enabled, tokens)
+    boards = [b for b in enabled if b not in elsewhere]
+    if args.boards:
+        elsewhere = []
+        boards = [b if b.endswith("-search") else b + "-search"
+                  for b in (part.strip() for part in args.boards.split(",")) if b]
+        unknown = [b for b in boards if b not in enabled + disabled]
+        if unknown:
+            print(f"lite_search: no board named {', '.join(unknown)}; installed: "
+                  f"{', '.join(enabled + disabled)}")
+            return 2
+        disabled = []
+    if not boards:
+        print("lite_search: no enabled boards under .agents/skills/*-search/")
+        return 2
+    bun = shutil.which("bun")
+    if not bun:
+        print("lite_search: bun is not installed, and every portal CLI needs it - "
+              "run: python harness_setup.py --doctor")
+        return 2
+
+    queries = [position["query"] for position in positions]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(boards)) as pool:
+        runs = list(pool.map(
+            lambda board: run_board(bun, root, board, queries, home, args.limit), boards))
+
+    pooled = []
+    for run in runs:
+        jobs = [job for job in run["jobs"] if job["title"]]
+        if run["post_filter"] and tokens:
+            jobs = [job for job in jobs if near_home(job["location"], tokens, remote_ok)]
+        run["near"] = len(jobs)
+        pooled += jobs
+    seen_path = (Path(args.state_dir) if args.state_dir else root / "job_scraper") \
+        / "seen_jobs.json"
+    data, writable = read_seen(seen_path)
+    tracker, _ = tracker_row.read_rows(root / "job_search_tracker.csv")
+    fresh = dedupe(pooled, data["seen"], tracker)
+    city = tokens[0] if tokens else ""
+    for job in fresh:
+        # Against every searched position: one query's find may fit another position better.
+        job["score"], job["position"], job["trial"] = max(
+            ((score(job["title"], p["phrases"], job["location"], city), p["title"],
+              p["trial"]) for p in positions), key=lambda match: match[0])
+        job["fit"] = fit(job["score"])
+    fresh.sort(key=lambda job: (job["score"], job["date"]), reverse=True)
+    for number, job in enumerate(fresh, 1):
+        job["n"] = number
+    for run in runs:
+        run["new"] = sum(1 for job in fresh if job["board"] == run["board"])
+
+    today = date.today().isoformat()
+    added = remember(data, fresh, today) if writable else 0
+    if added:
+        write_json(seen_path, data)
+    write_json(root / LAST_SEARCH, {"date": today, "home": home,
+                                    "positions": [p["title"] for p in positions],
+                                    "results": fresh})
+    recorded = []
+    if args.record:
+        for job in fresh[:RECORD_TOP]:
+            rationale = f"lite title match: {job['position']}" \
+                + (f"; trial: {job['position']}" if job["trial"] else "")
+            shortlist_row.append({
+                "company": job["company"], "role": job["title"],
+                "location": job["location"], "source": job["board"], "url": job["url"],
+                "score": job["score"], "verdict": "not-resolved", "rationale": rationale,
+                "deadline": job["deadline"]}, root / "shortlist.csv")
+        log_runs(root / "run_log.csv", runs, queries)
+        recorded = [f"{min(len(fresh), RECORD_TOP)} shortlist row(s) (not-resolved)",
+                    f"{len(runs)} run-log row(s)"]
+    # Every board failing is "could not search", never "no new jobs".
+    failed = all(run["error"] and not run["found"] for run in runs)
+
+    if args.json:
+        print(json.dumps({"date": today, "home": home, "positions": positions,
+                          "boards": [{k: v for k, v in run.items() if k != "jobs"}
+                                     for run in runs],
+                          "disabled": disabled, "results": fresh}, indent=1))
+        return 1 if failed else 0
+    where = fold(home) + (" (+remote)" if remote_ok else "") if home \
+        else "not set, so results are not location-filtered"
+    print(f"lite search {today} - {len(positions)} position(s), {len(runs)} board(s), "
+          f"home: {where}")
+    print("searched: " + "; ".join(f"{i} {clip(p['query'], 40)}"
+                                   for i, p in enumerate(positions, 1)))
+    for run in runs:
+        name = run["board"].ljust(19)
+        if run["error"] and not run["found"]:
+            print(f"  {name} FAILED {run['error']}")
+            continue
+        near = f", {run['near']} near home" if run["post_filter"] and tokens else ""
+        extra = "; ".join(x for x in (run["note"] and clip(run["note"], 70),
+                                      run["error"] and "stopped at " + run["error"]) if x)
+        print(f"  {name} {run['found']} found{near}, {run['new']} new"
+              + (f"  [{extra}]" if extra else ""))
+    if disabled:
+        print(f"  skipped (disabled): {', '.join(disabled)}")
+    if elsewhere:
+        print(f"  skipped (another country): {', '.join(elsewhere)}")
+    if fresh:
+        print("\n  #  fit     sc  title | company | location | posted | board")
+    for job in fresh[:MAX_ROWS]:
+        print(f"{job['n']:>3}  {job['fit']:<6} {job['score']:>3}  {clip(job['title'], 55)}"
+              f" | {clip(job['company'], 28)} | {clip(job['location'], 30)}"
+              f" | {job['date'] or '-'} | {job['board'].removesuffix('-search')}")
+    more = f" (showing {MAX_ROWS})" if len(fresh) > MAX_ROWS else ""
+    store = f"{seen_path.name} +{added}" if writable else f"{seen_path.name} NOT updated"
+    if failed:
+        print("\nEvery board failed, so nothing was searched. This is not 'no new jobs'.")
+        return 1
+    print(f"\n{len(fresh)} new job(s){more}; {store}"
+          + (f"; recorded {', '.join(recorded)}" if recorded else ""))
+    if fresh:
+        print("One row in full: python harness/lite_search.py --show <#>")
+    return 0
+
+
+def show(args) -> int:
+    path = Path(args.root) / LAST_SEARCH
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        rows = data["results"]
+    except (OSError, ValueError, KeyError, TypeError):
+        print("lite_search: no saved search - run /lite search first")
+        return 2
+    if not 1 <= args.show <= len(rows):
+        print(f"lite_search: no row {args.show}; the search of {data.get('date')} "
+              f"has {len(rows)}")
+        return 2
+    job = rows[args.show - 1]
+    if args.json:
+        print(json.dumps(job, indent=1))
+        return 0
+    print(f"#{args.show} {fold(job['title'])} | {fold(job['company'])} | "
+          f"{fold(job['location'])}   (search of {data.get('date')})")
+    print(f"posted {job['date'] or '-'}, closes {job['deadline'] or '-'}, fit "
+          f"{job['fit']} ({job['score']}, title match: {fold(job['position'])})")
+    print(f"url: {fold(job['url']) or '-'}")
+    if job["id"]:
+        print(f"posting text: bun run .agents/skills/{job['board']}/cli/src/cli.ts "
+              f"detail {fold(job['id'])} --format plain")
+    else:
+        print("posting text: this board gave no id - fetch the url instead")
+    return 0
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--root", default=str(ROOT))
+    parser.add_argument("--preferences", help="default: <root>/preferences.yaml")
+    parser.add_argument("--state-dir", help="folder holding seen_jobs.json; default "
+                        "<root>/job_scraper, the store /rank and /upskill read")
+    parser.add_argument("--top", type=int, default=5,
+                        help="how many target positions to search (default 5)")
+    parser.add_argument("--boards", help="comma-separated portals, e.g. linkedin,jobindex "
+                        "(default: every enabled board)")
+    parser.add_argument("--limit", type=int, default=10,
+                        help="results per query per board (default 10)")
+    parser.add_argument("--record", action="store_true",
+                        help=f"append the top {RECORD_TOP} to shortlist.csv as not-resolved "
+                        "and one run_log.csv row per board")
+    parser.add_argument("--show", type=int, metavar="N",
+                        help="print row N of the last search and the command for its text")
+    parser.add_argument("--json", action="store_true", help="machine-readable output")
+    args = parser.parse_args(argv)
+    if args.top < 1 or args.limit < 1:
+        parser.error("--top and --limit must be at least 1")
+    return show(args) if args.show is not None else search(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

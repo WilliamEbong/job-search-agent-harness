@@ -141,11 +141,11 @@ Both documents MUST be compiled and visually inspected via the Read tool on the 
 - [ ] **Cover letter bullet font matches body font** - `\lettercontent{}` must not wrap `\begin{itemize}...\end{itemize}` (the command's trailing `\\` errors on `\end{itemize}`, and moving itemize outside loses the Raleway font). Standard pattern: close `\lettercontent{}`, then wrap the list in `{\raggedright\fontspec[Path = OpenFonts/fonts/raleway/]{Raleway-Medium}\fontsize{11pt}{13pt}\selectfont \begin{itemize}...\end{itemize}\par}`
 
 ### ATS & keyword verification (CV)
-ATS parsers read the PDF's embedded text layer, not the rendered page. Extract it with `pdftotext -layout` and verify what a parser sees. `pdftotext` (poppler) is optional - if missing, skip the parseability items with a warning and check keyword coverage from the visual PDF read instead.
-- [ ] CV text layer extracts cleanly - no `(cid:*)` markers, `�` replacement characters, or text visible in the PDF but absent from the extraction
-- [ ] Email and phone appear as **literal text** in the extraction (icon-glyph noise like `MOBILE-ALT`/`Envelope` is harmless, but a contact detail carried only by an icon or hyperlink is invisible to ATS)
-- [ ] Reading order of the extracted text matches the visual order (single-column stock template is safe; multi-column custom templates are where this breaks)
-- [ ] Posting keywords covered or honestly absent - synonym-only matches tightened to the posting's exact term where truthfully applicable, keywords the profile genuinely supports added to experience bullets, genuine gaps left visible and **never stuffed**
+ATS parsers read the PDF's embedded text layer, not the rendered page. `python harness/ats_check.py --cv <cv.pdf> --tex <cv source> --keywords cv/main_<company>_<role>.keywords.txt --posting <job_posting.md>` extracts it (`pdftotext -layout`, or pypdf when poppler is absent) and checks what a parser sees; exit 1 is a parse failure. `harness/apply_package.py` runs the same check and writes `ats_report.md` into every package.
+- [ ] CV text layer extracts cleanly - no `(cid:*)` markers, `�` replacement characters, or text visible in the PDF but absent from the extraction (the script reports `parse OK`)
+- [ ] Email and phone appear as **literal text** in the extraction - the script checks the source's `\email`/`\phone` (icon-glyph noise like `MOBILE-ALT`/`Envelope` is harmless, but a contact detail carried only by an icon or hyperlink is invisible to ATS)
+- [ ] Reading order of the extracted text matches the visual order - the script warns when section headings come out of source order (single-column stock template is safe; multi-column custom templates are where this breaks)
+- [ ] Posting keywords covered or honestly absent - every `missing` row classified as have-it (added truthfully, preferring experience bullets) or gap (left visible and **never stuffed**); synonym-only matches tightened to the posting's exact term where truthfully applicable
 
 <!-- harness:begin -->
 ## Job Search Agent Harness layer
@@ -161,8 +161,9 @@ If `graphify-out/` exists (optional, gitignored), it holds a knowledge graph of 
 repo — answer questions about the architecture with `graphify query "..."` before
 grepping. It is not required and is absent on a fresh clone.
 
-Harness workflows: `/setup-harness`, `/career-review`, `/companies`, `/discover`,
-`/scrape`, `/apply-any`, `/verify-facts`, `/fact`, `/tracker`, `/continue`.
+Harness workflows: `/setup-harness`, `/recruiter`, `/career-review`, `/companies`,
+`/discover`, `/scrape`, `/apply-any`, `/verify-facts`, `/fact`, `/tracker`, `/continue`,
+`/lite`.
 
 The Verification Checklist above still governs every generated document. The harness adds
 one blocking step to it: **`/verify-facts` runs on the final text, after any humanizer
@@ -183,17 +184,28 @@ model should treat them as equivalent:
 | "check my spreadsheet", "update the tracker" | `/tracker` |
 | "look at my GitHub / portfolio" | `/career-review` |
 | "watch this company", "add employer" | `/companies` |
-| "what else could I do", "what jobs am I qualified for", "other careers" | `/discover` |
+| "what jobs am I a good fit for", "what positions fit my CV", "what jobs am I qualified for", "what should I be applying for", "act as a recruiter" | `/recruiter` |
+| "what else could I do", "other careers" | `/discover` |
 | "set me up", "start over with my CV" | `/setup-harness` |
 | "prep me for the interview" | `/interview` |
+| "lite mode", "save tokens", "cheap mode" ("switch to lite mode" also sets `usage.mode: lite` in `preferences.yaml`) | `/lite` |
+
+**Lite mode is sticky.** When `preferences.yaml` sets `usage.mode: lite`, plain
+language routes to lite instead: "set me up" → `/lite setup`, "find me jobs" →
+`/lite search`, "apply to this" → `/lite apply`, "what's next" → `/lite`. An explicitly
+typed `/scrape` under mode `lite` runs as `focused`.
 
 **Before any harness workflow runs, check the user is set up.** If
 `evidence/register.yaml` or `preferences.yaml` is missing, do not fail into
 undefined behaviour and do not read the `.example.yaml` as if it were theirs.
-Say so in one line and offer onboarding:
+(`/setup-harness`, `/lite setup` and `/recruiter` are exempt: they are how a user
+gets set up, and `/recruiter` needs only the register.) Say so in one line and
+offer onboarding, recommending by plan: use `usage.plan` from `preferences.yaml` if
+the installer recorded it, otherwise ask.
 
-> You have not set up a profile yet - want to do that now? It takes about five
-> minutes.
+> You have not set up a profile yet. On a plan below ChatGPT Pro or Claude Max,
+> start with lite mode: `/lite setup`, 5-10 minutes, a fraction of the usage. On
+> those plans `/setup-harness` runs the full system. Which plan are you on?
 
 **`/apply` is upstream's inner workflow.** If the user types it directly, they
 skip posting intake, the hard-constraint gate, the humanizer pass, the fact

@@ -367,8 +367,9 @@ exists, so it uses milestones instead and never prints a percentage it cannot me
 
 ## Both runtimes
 
-Everything above works in Claude Code and in Codex. In Codex, invoke a workflow with `@`
-or paste the matching stub from `.codex/prompts/`.
+Everything above works in Claude Code and in Codex. In Codex, start a workflow with `$`
+and its name (`$today`, `$apply-any`) or just say what you want. The Codex CLI rejects
+slash commands it does not know, so type `$scrape` there, not `/scrape`.
 
 [RUNTIME-MAP.md](RUNTIME-MAP.md) lists every difference. There are few, and they are
 mechanical: Codex has no subagent tool, so the reviewer runs as a sequential fresh pass;

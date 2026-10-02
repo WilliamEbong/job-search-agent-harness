@@ -53,7 +53,13 @@ Present the evaluation to the user with:
 After presenting the evaluation, ask the user:
 > "Should I proceed with drafting the CV and cover letter for this role?"
 
-**If the user says no, stop here.** If yes, continue to Step 1b.
+**If the user says no, stop here.** If yes, save the keyword list behind your skills match to `cv/main_<company>_<role>.keywords.txt` before continuing to Step 1b. Use the posting's exact terms, one per line; after `|`, the words a CV may use for the same thing. Step 5d checks the compiled CV against it:
+
+```
+required: QA/QC
+required: spreadsheet | Excel
+preferred: Power BI
+```
 
 ---
 
@@ -319,39 +325,24 @@ Do not proceed to Step 6 until both PDFs pass inspection.
 
 ### 5d. ATS & keyword verification (CV)
 
-An ATS parser reads the PDF's embedded **text layer**, not the rendered page — a CV that passed visual inspection can still extract as garbage (icon glyphs where the contact details should be, scrambled reading order in multi-column layouts). This step verifies what a parser actually sees. It applies to the **CV only**; cover letters rarely go through keyword screening.
-
-**Availability check:** run `pdftotext -v`. `pdftotext` (poppler) is an optional dependency, not part of TeX distributions. If it is missing, print a one-line warning that the mechanical parse check is skipped, do the keyword-coverage check (item 3 below) against your visual Read of the PDF instead, and note the degraded mode in the Step 6 report. Same graceful-skip pattern as the salary lookup.
-
-**1. Extract the text layer:**
+An ATS reads the PDF's embedded **text layer**, not the rendered page, so a CV that passed visual inspection can still extract as garbage. One script checks what a parser sees. It applies to the **CV only**; cover letters rarely go through keyword screening.
 
 ```bash
-cd cv && pdftotext -layout main_<company>_<role>.pdf main_<company>_<role>.txt
+python harness/ats_check.py --cv cv/main_<company>_<role>.pdf --tex cv/main_<company>_<role><CV_EXT> \
+    --keywords cv/main_<company>_<role>.keywords.txt --posting <posting file> --brief
 ```
 
-Read the `.txt` file.
+`<posting file>` is the package folder's `job_posting.md` from `/apply-any`'s intake (running `/apply` alone, save the Step 0 text to a file first). The script extracts the text layer, checks parseability (text present, no `(cid:)` markers or `�`, the source's email and phone printed as literal text, every `\cventry` year present, section headings in source order, ASCII-hyphen date ranges) and reports each keyword from Step 1 as `covered`, `synonym-only` or `missing`. Drop `--brief` for the full table. It writes no files.
 
-**2. Parseability checks** on the extracted text:
+**Exit 1 is a parse failure**, a template-level problem: fix it in the `<CV_EXT>` source (e.g. print the email as text rather than icon-only), re-run 5a–5c and the script. A section-order warning on a custom multi-column template means the layout scrambles extraction: tell the user prominently that they are trading ATS compatibility for looks.
 
-- [ ] **Text extracted at all**, with no garbage runs: no `(cid:NNN)` markers, no `�` replacement characters, no stretches of missing text that are visible in the PDF
-- [ ] **Email and phone survive as literal text.** Icon fonts extract as glyph names (the stock template's contact line extracts as `MOBILE-ALT [+XX ...] • Envelope [your.email@...]`) — that noise is harmless, but the actual address and digits must be present. A contact detail carried only by an icon or a hyperlink target (like the `LinkedIn` link text) is invisible to an ATS; the email must be printed as text.
-- [ ] **Reading order matches the visual order** — section headings appear in the same sequence as on the page, and lines from different sections are not interleaved. The stock banking template is single-column and safe; custom templates registered via `/add-template` with sidebars or multi-column layouts are where this breaks.
-- [ ] **Dates recognizable** — each role and degree has its years present in the extraction.
+**Your part is the judgment the script cannot make.** Classify every `missing` row:
+- **missing (have it)**: the profile shows the candidate genuinely has it. Add it where it fits naturally, preferring experience bullets (concrete evidence) over the profile statement, then re-run 5a–5c and the script.
+- **missing (gap)**: leave it missing. **Never stuff keywords.** The gap goes in the user-facing report and interview prep; the documents neither fake it nor volunteer it. A rapidly-closable tool gap (`04-job-evaluation.md`'s ladder) gets a short learning plan for the user instead.
 
-Failures here are template-level problems: fix them in the `<CV_EXT>` source (e.g. print the email as text rather than icon-only), then re-run 5a–5c and re-extract. If a custom template's layout fundamentally scrambles extraction order, tell the user prominently — they may be trading ATS compatibility for looks.
+For a `synonym-only` row, use the posting's exact term wherever it is truthfully applicable (ATS matching is often literal). A posting in another language than the CV: list the CV-language term after `|` in the keywords file, so the concept counts as synonym-only. Report the summary line and the classified rows in Step 6.
 
-**3. Keyword coverage.** Reuse the required/preferred keyword list you extracted in Step 1 — do not re-derive it. Match each keyword against the extracted text, **in the posting's language** (when the posting's language differs from the CV language — e.g. a Danish posting against an English CV — a concept the CV legitimately covers in its own language counts as synonym-only; note the language difference). Report a table:
-
-| Keyword | Priority | Status | Note |
-|---------|----------|--------|------|
-| ... | required/preferred | covered / synonym-only / missing (have it) / missing (gap) | where it appears, or why absent |
-
-- **covered** — the term appears (verbatim or trivial inflection).
-- **synonym-only** — the concept is present under a different term. If the posting's exact term is truthfully applicable per the profile, prefer the posting's term (ATS keyword matches are often literal).
-- **missing (have it)** — the profile shows the candidate genuinely has this skill but the CV never says it: add it where it fits naturally, preferring experience bullets (concrete evidence) over the profile statement, then re-run 5a–5c.
-- **missing (gap)** — a genuine gap: leave it missing. **Never stuff keywords.** The gap goes in the user-facing report and interview prep; the documents neither fake it nor volunteer it. If it is a rapidly-closable tool gap (see `04-job-evaluation.md`'s ladder), flag it to the user with a short learning plan instead of writing around it.
-
-**4. Clean up:** delete the extracted `.txt` file.
+**Without poppler** the script falls back to pypdf (a pinned dependency) and names the extractor; every check still runs, but pypdf's text is not the layout view an ATS usually gets, so look at the PDF before rewriting the source over a pypdf-only finding, and note the degraded mode in Step 6.
 
 ### 5e. Clean up build artifacts
 

@@ -14,6 +14,8 @@ never produced, so interview prep could not find the documents it prepares from.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import shutil
 import sys
 import tempfile
@@ -22,8 +24,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "harness"))
+sys.path.insert(0, str(ROOT))
 
 import apply_package  # noqa: E402
+from tests_harness.test_ats_check import text_pdf  # noqa: E402
 
 REGISTER = ROOT / "evidence" / "register.example.yaml"
 
@@ -373,6 +377,77 @@ class TrainingGate(unittest.TestCase):
         gaps = apply_package.training_gaps(self.folder)
         self.assertEqual(len(gaps), 1)
         self.assertIn(apply_package.TRAINING_FILE, gaps[0])
+
+
+class AtsReportGate(unittest.TestCase):
+    """Every package carries ats_report.md, and an unreadable CV blocks it.
+
+    The ATS check used to be prose in /apply Step 5d - skippable, and nothing
+    downstream noticed when it was skipped. These run the real CLI end to end:
+    a text PDF beside the CV source, the drafter's keywords file beside that.
+    """
+
+    COMPANY, ROLE = "Acme Environmental", "Data Analyst"
+    CV_LINES = ["Candidate", "+1 555-0100 | candidate@example.com", "Experience",
+                "Laboratory Technician, Northwind 2020 - 2022",
+                "Processed 1,400 samples for the QA/QC programme."]
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="harness-ats-gate-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.cv = self.tmp / "main_acme_analyst.tex"
+        self.cv.write_text("\\phone[mobile]{+1 555-0100}\n"
+                           "\\email{candidate@example.com}\n" + CV_TEX, encoding="utf-8")
+        self.letter = self.tmp / "cover_acme_analyst.tex"
+        self.letter.write_text(LETTER_TEX, encoding="utf-8")
+        text_pdf(self.letter.with_suffix(".pdf"), ["Dear Hiring Team,"])
+        self.cv.with_name("main_acme_analyst.keywords.txt").write_text(
+            "required: QA/QC\npreferred: Power BI\n", encoding="utf-8")
+        self.applications = self.tmp / "applications"
+        folder = self.applications / apply_package.folder_name(self.COMPANY, self.ROLE)
+        (folder / "posting_source").mkdir(parents=True)
+        for name in ("job_posting.md", "posting_source/pasted.md"):
+            (folder / name).write_text(PostingArchiveGate.POSTING, encoding="utf-8")
+        (folder / "provenance.md").write_text("# Provenance\n- Rung 1", encoding="utf-8")
+        self.folder = folder
+
+    def run_main(self) -> tuple[int, str]:
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = apply_package.main([
+                "--company", self.COMPANY, "--role", self.ROLE,
+                "--cv", str(self.cv), "--letter", str(self.letter),
+                "--build", str(self.tmp / "build"), "--register", str(REGISTER),
+                "--applications", str(self.applications), "--no-tracker"])
+        return code, out.getvalue()
+
+    def test_package_carries_the_report_and_prints_its_summary(self):
+        text_pdf(self.cv.with_suffix(".pdf"), self.CV_LINES)
+        code, out = self.run_main()
+        self.assertEqual(code, 0, out)
+        self.assertIn("ATS: parse OK \u00b7 required 1/1 \u00b7 preferred 0/1", out)
+        report = (self.folder / "ats_report.md").read_text(encoding="utf-8")
+        self.assertIn("| Power BI | preferred | missing |", report)
+        # The drafter's list travelled with the package and was the one used.
+        self.assertTrue((self.folder / "ats_keywords.txt").is_file())
+        self.assertIn("drafter's list", report)
+
+    def test_a_parse_failure_blocks_the_package(self):
+        lines = [line.replace("candidate@example.com", "Envelope")
+                 for line in self.CV_LINES]
+        text_pdf(self.cv.with_suffix(".pdf"), lines)
+        code, out = self.run_main()
+        self.assertNotEqual(code, 0)
+        self.assertIn("ATS PARSE FAILURE", out)
+        self.assertIn("email not in the text layer", out)
+        self.assertIn("FAIL", (self.folder / "ats_report.md").read_text(encoding="utf-8"))
+
+    def test_a_missing_cv_pdf_blocks_and_leaves_no_stale_report(self):
+        (self.folder / "ats_report.md").write_text("ATS: parse OK (old)", encoding="utf-8")
+        code, out = self.run_main()
+        self.assertNotEqual(code, 0)
+        self.assertIn("no compiled PDF for main_acme_analyst.tex", out)
+        self.assertFalse((self.folder / "ats_report.md").exists())
 
 
 if __name__ == "__main__":

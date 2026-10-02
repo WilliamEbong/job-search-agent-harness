@@ -5,7 +5,9 @@ workflows; switch any time.
 
 ## Rules
 
-**Runtime.** Apply `RUNTIME-MAP.md` once per session, including its next-action mapping.
+**Codex.** Next actions as `$lite …` (translate the `/…` that scripts print). A compile
+or write the sandbox blocks: request escalation, never report it done. Other runtime
+differences: `RUNTIME-MAP.md`, only when one comes up.
 
 **Budget.** Read only files named here, each once per session; never re-read own writes.
 `/lite setup` and `/lite apply` read their steps from `.claude/lite/setup.md` and

@@ -298,7 +298,7 @@ def read_seen(path: Path) -> tuple[dict, bool]:
     if not path.exists():
         return {"seen": {}}, True
     try:
-        data = json.loads(path.read_text(encoding="utf-8") or "{}")
+        data = json.loads(path.read_text(encoding="utf-8-sig") or "{}")
     except (OSError, ValueError) as exc:
         print(f"WARNING: {path} is unreadable ({str(exc)}); not deduplicating against "
               "it and not updating it")
@@ -386,7 +386,7 @@ def search(args) -> int:
         print(f"lite_search: no preferences at {prefs_path} - run /lite setup first")
         return 2
     try:
-        prefs = yaml.safe_load(prefs_path.read_text(encoding="utf-8")) or {}
+        prefs = yaml.safe_load(prefs_path.read_text(encoding="utf-8-sig")) or {}
     except yaml.YAMLError as exc:
         print(f"lite_search: {prefs_path.name} does not parse ({str(exc)})")
         return 2
@@ -518,7 +518,7 @@ def search(args) -> int:
 def last_row(root: Path, number: int) -> tuple[dict, str] | None:
     """(row, search date) from the saved list; None, with the reason printed."""
     try:
-        data = json.loads((root / LAST_SEARCH).read_text(encoding="utf-8"))
+        data = json.loads((root / LAST_SEARCH).read_text(encoding="utf-8-sig"))
         rows = data["results"]
     except (OSError, ValueError, KeyError, TypeError):
         print("lite_search: no saved search - run /lite search first")
@@ -617,7 +617,7 @@ APPLYING = Path("state") / "lite-apply.json"
 def load_meta(root: Path) -> dict | None:
     """The JSON the model wrote for a posting that did not come from a search row."""
     try:
-        meta = json.loads((root / APPLYING).read_text(encoding="utf-8"))
+        meta = json.loads((root / APPLYING).read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         print(f"lite_search: write {APPLYING.as_posix()} first (company, role, url, "
               "location, channel)")
@@ -643,7 +643,7 @@ def start(root: Path, meta: dict | None = None, body: str = "") -> int:
     import apply_package  # the owner of the folder name
     if meta is None:
         try:
-            meta = json.loads((root / APPLYING).read_text(encoding="utf-8"))
+            meta = json.loads((root / APPLYING).read_text(encoding="utf-8-sig"))
         except (OSError, ValueError):
             print(f"lite_search: write {APPLYING.as_posix()} first (company, role, url, "
                   "location, channel)")
@@ -665,7 +665,7 @@ def start(root: Path, meta: dict | None = None, body: str = "") -> int:
 
 def applying(root: Path) -> dict | None:
     try:
-        meta = json.loads((root / APPLYING).read_text(encoding="utf-8"))
+        meta = json.loads((root / APPLYING).read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         meta = {}
     if not meta.get("folder"):

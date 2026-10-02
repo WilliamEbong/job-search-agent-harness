@@ -315,6 +315,13 @@ class Driver(unittest.TestCase):
             self.assertEqual(1, self.run_main("--applied", "rejected", "--match", "zzz"))
         self.assertEqual("rejected", tracker_row.read_rows(tracker)[0][0]["status"])
 
+    def test_a_byte_order_mark_does_not_break_the_driver(self):
+        """Codex on Windows PowerShell 5.1 writes UTF-8 with a BOM (Set-Content
+        -Encoding UTF8); the driver must still read the file it wrote."""
+        path = self.tmp / "state" / "lite-apply.json"
+        path.write_bytes(b"\xef\xbb\xbf" + path.read_bytes())
+        self.assertEqual(0, self.run_main("--start"))
+
     def test_start_from_archives_a_posting_file(self):
         posting = self.tmp / "posting.txt"
         posting.write_text("Data analyst wanted. Requirements: SQL and Excel. " * 12,
@@ -336,6 +343,15 @@ class LiteSpec(unittest.TestCase):
         size = sum((ROOT / path).stat().st_size
                    for path in (".claude/commands/lite.md", ".claude/lite/apply.md"))
         self.assertLess(size, 8 * 1024)
+
+    def test_lite_never_sends_every_session_through_runtime_map(self):
+        """RUNTIME-MAP.md is ~13 KB; reading it on every lite session nearly tripled a
+        lite application's instructions. The router carries the Codex rule inline."""
+        router = (ROOT / ".claude" / "commands" / "lite.md").read_text(encoding="utf-8")
+        pointer = (ROOT / ".agents" / "skills" / "lite" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertNotIn("Apply `RUNTIME-MAP.md` once per session", router)
+        self.assertIn("$lite", router)
+        self.assertNotIn("applying `RUNTIME-MAP.md`", pointer)
 
     def test_the_router_names_every_step_file_it_delegates_to(self):
         router = (ROOT / ".claude" / "commands" / "lite.md").read_text(encoding="utf-8")

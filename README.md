@@ -1,103 +1,95 @@
 # Job Search Agent Harness
 
-An **evidence-gated, human-reviewed application assistant**. It runs inside the AI coding
-agent you already have (**Claude Code or Codex, on an ordinary subscription**), on your own
-machine. There is no hosted service, no account and no server: your CV, your evidence and
-your applications stay in the folder you cloned into.
+**An AI job-application assistant that will not lie for you.**
 
-You give it your CV and your public work. It reads them the way a hiring manager would and
-tells you what actually lands, including the unflattering parts and the strong thing you
-never wrote down. It measures your profile against real postings and names the gaps worth
-closing, the transferable skills worth claiming, and the employers worth watching. When you
-decide a job is worth pursuing, it turns "apply to this" into a researched, tailored,
-fact-checked CV and cover letter with every claim traced to evidence you supplied, then
-archives the lot and keeps your tracker current.
+Give it your CV. It tells you which jobs you are a strong candidate for, finds them on
+real job boards near you, and turns any posting you choose into a tailored CV and cover
+letter. Every claim in those documents is checked against evidence you supplied, so
+nothing in them falls apart when an interviewer asks about it. You review the result,
+and you are the one who presses send.
 
-It does not submit anything, and it does not invent anything. A deterministic fact gate
-blocks any claim your evidence register cannot back, and every document passes your own
-review before it goes anywhere. Generating an application and sending one are different
-acts, and the second one stays yours.
+It runs inside the AI coding agent you may already pay for (**Claude Code or Codex**), on
+your own computer. There is no website to sign up for and no server holding your data.
+
+> Built on [ai-job-search](https://github.com/MadsLorentzen/ai-job-search) by
+> MadsLorentzen (MIT), which supplies the drafting pipeline, PDF tooling, board search
+> and tests. See [Built on ai-job-search](#built-on-ai-job-search) for what comes from
+> where.
 
 ---
 
-## Built on ai-job-search
+## Why use it
 
-This is a **standalone repository derived from
-[ai-job-search](https://github.com/MadsLorentzen/ai-job-search) by MadsLorentzen** (MIT) —
-not a GitHub fork; upstream is tracked as a git remote and merged by tag.
-That project contributes the parts doing the heaviest lifting: the drafter-and-reviewer
-apply pipeline, PDF compilation and inspection, ATS text-layer checks, the portal-CLI
-architecture, application archives, the tracker, template and portal registration, the
-security guards, and the test suites. **This harness would not exist without it**, and
-none of that work is presented as original here.
-
-It also builds on four MIT-licensed tools: **Humanizer** (blader), **Ponytail**
-(DietrichGebert), **Caveman** (JuliusBrussee) and **i-have-adhd** (ayghri).
-
-What this project adds — portability across runtimes, a deterministic truth tier,
-multimodal intake, a preference engine, usage modes, session continuity, and a demo
-candidate — is set out in [NOTICE.md](NOTICE.md), which draws the line between inherited
-and original work precisely.
-
-> Independent open-source project, not affiliated with or endorsed by Anthropic or OpenAI.
-> Claude Code and Codex are named only to describe the toolchain this runs on.
+- **Applications you can defend.** AI writing tools inflate: "supported" becomes "led",
+  a course becomes a credential. Here a script reads the finished CV and letter and
+  blocks anything your evidence cannot back up. It runs again after the final style
+  pass, which is exactly when inflation creeps in.
+- **A recruiter's honest read, first.** Straight after reading your CV it names the 20
+  job titles a good recruiter would put you forward for, each with a fit score, the
+  evidence behind it and the honest gap. You cross off any you don't want; searches
+  look for the rest first.
+- **Jobs found for you.** It searches the job boards and employer career pages you
+  choose, filters to what is near you, removes duplicates and ranks by fit.
+- **Built to get past the screening software.** Every CV is read the way an
+  applicant-tracking system reads it. If that reading loses your email, phone number or
+  dates, the package is blocked until the CV is fixed. You also see which of the
+  posting's keywords you cover.
+- **Apply from anything.** Paste a link, a screenshot, a PDF or the posting text.
+- **A finished package, not a draft.** Each application gets its own folder: CV and
+  cover letter as PDF and Markdown (and Word, if pandoc is installed), a combined file,
+  the ATS report, and an archived copy of the posting.
+- **Affordable on an ordinary plan.** Lite mode runs the core loop with about 7 KB of
+  instructions per application instead of about 160 KB, and keeps the fact check, the
+  ATS check and the page checks.
+- **Private by default.** Your CV, evidence, applications and tracker stay in the folder
+  you cloned into. Git ignores them, and two checks flag any that get committed anyway.
+- **It never submits anything.** Drafting an application and sending one are different
+  acts, and the second one is always yours.
 
 ---
 
-## The idea
+## How it works
 
-Most AI job-application tools share one failure: asked to make a candidate look good, a
-language model will quietly make things up — a slightly better number, a credential that is
-"basically" finished, a technology used once and described as a skill. Each is defensible in
-the moment and indefensible in an interview.
-
-So this harness splits two questions that usually get mixed together:
-
-- **What may this person claim?** — `evidence/register.yaml`, built from their own
-  documents, where every entry carries a `source:`.
-- **How should it be presented?** — templates, drafting and the reviewer pass, which are
-  free to rephrase, reorder, reframe and argue for transferable relevance.
-
-Between them sits a deterministic gate. `harness/fact_check.py` reads the finished text
-and blocks delivery if it asserts a number, date range, credential or technology that is
-not in the register. It judges facts, never phrasing. It runs **again** after the
-humanizing pass, because rewriting for style is exactly what turns "supported the
-migration" into "led the migration" — which reads better, which is why nobody catches it
-by eye.
-
-**A failing check is never resolved by weakening the check.** Fix the draft, or confirm
-the fact and record it properly. That rule is written into the workflows themselves, not
-just into this README.
+1. **Set up.** Give it your CV. It asks a few questions about what the CV left out (the
+   numbers, whether you *led* or *supported*, whether a course is finished), then names
+   your 20 best-fit positions. Lite setup takes 5 to 10 minutes.
+2. **Find jobs.** Say "find me jobs". You get a short ranked list near you, with the
+   reasons for each score, and jobs that break one of your hard rules set aside with the
+   posting's own words quoted.
+3. **Apply.** Pick one from the list, or say "apply to this" with a link or screenshot.
+   It writes the CV and cover letter, compiles them, checks the page count and layout,
+   runs the ATS check and the fact check, and saves the package.
+4. **You send it.** Open the folder, read the documents, submit them yourself, then say
+   "I applied". The tracker updates and the follow-up dates appear in `/today`.
 
 ---
 
 ## Quickstart
 
 ```bash
-git clone https://github.com/<you>/job-search-agent-harness
+git clone https://github.com/WilliamEbong/job-search-agent-harness
 cd job-search-agent-harness
 python harness_setup.py
 ```
 
-`harness_setup.py` detects your runtimes and **checks** the prerequisites, printing the exact
-install command for anything missing (Node, Bun, TeX and poppler are separate
-installers it cannot run for you). It **does** install the Python packages and the
-job-board tools, offers the optional plugins and MCP servers, and finishes with a doctor
-table that tells you the truth — including when something is installed but broken.
+`harness_setup.py` checks what your computer has and prints the exact install command for
+anything missing (Node, Bun, TeX and poppler have their own installers). It installs the
+Python packages and the job-board tools itself, offers the optional add-ons, and ends with
+a doctor table that says plainly what works and what does not.
 
-It asks which plan your coding agent runs on and recommends a mode: **lite** on anything
-below ChatGPT Pro or Claude Max, the standard workflows on those. Then choose
-**express**: one confirmation instead of a dozen questions.
+It asks which plan your coding agent runs on and recommends a mode: **lite** below ChatGPT
+Pro or Claude Max, the standard workflows on those plans. Choose **express** for one
+confirmation instead of a dozen questions.
 
-Then, in Claude Code (in Codex, type `$` where you see `/`):
+Then open Claude Code in the folder and type (in Codex, type `$` where you see `/`):
 
 ```
-/lite setup         # lite: your CV, five questions, your 20 best-fit positions
+/lite setup         # your CV, five questions, your 20 best-fit positions
 /lite search        # jobs for your top 5 positions, near you, deduplicated
-/lite apply <#>     # one tailored, fact-checked, ATS-checked CV and cover letter
+/lite apply 2       # one tailored, fact-checked, ATS-checked CV and cover letter
 ```
 
-or, for the standard workflows:
+Or the standard workflows:
 
 ```
 /setup-harness      # onboarding: your CV first, then a short interview
@@ -105,170 +97,201 @@ or, for the standard workflows:
 apply <a posting>   # URL, screenshot, PDF, or pasted text
 ```
 
-Or just say what you want — "find me jobs", "apply to this", "I got rejected by
-Acme". Slash commands are optional.
+Commands are optional. Plain sentences work the same way:
 
-### What it runs on
-
-| Layer | What it is |
+| Say | It does |
 |---|---|
-| Harness, gates, tracker | Python 3.10+ (PyYAML, openpyxl, pypdf) |
-| Board search | Bun + TypeScript CLIs, zero runtime dependencies |
-| Documents | TeX providing `lualatex` and `xelatex`; poppler for `pdftotext` **and** `pdfinfo` |
-| Optional | Playwright and Firecrawl MCP servers for pages that will not fetch; pandoc for `.docx` |
+| "what jobs am I a good fit for?" | the recruiter read: your 20 best-fit positions |
+| "find me jobs" | a search, ranked by fit |
+| "apply to this" (plus a link, screenshot, PDF or text) | a checked application package |
+| "I applied" / "I got rejected by Acme" | updates the tracker |
+| "what should I do today?" | the day's list: deadlines, follow-ups, ready packages |
+| "prep me for the interview" | interview preparation for a tracked application |
 
-Node is needed alongside Bun. Everything in the optional row degrades cleanly when absent,
-and `harness_setup.py` reports which of them you actually have.
-
-Full walkthrough of every feature: **[USER-GUIDE.md](USER-GUIDE.md)**.
+Every walkthrough is in **[USER-GUIDE.md](USER-GUIDE.md)**.
 
 ---
 
-## What it does
+## Lite or standard?
 
-**A career review.** Point `/career-review` at your portfolio, site or GitHub and it
-reports what a hiring manager would conclude — including the unflattering parts (the
-abandoned repo pinned to your profile, the broken contact form), and the strong thing you
-did that never made it onto your CV. It only suggests; nothing is added without your
-say-so.
+| | Lite | Standard |
+|---|---|---|
+| Recommended for | Plans below ChatGPT Pro or Claude Max | ChatGPT Pro, Claude Max |
+| Instructions read per application | about 7 KB | about 160 KB |
+| Fact check, ATS check, page and layout checks | yes | yes |
+| Style (humanizer) pass and a second reviewer | no | yes |
+| Company research for the cover letter | no (uses the posting) | yes |
 
-**Paths to employability.** `/upskill` compares your profile against the real postings
-you have tracked and produces a prioritised gap analysis: which missing skills actually
-gate the jobs you want, which you can honestly claim already under another name, and a
-learning plan for the rest. `/rank` triages found jobs by fit so effort goes where the
-odds are.
+In lite mode, scripts do the searching, compiling, checking and packaging, and the AI
+does only the writing and the judgement. Every standard feature (career review, gap
+analysis, interview prep) stays available as its own command. Say "switch to lite mode"
+to turn it on; `usage.mode` in `preferences.yaml` holds the choice.
 
-**Lite mode for ordinary plans.** The standard workflows are thorough, and one
-application through them reads about 160 KB of instructions. `/lite` runs the same core
-loop — setup, search, one checked package at a time — and an application reads about 7 KB,
-with scripts doing the searching, compiling, ATS check, fact gate and packaging. It
-keeps every truth and safety check and drops the expensive extras (humanizer and
-second-reviewer passes, company research, interview prep), each still available as its
-full command. Setup recommends it below ChatGPT Pro or Claude Max.
+---
 
-**A recruiter's read, first.** Right after it reads your CV, `/recruiter` names the 20
-positions a good agency recruiter would put you forward for today: titles as employers
-post them, each with a level, a fit score, the evidence behind it, the honest gap and
-the exact search terms. You strike any you do not want, and every search looks for the
-rest first.
+## Everything else it does
 
-**ATS matching on every CV.** `harness/ats_check.py` reads the PDF's text layer the way
-an applicant-tracking system does, checks it parses (your email and phone present as
-text, no garbled glyphs, every year present) and measures coverage of the posting's
-keywords. Every package carries the report; a CV an ATS cannot read never ships.
+**Career review.** Point `/career-review` at your portfolio, site or GitHub and it reports
+what a hiring manager would conclude: the unflattering parts (an abandoned repo pinned to
+your profile, a broken contact form) and the strong work that never reached your CV. It
+only suggests; nothing is added without your say-so.
 
-**Onboarding that starts with your CV.** It reads your CV, then interviews you on what the
-CV left out — the numbers, whether a credential is finished, whether you *led* or
-*supported*. Say "speed up" for fewer questions or "that's enough" to stop, at any point;
-resume later with `/setup-harness --interview`. It never re-asks something you have
-already answered.
+**Gaps worth closing.** `/upskill` compares your profile with the postings you have
+tracked: which missing skills actually block the jobs you want, which you can already
+claim under another name, and a learning plan for the rest. `/rank` sorts found jobs by
+fit so your effort goes where the odds are.
 
-**Job discovery you control.** Five scopes — one board, one company, all your companies of
-interest, all boards, or everything — and three usage modes from `focused` (one board, no
-documents generated) up to `full`. Every run states what it is about to do before it
-starts, in plain language, without inventing token arithmetic. The mechanics are in
-[How it finds jobs](#how-it-finds-jobs).
+**Search you control.** One board, one employer, your list of employers, all boards, or
+everything, at three depths from `focused` to `full`. Each run says what it is about to do
+before it starts.
 
-**Companies of interest.** Boards only find jobs that were advertised on boards. Keep a
-living list of employers worth watching directly; `/companies` also researches candidates
-for it — large employers in your field and local ones hiring your skill set — and you
-approve each before it lands.
+**Employers worth watching.** Many jobs never reach a board. `/companies` keeps a list of
+employers to check directly and can suggest more (large employers in your field, local
+ones hiring your skills). You approve each one.
 
-**Apply from anything.** A link, screenshots, a PDF, pasted text, or several at once. The
-intake ladder resolves them into one posting, archives the raw artifacts with a provenance
-record, and marks a posting `unverified` when it could not be confirmed live rather than
-implying otherwise.
+**A tracker that cannot lose your notes.** A CSV file holds the record. The four-tab Excel
+workbook is generated from it and never read back. Applications move to `applied/` when
+you say you have applied and archive themselves after eight weeks.
 
-**Tracking that cannot lose your notes.** A CSV holds the truth; the four-tab Excel
-workbook is a view, regenerated and never read back. Applications move to `applied/` when
-you say you have applied, and archive themselves after eight weeks.
+**Picks up where you left off.** Progress is saved at every step. `/continue` resumes at
+the exact next step, in either Claude Code or Codex, without redoing work or asking you
+the same question twice.
 
-**Work that survives a session ending.** State is written at every milestone. `/continue`
-resumes at the exact next step — in either runtime — without redoing work or re-asking
-questions you have already answered.
+---
+
+## Why it will not make things up
+
+Ask a language model to make a candidate look good and it will quietly improve the facts:
+a better number, a credential that is "basically" finished, a tool used once described as
+a skill. Each change is easy to miss on the page and hard to defend in an interview.
+
+So the harness keeps two questions apart:
+
+- **What may you claim?** `evidence/register.yaml`, built from your own documents. Every
+  entry records where it came from.
+- **How should it be presented?** The templates, the drafting and the reviewer, which are
+  free to reword, reorder and argue for how your experience transfers.
+
+Between them sits `harness/fact_check.py`. It reads the finished text and blocks the
+package if it states a number, a date range, a credential, a technology or an employer
+that the register does not hold, or a phrasing you have banned. It judges facts, not
+style.
+
+**A failed check is never fixed by weakening the check.** Either the draft changes, or you
+confirm the fact and it is recorded with its source. That rule is written into the
+workflows themselves.
+
+---
+
+## What it runs on
+
+| Layer | What it is |
+|---|---|
+| Harness, checks, tracker | Python 3.10+ (PyYAML, openpyxl, pypdf) |
+| Board search | Bun + TypeScript command-line tools, no runtime dependencies |
+| Documents | TeX with `lualatex` and `xelatex`; poppler for `pdftotext` and `pdfinfo` |
+| Optional | Playwright and Firecrawl MCP servers for pages that will not load plainly; pandoc for Word files |
+
+Node is needed alongside Bun. Everything optional degrades cleanly when absent, and
+`harness_setup.py` reports what you actually have.
 
 ---
 
 ## How it finds jobs
 
-Board search is the smallest layer in this repository, and it is meant to stay that way.
+Each job board has a small TypeScript tool under `.agents/skills/`, run with Bun, that
+calls the public listing pages the board already serves. LinkedIn's guest job search is
+one; Jobindex, Jobnet, Jobdanmark, Job Bank (Canada), Jobbank and Freehire are the others.
+`/add-portal` builds a new one for your local board.
 
-Each board has a small TypeScript CLI under `.agents/skills/`, run with Bun. They have no
-runtime dependencies: plain `fetch` against the public listing endpoints the boards already
-expose. LinkedIn's guest job search is one; Jobindex, Jobnet, Jobdanmark, Job Bank
-(Canada), Jobbank and Freehire are the others. `/add-portal` generates a new one for your
-own local board.
+When a page comes back as an empty JavaScript shell or a cookie wall, the workflow can use
+a **Playwright or Firecrawl MCP server** if you have one. Both are optional, but career
+pages are often built in the browser, so they are worth having. The harness never grows
+its own scraper: the workflows forbid writing browser or scraping code into this
+repository, so there is no proxy layer and no headless-browser fleet here.
 
-When a page comes back as a JavaScript shell or a cookie wall rather than the posting, the
-workflow escalates to a **Playwright or Firecrawl MCP server** if you have one configured.
-Both are optional and everything degrades to plain fetching without them, but in practice
-they are worth having: career pages in particular are often rendered client-side, and a
-plain fetch returns the shell rather than the openings. `harness_setup.py` offers to
-install both. What the harness
-never does is grow its own scraper: the workflows forbid writing browser or scraping code
-into this repository, so there is no proxy layer and no headless-browser fleet here, and
-none is planned.
-
-Volume stays low deliberately. A run makes a handful of searches and pulls full detail only
-for postings that survive a title-and-snippet filter. A 429 or a block page is recorded as
-rate-limited and the tool backs off; it never treats a block as something to route around.
-The portal health check spends at most one probe, one retry and one detail fetch per board.
+Volume stays low on purpose. A run makes a handful of searches and fetches full details
+only for postings that pass a title-and-summary filter. A rate limit or a block page is
+recorded and the tool backs off; it never tries to get around a block.
 
 This is personal-use tooling. Automated access to LinkedIn's public job pages is against
-their Terms of Service, which is why the low ceiling and the no-custom-scrapers rule are
-written into the workflows rather than left as things to optimise away later. Use it for
-your own job hunt, on your own responsibility, and not commercially or for bulk collection.
+their Terms of Service, which is why the low ceiling and the no-scrapers rule are written
+into the workflows. Use it for your own job hunt, at your own risk, and not commercially
+or for bulk collection.
 
 ---
 
 ## Questions people ask
 
-**Is any of this hosted?** No. It runs on your machine inside Claude Code or Codex. There
-is no server and no account. The requests that leave your machine are the job-board
-searches you trigger and whatever your coding agent sends to its own model provider.
+**Is any of this hosted?** No. It runs on your computer inside Claude Code or Codex. What
+leaves your machine is the job-board searches you start and whatever your coding agent
+sends to its own model provider.
 
-**Does it use proxies, a crawler or a browser farm?** No. See
-[How it finds jobs](#how-it-finds-jobs). Playwright and Firecrawl are MCP servers for a
-page that will not fetch: recommended, but not a scraping stack, and the harness works
-without them.
-
-**Does it submit applications for me?** No, by design. It produces the package and you
-send it.
+**Does it submit applications for me?** No, by design. It prepares the package; you send
+it.
 
 **Does it need an API key?** Only if you choose Firecrawl. Everything else runs on the
 coding-agent subscription you already have.
 
-**Can I use it commercially or to collect job data in bulk?** No. The board CLIs are for
+**Will it work in my country?** The tracker, checks and documents work anywhere. Board
+search ships with the boards listed above, and `/add-portal` adds yours. Employer career
+pages work wherever they load.
+
+**Does it use proxies, a crawler or a browser farm?** No. See
+[How it finds jobs](#how-it-finds-jobs).
+
+**Can I use it commercially or to collect job data in bulk?** No. The board tools are for
 your own job search, at low volume.
 
 ---
 
-## Runtimes
+## Claude Code and Codex
 
-Claude Code and Codex both work. Workflows, scripts, register and state files are shared;
+Both work, sharing the same workflows, scripts, evidence and saved progress.
 [RUNTIME-MAP.md](RUNTIME-MAP.md) is the only place the two may differ, and it records only
-differences that were actually verified — how a subagent is spawned, what a tool is
-called, and what usage telemetry exists (on Codex: none, so no percentage is ever
-printed).
+differences that were actually tested: how a reviewer is run, what a tool is called, and
+what usage figures exist (Codex reports none, so no percentage is ever printed).
 
-In Codex, every workflow is a skill in `.agents/skills/`: type `$lite`, `$scrape`,
-`$apply-any` and so on, or just say what you want (the Codex CLI rejects slash commands it
-does not know). Codex's default sandbox has no network, so job-board searches fail until
-you allow it; `python harness_setup.py --doctor` shows whether it is on and how to turn it
-on.
+In Codex every workflow is a skill in `.agents/skills/`: type `$lite`, `$scrape`,
+`$apply-any` and so on, or say what you want. Codex's default sandbox has no network, so
+job-board searches fail until you allow it; `python harness_setup.py --doctor` shows
+whether it is on and how to turn it on.
 
 ---
 
 ## Privacy
 
 Your career data stays on your machine. `evidence/`, `preferences.yaml`, `companies.yaml`,
-`state/`, your applications and your tracker are all gitignored, and two guards enforce it
-mechanically: `tools/harness_guards.py` fails CI if an ignore rule disappears or a
-personal path becomes tracked, and `harness/privacy_sweep.py` scans file *content* before
-release.
+`state/`, your applications and your tracker are all gitignored. Two guards enforce it:
+`tools/harness_guards.py` fails if an ignore rule disappears or a personal file becomes
+tracked, and `harness/privacy_sweep.py` scans file contents before release.
 
-The only candidate-shaped content in this repository is a fictional demo candidate — Riley
-Chen, who does not exist — used for tests, fixtures and the walkthrough.
+The only candidate in this repository is fictional: Riley Chen, who does not exist, used
+for tests, fixtures and the walkthrough.
+
+---
+
+## Built on ai-job-search
+
+This is a **standalone repository derived from
+[ai-job-search](https://github.com/MadsLorentzen/ai-job-search) by MadsLorentzen** (MIT),
+not a GitHub fork; upstream is tracked as a git remote and merged by tag. That project
+contributes the parts doing the heaviest lifting: the drafter-and-reviewer apply pipeline,
+PDF compilation and inspection, ATS text-layer checks, the portal-CLI architecture,
+application archives, the tracker, template and portal registration, the security guards
+and the test suites. **This harness would not exist without it**, and none of that work is
+presented as original here.
+
+It also builds on four MIT-licensed tools: **Humanizer** (blader), **Ponytail**
+(DietrichGebert), **Caveman** (JuliusBrussee) and **i-have-adhd** (ayghri).
+
+What this project adds (the Codex port, the fact gate and evidence register, lite mode,
+the recruiter pass, intake from any format, the preference engine, saved progress and the
+demo candidate) is set out in [NOTICE.md](NOTICE.md), which draws the line between
+inherited and original work precisely.
+
+> Independent open-source project, not affiliated with or endorsed by Anthropic or OpenAI.
+> Claude Code and Codex are named only to describe the tools this runs on.
 
 ---
 
@@ -284,12 +307,12 @@ python tools/security_guards.py && python tools/harness_guards.py
 python -m unittest discover -s tests -t . && python -m unittest discover -s tests_harness -t .
 ```
 
-Merge only once the guards and both suites pass. Note that `check_upstream_updates.py`
-compares frontmatter versions and is **not** tag-aware — it previews, it does not decide.
+Merge only once the guards and both test suites pass. `check_upstream_updates.py`
+compares frontmatter versions and is **not** tag-aware: it previews, it does not decide.
 
 ---
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE). Attribution and the boundary between inherited and original
+MIT. See [LICENSE](LICENSE). Attribution and the boundary between inherited and original
 work are in [NOTICE.md](NOTICE.md).

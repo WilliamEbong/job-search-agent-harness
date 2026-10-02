@@ -1,7 +1,7 @@
 # Handoff - lite mode, recruiter pass, ATS check, Codex (2026-10-02)
 
 Branch `feat/lite-mode-codex-recruiter-ats`, pushed, **not merged**: `main` is untouched
-(branch-first rule). 9 commits on the branch, 93 files, +4.2k / -0.5k lines.
+(branch-first rule). 11 commits on the branch, about 100 files, +4.6k / -0.5k lines.
 Read this first in a new session; `docs/REVIEW-HANDOFF.md` remains the long-form record of
 the conventions.
 
@@ -36,17 +36,18 @@ built from the owner's own CV or job search.
 | Fact gate | `harness/fact_check.py` | Back-to-back titles merge by **month**, never bridging a gap. The register's own `banned_phrasings` now block. Every `\cventry` employer or institution must be registered. |
 | Today | `harness/today.py` | Lite commands under `usage.mode: lite`; "ready to submit" for unsent packages; no apply offer for gated jobs; one line per application; UTF-8 output. |
 
-Measured instruction bytes (`wc -c`) for the standard route vs lite:
+Instruction bytes (`wc -c`) for the standard route vs lite. The standard column is what
+Codex measured on its full-workflow run (excluding shared orientation, data and source
+templates); the earlier ~71 KB onboarding estimate was low.
 
 | Route | Standard | Lite |
 |---|---|---|
-| One application | ~158 KB | ~7.3 KB |
-| One search | ~86 KB | ~3.8 KB + script output |
-| Onboarding | ~71 KB | ~27 KB (router, setup, recruiter, register example read once for shape) |
+| One application | 161,525 B | ~7.3 KB |
+| One search | 102,290 B | ~3.8 KB + script output |
+| Onboarding | 128,101 B | ~27 KB (router, setup, recruiter, register example read once for shape) |
 
 `CLAUDE.md` (16.5 KB, Claude Code) or `AGENTS.md` (11.7 KB, Codex) loads in both modes.
-These are instruction sizes, not a measured token run; the full-workflow Codex prompt
-below asks Codex to measure the standard route.
+These are bytes, not billed tokens.
 
 ## Verification record
 
@@ -62,7 +63,14 @@ below asks Codex to measure the standard route.
 - Codex's own fix commit `9ac6883` was reviewed. It is kept, except that it routed lite
   through the 13 KB RUNTIME-MAP; `7374985` reverses that and makes state reads
   BOM-tolerant.
-- **Not yet run in Codex:** the standard workflows end to end. The prompt is below.
+- **Run 4 (Codex, standard workflows):** Setup Harness, Apply Any, Outcome, Today and
+  Tracker worked; 2-page CV, 1-page letter, ATS 95%, fact gate zero red lines, package
+  moved to `applied/`, no duplicate row or folder. Scrape found six results, then a board
+  returned HTTP 500 and the run was recorded incomplete (the intended behaviour).
+- Codex's commit `1a3b319` (self-review wording, `/scrape` dispatch row, network
+  escalation, Windows encoding, safe metadata passing) was reviewed and kept. One fix:
+  its `apply-any.md` line had lost its "On Codex" scope, which would send Claude Code to
+  read the 14 KB RUNTIME-MAP on every application; restored and pinned by a test.
 
 ## Decisions worth knowing
 
@@ -111,24 +119,42 @@ below asks Codex to measure the standard route.
   paths fail to delete ("Filename too long"). The Agent tool's `isolation: worktree`
   starts from `main`, not the branch.
 
-## Open items, in order
+## Open items
 
-1. **Owner:** run the Codex full-workflow prompt (kept with this handoff in the session
-   that wrote it), then bring Codex's report to a new session for review.
-2. **Owner:** approve the merge, then
+Done on 2026-10-02: the Codex full-workflow run and its review (above), and two of the
+optional items:
+
+- **Folder names cut at a whole word.** `apply_package.folder_name` cuts each part at its
+  last whole word within 45 characters. `package_folder` reuses a folder started under
+  the old mid-word cut, so an application in flight at upgrade time never gets a second
+  folder. `lite_search.py` calls `package_folder` too.
+- **Bold labels in cover letters.** One `\defaultfontfeatures` line in `cover.cls`
+  (upstream divergence, recorded in REVIEW-HANDOFF §4.1). A real-compile test checks the
+  bold face is embedded.
+
+Declined, with the reason, so nobody re-opens them by accident:
+
+- **Routing `/scrape`'s board sweep through `lite_search.py`.** It would save about 50 KB
+  per standard search, but the standard route would lose the job-scraper skill's
+  deadline extraction, mass-posting flags, portal health check and query tiers. Lite is
+  already the cheap path.
+- **Moving the Verification Checklist out of `CLAUDE.md`.** Upstream's `/apply` Step 6
+  reads it there, so the move restructures two upstream files for about 5 KB per Claude
+  Code session.
+
+Still open:
+
+1. **Owner:** approve the merge, then
    `git checkout main && git merge --ff-only feat/lite-mode-codex-recruiter-ats && git push`.
-3. **Owner environment:** make Codex network permanent if they search inside Codex
+   `main` has no commits the branch lacks, so it fast-forwards.
+2. **Owner environment:** make Codex network permanent if they search inside Codex
    (`[sandbox_workspace_write]` with `network_access = true` in `~/.codex/config.toml`).
-   They used a per-session `-c` override.
-4. **Optional engineering:**
-   - Route `/scrape`'s board sweep through `lite_search.py`. That would save about 50 KB
-     per standard search, but it touches upstream job-scraper behaviour.
-   - Move the Verification Checklist out of `CLAUDE.md` (about 5 KB per Claude Code
-     session).
-   - Cut application folder names at a word boundary. They are currently cut mid-word
-     at 45 characters, and `match_folder` depends on that rule.
-   - Make the cover letter's `\textbf` labels render bold (Raleway-Medium has no bold
-     face configured).
+   They used a per-session `-c` override. This is the owner's sandbox decision; the
+   repo never ships a `.codex/config.toml`.
+3. **Retry a live board search in Codex.** Run 4's search hit an HTTP 500 from a board.
+   The harness recorded it correctly as incomplete; a clean rerun would close it.
+4. **Cross-runtime drill** (REVIEW-HANDOFF Outstanding A.3): start in Claude Code, resume
+   with `$continue` in Codex mid-application, and back. Needs a human at two terminals.
 
 ## Verify in one go
 

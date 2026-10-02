@@ -571,8 +571,8 @@ def archive(root: Path, meta: dict, body: str, raw_name: str, source: str,
     """Write what apply_package.py's archive check needs (the raw text in
     posting_source/, job_posting.md, provenance.md), then start the application."""
     import apply_package  # the owner of the folder name
-    folder = (root / "documents" / "applications"
-              / apply_package.folder_name(meta["company"], meta["role"]))
+    folder = apply_package.package_folder(root / "documents" / "applications",
+                                          meta["company"], meta["role"])
     today = date.today().isoformat()
     (folder / "posting_source").mkdir(parents=True, exist_ok=True)
     (folder / "posting_source" / raw_name).write_text(
@@ -651,8 +651,8 @@ def start(root: Path, meta: dict | None = None, body: str = "") -> int:
     if not (str(meta.get("company") or "").strip() and str(meta.get("role") or "").strip()):
         print(f"lite_search: {APPLYING.as_posix()} needs a company and a role")
         return 2
-    folder = (root / "documents" / "applications"
-              / apply_package.folder_name(meta["company"], meta["role"]))
+    folder = apply_package.package_folder(root / "documents" / "applications",
+                                          meta["company"], meta["role"])
     (folder / "posting_source").mkdir(parents=True, exist_ok=True)
     meta.update(folder=folder.relative_to(root).as_posix(),
                 slug=apply_package.slugify(meta["company"], meta["role"]))

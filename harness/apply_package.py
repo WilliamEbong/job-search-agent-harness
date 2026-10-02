@@ -90,13 +90,31 @@ def slugify(*parts: str) -> str:
     return re.sub(r"_+", "_", text)
 
 
+def _clean(text: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]+", "_", text.replace("&", " and ")).strip("_")
+
+
 def folder_name(company: str, role: str) -> str:
-    """`<Company>_<Role>` — the documented application-folder convention."""
+    """`<Company>_<Role>` — the documented application-folder convention.
+
+    Each part is cut at its last whole word within MAX_PART, so no folder ends in
+    a word fragment that `match_folder` then fails to find in the tracker's role.
+    """
     def part(text: str) -> str:
-        text = text.replace("&", " and ")
-        cleaned = re.sub(r"[^A-Za-z0-9]+", "_", text).strip("_")
-        return cleaned[:MAX_PART].rstrip("_")
+        cleaned = _clean(text)
+        if len(cleaned) <= MAX_PART:
+            return cleaned
+        head, sep, _ = cleaned[:MAX_PART + 1].rpartition("_")
+        return head if sep else cleaned[:MAX_PART]
     return f"{part(company)}_{part(role)}"
+
+
+def package_folder(applications_dir: Path, company: str, role: str) -> Path:
+    """The folder for this posting. One started before parts were cut at whole
+    words (a mid-word cut at MAX_PART) is reused rather than duplicated."""
+    folder = applications_dir / folder_name(company, role)
+    old = applications_dir / "_".join(_clean(p)[:MAX_PART].rstrip("_") for p in (company, role))
+    return old if not folder.exists() and old.is_dir() else folder
 
 
 def friendly(kind: str, role: str, company: str, name: str) -> str:
@@ -183,7 +201,7 @@ def build_package(company: str, role: str, cv_tex: Path, letter_tex: Path,
                   applications_dir: Path = APPLICATIONS_DIR) -> tuple[Path, list[str]]:
     """Create the folder and every artifact. Returns (folder, files written)."""
     name = candidate_name(register)
-    folder = applications_dir / folder_name(company, role)
+    folder = package_folder(applications_dir, company, role)
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "posting_source").mkdir(exist_ok=True)
 

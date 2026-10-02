@@ -69,6 +69,26 @@ class Slugging(unittest.TestCase):
             "Senior Environmental Data Analyst, Water Quality Programmes")
         self.assertLessEqual(len(name), 2 * apply_package.MAX_PART + 1)
         self.assertTrue(name.startswith("A_Very_Long"))
+        # Cut at whole words: the old mid-word cut ended the role in "..._Water_Quali".
+        self.assertEqual("A_Very_Long_Environmental_Consulting_Company_"
+                         "Senior_Environmental_Data_Analyst_Water", name)
+        # One unbroken word longer than the cap still fits it.
+        self.assertEqual("X" * apply_package.MAX_PART + "_Analyst",
+                         apply_package.folder_name("X" * 60, "Analyst"))
+
+    def test_a_folder_started_under_the_mid_word_cut_is_reused(self):
+        company = "A Very Long Environmental Consulting Company Limited Partnership"
+        role = "Senior Environmental Data Analyst, Water Quality Programmes"
+        with tempfile.TemporaryDirectory() as tmp:
+            apps = Path(tmp)
+            fresh = apply_package.package_folder(apps, company, role)
+            self.assertEqual(apply_package.folder_name(company, role), fresh.name)
+            old = apps / ("A_Very_Long_Environmental_Consulting_Company_"
+                          "Senior_Environmental_Data_Analyst_Water_Quali")
+            old.mkdir()
+            self.assertEqual(old, apply_package.package_folder(apps, company, role))
+            fresh.mkdir()  # both exist: the current name wins
+            self.assertEqual(fresh, apply_package.package_folder(apps, company, role))
 
     def test_friendly_name_drops_characters_windows_rejects(self):
         stem = apply_package.friendly("resume", 'Analyst: "Water/Data"',

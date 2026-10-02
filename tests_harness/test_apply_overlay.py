@@ -286,8 +286,10 @@ class ApplyOverlay(unittest.TestCase):
 
     def test_codex_reviewer_fallback_is_named(self):
         self.assertIn("self-review", self.text)
-        self.assertIn("keeps the drafting context", self.text)
+        self.assertIn("the drafting context", self.text)
         self.assertNotIn("sequential fresh pass", self.text)
+        # Scoped to Codex, so Claude Code (Agent tool) never reads the 14 KB map for it.
+        self.assertIn("on codex, use the reviewer mechanic", self.text)
 
     def test_training_required_flow_is_documented(self):
         """A rapidly-closable gap makes the package provisional, not final."""

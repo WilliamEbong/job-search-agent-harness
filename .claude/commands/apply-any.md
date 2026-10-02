@@ -67,8 +67,8 @@ the fresh-context reviewer pass, revision, compilation (**lualatex** for the CV,
 **xelatex** for the cover letter), the visual page-count inspection loop, and the ATS
 text-layer check.
 
-Use the reviewer mechanic in `RUNTIME-MAP.md` §2. A sequential fallback keeps the
-drafting context: report it as **self-review**, never as a fresh-context review.
+On Codex, use the reviewer mechanic in `RUNTIME-MAP.md` §2. A sequential fallback keeps
+the drafting context: report it as **self-review**, never as a fresh-context review.
 
 ### The autonomy ladder
 

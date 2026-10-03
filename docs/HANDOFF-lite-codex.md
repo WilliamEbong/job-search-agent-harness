@@ -1,7 +1,7 @@
 # Handoff - lite mode, recruiter pass, ATS check, Codex (2026-10-02)
 
 Branch `feat/lite-mode-codex-recruiter-ats`, pushed, **not merged**: `main` is untouched
-(branch-first rule). 11 commits on the branch, about 100 files, +4.6k / -0.5k lines.
+(branch-first rule). 16 commits on the branch, 95 files, about +4.7k / -0.7k lines.
 Read this first in a new session; `docs/REVIEW-HANDOFF.md` remains the long-form record of
 the conventions.
 
@@ -71,6 +71,14 @@ These are bytes, not billed tokens.
   escalation, Windows encoding, safe metadata passing) was reviewed and kept. One fix:
   its `apply-any.md` line had lost its "On Codex" scope, which would send Claude Code to
   read the 14 KB RUNTIME-MAP on every application; restored and pinned by a test.
+- **CI on `main` had failed on every push since 2026-08-08.** Two `PdfBesideTheSource`
+  tests passed the user's real `evidence/register.yaml`, so they read personal data on
+  the owner's machine and errored on a fresh clone. They now use the demo register.
+- **Clean-checkout run (2026-10-02, detached worktree outside OneDrive, demo data):**
+  all suites and guards green; a live lite search reached freehire, Job Bank (Canada)
+  and LinkedIn with no errors; `--save`, both compiles, `--package`, `--applied`,
+  `today.py`, `tracker_xlsx.py` and the archiver all worked, and the package moved to
+  `applied/`.
 
 ## Decisions worth knowing
 
@@ -152,7 +160,9 @@ Still open:
    They used a per-session `-c` override. This is the owner's sandbox decision; the
    repo never ships a `.codex/config.toml`.
 3. **Retry a live board search in Codex.** Run 4's search hit an HTTP 500 from a board.
-   The harness recorded it correctly as incomplete; a clean rerun would close it.
+   The harness recorded it correctly as incomplete. The demo candidate's three boards
+   answered cleanly from Claude Code on 2026-10-02; a Codex rerun with network on would
+   close it.
 4. **Cross-runtime drill** (REVIEW-HANDOFF Outstanding A.3): start in Claude Code, resume
    with `$continue` in Codex mid-application, and back. Needs a human at two terminals.
 

@@ -1,7 +1,7 @@
 # Handoff - lite mode, recruiter pass, ATS check, Codex (2026-10-02)
 
-Branch `feat/lite-mode-codex-recruiter-ats`, pushed, **not merged**: `main` is untouched
-(branch-first rule). 16 commits on the branch, 95 files, about +4.7k / -0.7k lines.
+Branch `feat/lite-mode-codex-recruiter-ats`, fast-forward merged into `main` on
+2026-10-02 when the owner said to merge. 18 commits, about 95 files, +4.8k / -0.7k lines.
 Read this first in a new session; `docs/REVIEW-HANDOFF.md` remains the long-form record of
 the conventions.
 
@@ -157,18 +157,15 @@ Declined, with the reason, so nobody re-opens them by accident:
 
 Still open:
 
-1. **Owner:** approve the merge, then
-   `git checkout main && git merge --ff-only feat/lite-mode-codex-recruiter-ats && git push`.
-   `main` has no commits the branch lacks, so it fast-forwards.
-2. **Owner environment:** make Codex network permanent if they search inside Codex
+1. **Owner environment:** make Codex network permanent if they search inside Codex
    (`[sandbox_workspace_write]` with `network_access = true` in `~/.codex/config.toml`).
    They used a per-session `-c` override. This is the owner's sandbox decision; the
    repo never ships a `.codex/config.toml`.
-3. **Retry a live board search in Codex.** Run 4's search hit an HTTP 500 from a board.
+2. **Retry a live board search in Codex.** Run 4's search hit an HTTP 500 from a board.
    The harness recorded it correctly as incomplete. The demo candidate's three boards
    answered cleanly from Claude Code on 2026-10-02; a Codex rerun with network on would
    close it.
-4. **Cross-runtime drill** (REVIEW-HANDOFF Outstanding A.3): start in Claude Code, resume
+3. **Cross-runtime drill** (REVIEW-HANDOFF Outstanding A.3): start in Claude Code, resume
    with `$continue` in Codex mid-application, and back. Needs a human at two terminals.
 
 ## Verify in one go

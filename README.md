@@ -66,11 +66,47 @@ your own computer. There is no website to sign up for and no server holding your
 
 ## Quickstart
 
+Three steps, done once.
+
+**1. In a terminal, download it and run the installer:**
+
 ```bash
 git clone https://github.com/WilliamEbong/job-search-agent-harness
 cd job-search-agent-harness
 python harness_setup.py
 ```
+
+**2. Open your AI agent in that same folder.** Still inside `job-search-agent-harness`,
+run `claude` (Claude Code) or `codex` (Codex), or open the folder in the agent's app.
+
+**3. In the chat, say "set me up".** It starts lite or standard setup (whichever the
+installer saved; if none, it asks your plan first) and asks for your CV.
+
+**Never used a terminal? Let Codex do step 1.** Install the Codex app from
+[chatgpt.com/codex](https://chatgpt.com/codex) and sign in, create an empty folder, open
+it in Codex (allow access if asked), and send this:
+
+```text
+Set up the Job Search Agent Harness in this folder. I'm not technical: do every step
+you can yourself, and tell me in plain words when I need to click or type something.
+
+1. Download https://github.com/WilliamEbong/job-search-agent-harness into this folder
+   itself, not a subfolder. Use git if it is installed; otherwise download the ZIP and
+   unpack it here.
+2. Run `python harness_setup.py --yes` here. If Python is missing, install it first.
+3. For anything the installer reports MISSING, install it with the command it prints,
+   then run the installer again. Repeat until it says all required prerequisites are
+   in place.
+4. If something needs my computer password or a window I must click, tell me exactly
+   what to do. If a program you just installed is not found, tell me to restart Codex.
+5. When everything is ready, tell me to start a new chat in this folder and say
+   "set me up".
+```
+
+Allow its requests to download and install as it works. When it is done, start a new chat
+in the same folder and say "set me up".
+
+About the installer:
 
 `harness_setup.py` checks what your computer has and prints the exact install command for
 anything missing (Node, Bun, TeX and poppler have their own installers). It installs the
@@ -81,7 +117,7 @@ It asks which plan your coding agent runs on and recommends a mode: **lite** bel
 Pro or Claude Max, the standard workflows on those plans. Choose **express** for one
 confirmation instead of a dozen questions.
 
-Then open Claude Code in the folder and type (in Codex, type `$` where you see `/`):
+If you prefer commands to sentences (in Codex, type `$` where you see `/`):
 
 ```
 /lite setup         # your CV, five questions, your 20 best-fit positions
@@ -101,6 +137,7 @@ Commands are optional. Plain sentences work the same way:
 
 | Say | It does |
 |---|---|
+| "set me up" | first-time setup: your CV, a few questions, your 20 best-fit positions |
 | "what jobs am I a good fit for?" | the recruiter read: your 20 best-fit positions |
 | "find me jobs" | a search, ranked by fit |
 | "apply to this" (plus a link, screenshot, PDF or text) | a checked application package |

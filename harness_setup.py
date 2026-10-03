@@ -1040,9 +1040,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"    {sys.executable} harness_setup.py")
         else:
             first = "lite setup" if mode == "lite" else "setup-harness"
-            print(f"\nNext step: open this folder in your agent and type /{first} "
-                  f"(${first} in Codex). It reads your CV, asks a few questions and "
-                  "names the 20 positions you fit best.")
+            print(f"\nNext step: open this folder in your agent (run `claude` or `codex` "
+                  f"here) and say \"set me up\", or type /{first} (${first} in Codex). "
+                  "It reads your CV, asks a few questions and names the 20 positions "
+                  "you fit best.")
             print("Then /today (or /lite in lite mode) tells you what to do each morning.")
     return failures
 

@@ -493,6 +493,20 @@ CODEX_NETWORK_FIX = (
     "it outside the sandbox."
 )
 
+# Shown once during setup, so a Codex user learns the choice before a search fails.
+CODEX_NETWORK_CHOICES = """\
+  Codex runs shell commands without internet access by default, and job-board
+  searches are shell commands. Pick one (README: "Job search in Codex needs
+  network access"):
+    1. Approve each search when Codex asks. Nothing changes; one approval each.
+    2. Turn it on for good: add these two lines to ~/.codex/config.toml, then
+       restart Codex. Searches just work, but every shell command Codex runs,
+       in any project, can then reach the internet.
+         [sandbox_workspace_write]
+         network_access = true
+    3. One session only: codex -c sandbox_workspace_write.network_access=true
+  This setup never edits your Codex config."""
+
 
 def check_codex_network(codex_home: Path | None = None) -> Check:
     """Codex's default workspace-write sandbox has no network access.
@@ -998,7 +1012,10 @@ def main(argv: list[str] | None = None) -> int:
         for runtime in runtimes:
             checks.append(Check(f"runtime: {runtime.name}", OK, runtime.exe))
         if any(r.name == "codex" for r in runtimes):
-            checks.append(check_codex_network())
+            network = check_codex_network()
+            checks.append(network)
+            if network.status != OK and not DOCTOR_ONLY:
+                print(CODEX_NETWORK_CHOICES)
 
     if runtimes and not DOCTOR_ONLY:
         for runtime in runtimes:

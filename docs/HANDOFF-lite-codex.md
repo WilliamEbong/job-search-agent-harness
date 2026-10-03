@@ -136,6 +136,11 @@ optional items:
   last whole word within 45 characters. `package_folder` reuses a folder started under
   the old mid-word cut, so an application in flight at upgrade time never gets a second
   folder. `lite_search.py` calls `package_folder` too.
+- **Codex network explained during onboarding.** The README section "Job search in Codex
+  needs network access" gives the three choices with their trade-offs; the installer
+  prints them when Codex's network is off, `/setup-harness` Step 0a item 6 and
+  `/lite setup` step 5 walk the user through the choice, and an all-boards-failed lite
+  search points to the README. Nothing edits the user's Codex config without a yes.
 - **Bold labels in cover letters.** One `\defaultfontfeatures` line in `cover.cls`
   (upstream divergence, recorded in REVIEW-HANDOFF §4.1). A real-compile test checks the
   bold face is embedded.

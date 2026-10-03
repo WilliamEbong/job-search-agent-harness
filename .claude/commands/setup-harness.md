@@ -57,6 +57,20 @@ fixed, and walk them through the rest.
 5. Anything the doctor marks MISSING that needs a system installer (TeX, poppler, Bun):
    give them the fix command from the doctor's own output and offer to continue setup
    without it, naming what won't work until it's installed.
+6. **Codex, with network off** (the doctor's `Codex network` row is not OK, or this
+   session's network is restricted): job-board search fails until they allow it. Give
+   them the three choices in plain words and let them pick; suggest the first if they
+   are unsure:
+   - **Approve each search** when Codex asks. Nothing changes; one approval per search.
+   - **On for good:** `[sandbox_workspace_write]` then `network_access = true` in
+     `~/.codex/config.toml`, then restart Codex. Searches just work, but every shell
+     command Codex runs, in any project, can reach the internet.
+   - **One session:** start Codex with `codex -c sandbox_workspace_write.network_access=true`.
+
+   If they pick "on for good", you may make the edit: back the file up to
+   `config.toml.bak`, show the exact diff, write only on a yes, and never add a second
+   `[sandbox_workspace_write]` header (it stops Codex from starting). Never put a
+   `.codex/config.toml` in this repo.
 
 This step runs on first onboarding. For a returning user (register and preferences both
 exist), skip it unless something visibly fails.

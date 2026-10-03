@@ -80,8 +80,9 @@ MCP — let posting intake read JavaScript-heavy and bot-walled pages; without t
 pages are marked `unverified` rather than guessed at.
 
 **Using Codex?** Its default sandbox has no network, so the job-board search fails
-inside it until you allow it. The doctor shows a `Codex network` row; the fix is in
-[RUNTIME-MAP.md](RUNTIME-MAP.md) §3.
+inside it until you allow it. The doctor shows a `Codex network` row. The three ways to
+allow it, with the trade-offs, are in the README under
+[Job search in Codex needs network access](README.md#job-search-in-codex-needs-network-access).
 
 ---
 

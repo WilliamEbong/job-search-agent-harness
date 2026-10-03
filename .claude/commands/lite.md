@@ -44,7 +44,7 @@ with one next action, the literal text to type. Questions in plain text, then wa
 No `evidence/register.yaml`: offer `/lite setup`. Else run `python harness/today.py`;
 relay its numbered actions (5 max), each with its command.
 
-## /lite setup (4 steps, 5-10 min)
+## /lite setup (4 steps, 5 on Codex; 5-10 min)
 
 Follow `.claude/lite/setup.md`. Next: `/lite search`.
 

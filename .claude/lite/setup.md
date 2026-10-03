@@ -33,3 +33,9 @@ then step 4 unless active `target_positions` exist.
    files it cites in `.claude/skills/`; no plan line; why, `because` and `gap` 10 words
    max each; 20 or fewer, never padded. User strikes any [you]; save
    `target_positions`.
+5. **Codex with network restricted only [you]:** search fails until allowed. One line
+   each, user picks [1]: (1) approve each search when asked, nothing changes; (2) on
+   for good, `[sandbox_workspace_write]` + `network_access = true` in
+   `~/.codex/config.toml`, restart; every Codex shell command can then go online; you
+   may edit it: back up, show diff, write on yes, never a second header; (3) one
+   session, `codex -c sandbox_workspace_write.network_access=true`.

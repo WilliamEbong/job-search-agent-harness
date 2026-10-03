@@ -509,6 +509,8 @@ def search(args) -> int:
     store = f"{seen_path.name} +{added}" if writable else f"{seen_path.name} NOT updated"
     if failed:
         print("\nEvery board failed, so nothing was searched. This is not 'no new jobs'.")
+        print("In Codex, its sandbox blocks the network by default: see the README, "
+              "'Job search in Codex needs network access'.")
         return 1
     print(f"\n{len(fresh)} new job(s){more}; {store}"
           + (f"; recorded {', '.join(recorded)}" if recorded else ""))

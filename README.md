@@ -253,9 +253,32 @@ differences that were actually tested: how a reviewer is run, what a tool is cal
 what usage figures exist (Codex reports none, so no percentage is ever printed).
 
 In Codex every workflow is a skill in `.agents/skills/`: type `$lite`, `$scrape`,
-`$apply-any` and so on, or say what you want. Codex's default sandbox has no network, so
-job-board searches fail until you allow it; `python harness_setup.py --doctor` shows
-whether it is on and how to turn it on.
+`$apply-any` and so on, or say what you want.
+
+### Job search in Codex needs network access
+
+Codex runs shell commands in a sandbox that has no internet access by default. Job-board
+searches are shell commands, so inside Codex they fail until you allow network access.
+Claude Code users can skip this. Setup explains the choice, and you pick one:
+
+| Choice | How | For | Against |
+|---|---|---|---|
+| **Approve each search** | Nothing to set up. With Codex's usual approval setting it asks before a search runs outside the sandbox; say yes | Nothing changes on your machine, and you see every command that goes online | One approval per search |
+| **Turn it on for good** | Add the two lines below to `~/.codex/config.toml`, then restart Codex | Searches just work | Every shell command Codex runs, in any project, can reach the internet |
+| **Turn it on for one session** | Start Codex with `codex -c sandbox_workspace_write.network_access=true` | Nothing permanent | You type it every time |
+
+```toml
+[sandbox_workspace_write]
+network_access = true
+```
+
+If the file already has a `[sandbox_workspace_write]` line, add only `network_access = true`
+under it: a second copy of that header stops Codex from starting. Codex can make the edit
+for you if you ask it to back the file up first and show you the change before writing.
+Afterwards, the `Codex network` row of `python harness_setup.py --doctor` reads OK.
+
+If a search fails anyway, the harness says the board could not be searched, never that
+there were no jobs.
 
 ---
 

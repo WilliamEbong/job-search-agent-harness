@@ -216,6 +216,38 @@ class Boards(unittest.TestCase):
         self.assertEqual([], ls.other_market(boards, []))
 
 
+class EveryBoardFails(unittest.TestCase):
+    def test_exit_1_and_the_codex_network_pointer(self):
+        """Codex's sandbox blocks the network by default, so every board fails at once;
+        the output must say "could not search" and point at the fix, never "no jobs"."""
+        import io
+        import subprocess
+        from unittest import mock
+
+        tmp = Path(tempfile.mkdtemp(prefix="lite-fail-"))
+        try:
+            skill = tmp / ".agents" / "skills" / "alpha-search" / "SKILL.md"
+            skill.parent.mkdir(parents=True)
+            skill.write_text("---\nname: alpha-search\n---\n", encoding="utf-8")
+            (tmp / "preferences.yaml").write_text(
+                "target_positions:\n  - {title: Data Analyst, status: active}\n",
+                encoding="utf-8")
+            failed = subprocess.CompletedProcess(
+                [], 1, stdout="", stderr='{"error": "fetch failed", "code": "NETWORK"}')
+            out = io.StringIO()
+            with mock.patch.object(ls.shutil, "which", return_value="bun"), \
+                 mock.patch.object(ls.subprocess, "run", return_value=failed), \
+                 mock.patch.object(ls.sys, "stdout", out):
+                code = ls.search(ls.argparse.Namespace(
+                    root=str(tmp), preferences=None, state_dir=None, top=1, boards=None,
+                    limit=10, record=False))
+            self.assertEqual(1, code)
+            self.assertIn("This is not 'no new jobs'", out.getvalue())
+            self.assertIn("Job search in Codex needs network access", out.getvalue())
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 class Save(unittest.TestCase):
     """--save archives the posting so the model never retypes it (the e2e run wrote
     every posting twice, by hand)."""

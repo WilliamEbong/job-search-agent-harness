@@ -82,7 +82,8 @@ run `claude` (Claude Code) or `codex` (Codex), or open the folder in the agent's
 **3. In the chat, say "set me up".** It starts lite or standard setup (whichever the
 installer saved; if none, it asks your plan first) and asks for your CV.
 
-**Never used a terminal? Let Codex do step 1.** Install the Codex app from
+**Never used a terminal? Let Codex do step 1.** The full walkthrough, written to send to
+a friend, is [CODEX-QUICKSTART.md](CODEX-QUICKSTART.md). In short: install the Codex app from
 [chatgpt.com/codex](https://chatgpt.com/codex) and sign in, create an empty folder, open
 it in Codex (allow access if asked), and send this:
 

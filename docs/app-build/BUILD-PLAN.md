@@ -46,9 +46,9 @@ is installed.
 | 5 | Front end: shell, wizard, Today, Jobs, Apply, Applications, Profile, Settings | done |
 | 6 | Launcher, installer `.cmd`, desktop shortcut | done (installer not executed) |
 | 7 | Tests (A1, A2) | done: 22 app tests, 461 harness, 154 upstream |
-| 8 | Browser pass (A3), live agent run (A4), launcher (A5) | done; live apply run in progress |
-| 9 | Review, DESIGN.md, docs (README, USER-GUIDE section) | in progress |
-| 10 | Commit, merge to main, push | pending |
+| 8 | Browser pass (A3), live agent run (A4), launcher (A5) | done (live Codex apply: full package in 7 min) |
+| 9 | Review, DESIGN.md, docs (README, USER-GUIDE section) | done |
+| 10 | Commit, merge to main, push | done |
 
 ## Later (not built)
 

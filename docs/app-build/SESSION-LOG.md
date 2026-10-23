@@ -19,3 +19,4 @@
 - 2026-10-23 Playwright MCP browser locked by another session's Chrome (started 00:21, not ours) - not killed. Verified in the built-in browser pane and a headless CDP script instead.
 - 2026-10-23 Design finish review: fix -> 8 material fixes applied by the front-end agent; verdict pass 7/8 resolved, fix 6 then confirmed by me at 1440 (README capture) and 390 (browser pane); one regression (queue hint read as status) reworded. Two-round budget reached.
 - 2026-10-23 Decision: README screenshots ship as .webp in docs/media/ because .gitignore ignores *.png/*.jpg (personal photos) and the guards forbid negations.
+- 2026-10-23 Done. Fast-forwarded main to feat/desktop-app and pushed main and the branch to origin (owner asked to commit and push). Resume cron deleted.

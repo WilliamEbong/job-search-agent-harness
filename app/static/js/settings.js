@@ -14,13 +14,18 @@ async function save(patch) {
   toast('Saved.', 'ok');
 }
 
+// Ready means installed and signed in with a plan; an API key bills per use, so it is not.
+export const engineReady = (e) => !!(e.installed && e.signed_in && !e.api_key);
+
 export function engineCards(engines) {
   if (!engines) return skeleton(3);
   return h('ul.engine-cards', (engines.engines || []).map((e) => {
-    const ok = e.installed && e.signed_in;
-    return h('li.engine-card', { class: ok ? 'is-ok' : '' },
-      h('p.engine-name', e.label, h('span.status', { class: ok ? 'st-strong' : e.installed ? 'st-maybe' : 'st-weak' },
-        ok ? 'Ready' : e.installed ? 'Not signed in' : 'Not installed')),
+    const ok = engineReady(e);
+    const plan = e.name === 'codex' ? 'ChatGPT' : 'Claude';
+    return h('li.engine-card', { class: ok ? 'is-ok' : e.api_key ? 'is-warn' : '' },
+      h('p.engine-name', e.label, h('span.status', { class: ok ? 'st-strong' : e.api_key ? 'st-gate-fail' : e.installed ? 'st-maybe' : 'st-weak' },
+        ok ? 'Ready' : e.api_key ? 'API key' : e.installed ? 'Not signed in' : 'Not installed')),
+      e.api_key ? h('p.engine-warn', icon('warn'), h('span', `Signed in with an API key: runs would be billed per use. Sign in with your ${plan} plan instead.`)) : null,
       h('dl.facts',
         h('dt', 'Installed'), h('dd', e.installed ? h('span', icon('check'), ' Yes', e.version ? h('span.num.muted', ` (${e.version})`) : null) : 'No'),
         h('dt', 'Signed in'), h('dd', e.signed_in ? h('span', icon('check'), ' Yes') : 'No')));

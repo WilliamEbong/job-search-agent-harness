@@ -21,7 +21,15 @@ your own computer. There is no website to sign up for and no server holding your
 ## Get the app (no terminal)
 
 **Candor** is the desktop app version: windows and buttons instead of a chat and
-commands. On Windows 10 or 11:
+commands.
+
+![Candor's Today screen: one next action, the day's list and the strongest jobs from the last search](docs/media/candor-today.webp)
+
+| Jobs, ranked by fit | One application package |
+|---|---|
+| ![Jobs ranked by fit, with the 80 line above which Candor drafts and the 60 line below which it will not](docs/media/candor-jobs.webp) | ![An application with its stages, page budget and the archived posting](docs/media/candor-application.webp) |
+
+Screens show the fictional demo candidate, Riley Chen. On Windows 10 or 11:
 
 1. **Download it.** On this page on GitHub, click the green **Code** button, then
    **Download ZIP**.

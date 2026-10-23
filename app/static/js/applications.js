@@ -1,5 +1,5 @@
 // Applications: the list with form-guide chips, and the detail pane with the PDFs.
-import { h, icon, num, button, busyClick, post, fmtDate, fileUrl, skeleton, toast, plural, TOKEN } from './core.js';
+import { h, icon, md, num, button, busyClick, post, fmtDate, fileUrl, skeleton, toast, plural, TOKEN } from './core.js';
 import { store, load, start, blockedReason, queueNote } from './store.js';
 import { panelHead, whoTag } from './today.js';
 
@@ -109,9 +109,11 @@ function detail(a) {
   if (!f) view = h('p.empty-note', tab === 'posting' ? 'Candor did not keep a copy of this posting.' : 'This document has not been made yet.');
   else if (f.ext === 'pdf') view = h('iframe.doc-frame', { src: fileUrl(f.path), title: `${tabs.find(([k]) => k === tab)[1]} for ${a.company}` });
   else {
-    view = h('pre.doc-text', 'Loading…');
+    // Markdown postings render through the same safe text-only renderer as the run panel.
+    const isMd = f.ext === 'md';
+    view = h(isMd ? 'div.doc-text.doc-md' : 'pre.doc-text', 'Loading…');
     fetch(fileUrl(f.path), { headers: { 'X-Candor-Token': TOKEN } }).then((r) => (r.ok ? r.text() : Promise.reject()))
-      .then((t) => { view.textContent = t; }, () => { view.textContent = 'Candor could not open this file. Use Open folder to see it.'; });
+      .then((t) => { if (isMd) view.replaceChildren(md(t)); else view.textContent = t; }, () => { view.textContent = 'Candor could not open this file. Use Open folder to see it.'; });
   }
 
   const actions = [];

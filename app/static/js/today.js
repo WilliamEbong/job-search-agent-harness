@@ -105,14 +105,17 @@ export function render() {
     hist.length
       ? h('ul.activity', hist.slice(0, 6).map((r) => h('li',
         h('span.act-mark', { class: r.status === 'done' ? 'ok' : r.status === 'failed' ? 'bad' : '' }, icon(r.status === 'failed' ? 'warn' : 'check')),
-        h('div', h('p.act-title', r.title, h('span.act-when', ago(r.at))), r.summary ? h('p.act-sum', r.summary) : null))))
+        h('div', h('p.act-title', activityTitle(r), h('span.act-when', ago(r.at))), firstSentence(r.summary) ? h('p.act-sum', firstSentence(r.summary)) : null))))
       : h('p.empty-note', 'When Candor finishes something for you (a search, an application, a follow-up) it is listed here, newest first.'));
 
+  // The preview ends at the 80 line: the jobs Candor would draft. The rest are on Jobs.
   const results = store.jobs?.search?.results || [];
+  const strong = results.filter((r) => (r.score ?? 0) >= 80 && r.verdict !== 'gate-fail');
+  const shown = strong.length ? strong.slice(0, 8) : [...results].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 5);
   const preview = h('section.panel.today-league', { 'aria-labelledby': 'lg-title' },
-    panelHead('lg-title', 'Best fits from the last search', results.length || null),
+    panelHead('lg-title', strong.length ? 'Strong fits from the last search' : 'Best fits from the last search', results.length ? shown.length : null),
     results.length
-      ? [leagueTable(results.slice(0, 8), { compact: true }),
+      ? [leagueTable(shown, { compact: true }),
         h('p.panel-foot', h('a.link', { href: '#/jobs' }, `All ${results.length} jobs`, icon('arrow')),
           store.jobs.search.date ? h('span.muted', ` Searched ${fmtDate(store.jobs.search.date)}`) : null)]
       : h('p.empty-note', 'After your first search, the jobs Candor found appear here, ranked by how well they fit you.'));
@@ -137,4 +140,28 @@ export function whoTag(who) {
 
 export function panelHead(id, title, count) {
   return h('header.panel-head', h('h2', { id }, title), count != null ? h('span.tab-count', num(count)) : null);
+}
+
+const DID = {
+  apply: 'Prepared an application', search: 'Searched for jobs', screen: 'Checked new jobs against your limits',
+  setup: 'Built your profile', followup: 'Drafted a follow-up', interview: 'Interview prep',
+  fact: 'Updated your profile', ask: 'Answered your question',
+};
+
+function activityTitle(r) {
+  const did = DID[r.kind] || r.title;
+  if (r.status === 'failed') return `Stopped: ${(r.title || did).toLowerCase()}`;
+  if (r.status === 'cancelled') return `Cancelled: ${(r.title || did).toLowerCase()}`;
+  return did;
+}
+
+// The first plain sentence of a run's summary; reply prompts ("Say 1 or 2") are dropped
+// because there is no reply box here.
+function firstSentence(text) {
+  const line = String(text || '').split('\n')
+    .map((l) => l.replace(/^\s*(\d+[.)]|[-*])\s+/, '').replace(/\*\*/g, '').trim())
+    .find((l) => l && !/^(say|reply|type|answer|next:)/i.test(l));
+  if (!line) return '';
+  const m = line.match(/^(.+?[.!?])(\s|$)/);
+  return m ? m[1] : line;
 }

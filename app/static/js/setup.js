@@ -1,7 +1,7 @@
 // First-run wizard: welcome, engine, CV, five questions, building, best-fit roles.
 import { h, icon, button, busyClick, api, toast, skeleton } from './core.js';
 import { store, load, start, ACTIVE } from './store.js';
-import { engineCards } from './settings.js';
+import { engineCards, engineReady } from './settings.js';
 import { dropZone } from './jobs.js';
 import { positionsList } from './profile.js';
 import { whoTag } from './today.js';
@@ -32,7 +32,11 @@ const to = (n) => () => {
 
 export function render() {
   if (!store.state) return h('div.screen', skeleton(6));
-  if (step == null) step = initialStep();
+  if (step == null || step === 0) {
+    // A setup run may be found after the first render (tasks load in parallel).
+    const found = initialStep();
+    if (step == null || found !== 0) step = found;
+  }
   if (step === 1 && !store.engines && !store.errors.engines) load('engines');
   if (step === 5 && !store.profile) load('profile');
   if (!cv && store.state.setup?.cv_files?.length) cv = store.state.setup.cv_files[0];
@@ -68,7 +72,7 @@ function welcome() {
 
 function engine() {
   const e = store.engines;
-  const ready = (e?.engines || []).some((x) => x.installed && x.signed_in);
+  const ready = (e?.engines || []).some(engineReady);
   const missing = e && !ready;
   return h('div.wizard',
     head('Your assistant', 'Candor does its writing through Claude or Codex, using the subscription you already pay for. No API key, no extra bill.'),
@@ -130,22 +134,22 @@ function questions() {
     to(4)();
   });
   return h('form.wizard', { onsubmit: submit, novalidate: true },
-    head('Five questions', 'Leave any blank to keep the default shown in grey. You can change all of this later.'),
+    head('Five questions', 'Leave any blank to use the default. You can change all of this later.'),
     q(1, 'Where can you work?', null,
-      field('loc', 'City, region and country', { placeholder: 'e.g. Winnipeg, Manitoba, Canada', autocomplete: 'address-level2' }),
-      field('auth', 'Allowed to work there as', { placeholder: 'e.g. citizen, permanent resident, work permit' }),
+      field('loc', 'City, region and country', { placeholder: 'e.g. Winnipeg', autocomplete: 'address-level2' }),
+      field('auth', 'Allowed to work there as', { placeholder: 'e.g. citizen' }),
       field('km', 'Longest commute (km)', { type: 'number', min: 1, inputmode: 'numeric', placeholder: '30' }),
       select('arr', 'Remote, hybrid or on site', [['', 'Any'], ['remote', 'Remote only'], ['hybrid', 'Hybrid or remote'], ['onsite', 'On site is fine']])),
     q(2, 'What is the lowest pay you would accept?', 'Jobs that clearly pay less are flagged for you to decide.',
-      field('pay', 'Amount', { type: 'number', min: 0, inputmode: 'numeric', placeholder: 'none' }),
+      field('pay', 'Amount', { type: 'number', min: 0, inputmode: 'numeric', placeholder: 'Leave blank for none' }),
       field('cur', 'Currency', { placeholder: 'e.g. CAD', maxlength: 3 }),
       select('per', 'Per', [['', 'Year (salary)'], ['hourly', 'Hour']])),
     q(3, 'Any jobs, industries, shifts or travel you refuse?', 'Candor never suggests these.',
-      field('refuse', 'I will not do', { rows: 2, placeholder: 'none' })),
+      field('refuse', 'I will not do', { rows: 2, placeholder: 'Leave blank for none' })),
     q(4, 'Any skills a job must not require, because you do not have them?', 'Jobs that insist on these are set aside.',
-      field('lack', 'Skip jobs that require', { rows: 2, placeholder: 'none' })),
+      field('lack', 'Skip jobs that require', { rows: 2, placeholder: 'Leave blank for none' })),
     q(5, 'Is there one gap in your CV that changes what may be claimed?', 'For example, a course you have not finished, or a tool you only used with help.',
-      field('gap', 'The gap', { rows: 2, placeholder: 'unclaimed' })),
+      field('gap', 'The gap', { rows: 2, placeholder: 'Leave blank for no gap' })),
     nav(2, h('span.btn-wrap', h('button.btn.btn-primary', { type: 'submit' }, icon('arrow'), h('span', 'Build my profile')),
       h('span.reason', 'Takes 5-10 minutes'))));
 }

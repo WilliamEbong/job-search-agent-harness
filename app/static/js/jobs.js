@@ -31,12 +31,14 @@ function ruleRow(cols, at, text) {
 }
 
 // Shared with Today's preview (compact: fewer columns, no actions).
+// A threshold line is drawn only where the ranking actually crosses it, plus the 80
+// line under a list that never drops below it, so no rule ever sits over nothing.
 export function leagueTable(results, { compact = false, onPrepare } = {}) {
   const rows = [...results].sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || a.number - b.number);
-  const cols = compact ? 4 : 11;
+  const cols = compact ? 4 : 10;
   const head = compact
     ? ['#', 'Fit', 'Job', 'Status']
-    : ['', '#', 'Fit', 'Job', 'Location', 'Board', 'Posted', 'Deadline', 'Status', '', ''];
+    : ['', '#', 'Fit', 'Job', 'Location', 'Board', 'Posted', 'Deadline', 'Status', ''];
   const body = h('tbody');
   let drew80 = false; let drew60 = false;
   for (const r of rows) {
@@ -45,8 +47,7 @@ export function leagueTable(results, { compact = false, onPrepare } = {}) {
     if (!drew60 && sc < 60) { body.append(ruleRow(cols, 60, 'Below 60: not worth drafting')); drew60 = true; }
     body.append(jobRow(r, compact, onPrepare));
   }
-  if (!drew80) body.append(ruleRow(cols, 80, 'Strong fit above this line: Candor drafts these'));
-  if (!drew60) body.append(ruleRow(cols, 60, 'Below 60: not worth drafting'));
+  if (!drew80 && rows.length) body.append(ruleRow(cols, 80, 'Strong fit above this line: Candor drafts these'));
   return h('div.table-wrap', { tabindex: compact ? null : '0', role: compact ? null : 'region', 'aria-label': compact ? null : 'Ranked jobs' },
     h('table.league', { class: compact ? 'is-compact' : '' },
       h('caption.sr-only', 'Jobs ranked by fit score, highest first. Lines at 80 and 60 show which ones Candor will draft.'),
@@ -60,6 +61,7 @@ function jobRow(r, compact, onPrepare) {
   const gate = r.verdict === 'gate-fail';
   const job = h('div.job',
     h('span.job-title', r.title), h('span.job-co', r.company),
+    !compact && r.location ? h('span.job-loc', r.location) : null,
     gate && r.rationale ? h('span.job-why', icon('warn'), `Set aside because: ${r.rationale}`)
       : r.rationale ? h('span.job-note', r.rationale) : null);
   const tier = (r.score ?? 0) >= 80 ? 'tier-a' : (r.score ?? 0) >= 60 ? 'tier-b' : 'tier-c';
@@ -74,22 +76,24 @@ function jobRow(r, compact, onPrepare) {
     ? h('input', { type: 'checkbox', id, checked: selected.has(r.number), 'aria-label': `Select ${r.title} at ${r.company}`,
       onchange: (e) => { e.target.checked ? selected.add(r.number) : selected.delete(r.number); updateBatch(); } })
     : null;
-  return h('tr', { class: cls },
+  return h('tr', { class: cls, 'data-n': r.number },
     h('td.c-pick', box),
-    h('th', { scope: 'row' }, num(r.number)),
+    h('th.c-no', { scope: 'row' }, num(r.number)),
     h('td.score', num(r.score)),
-    h('td', job),
+    h('td.c-job', job),
     h('td.c-loc', r.location || '–'),
     h('td.c-board', r.board || '–'),
     h('td.c-date.c-posted', num(fmtDate(r.date) || '–')),
-    h('td.c-date', r.deadline ? num(fmtDate(r.deadline)) : h('span.muted', 'none given')),
-    h('td', status),
-    h('td.c-act', r.url ? h('a.post-link', { href: r.url, target: '_blank', rel: 'noopener noreferrer' },
-      icon('external'), h('span', 'Posting'), h('span.sr-only', ` for ${r.title} (opens in your browser)`)) : null),
-    h('td.c-act', canPrepare(r) ? h('button.btn.btn-secondary.btn-sm', {
-      type: 'button', disabled: !!blockedReason(), title: blockedReason() || null,
-      onclick: busyClick(() => onPrepare([r.number])),
-    }, h('span', 'Prepare'), h('span.sr-only', ` an application for ${r.title}`)) : null));
+    h('td.c-date.c-deadline', { class: r.deadline ? '' : 'is-none' },
+      r.deadline ? [h('span.cell-label', 'Closes '), num(fmtDate(r.deadline))] : h('span.muted', 'none given')),
+    h('td.c-status', status),
+    h('td.c-act',
+      r.url ? h('a.post-link', { href: r.url, target: '_blank', rel: 'noopener noreferrer' },
+        icon('external'), h('span', 'Open posting'), h('span.sr-only', ` for ${r.title} (opens in your browser)`)) : null,
+      canPrepare(r) ? h('button.btn.btn-secondary.btn-sm', {
+        type: 'button', disabled: !!blockedReason(), title: blockedReason() || null,
+        onclick: busyClick(() => onPrepare([r.number])),
+      }, h('span', 'Prepare'), h('span.sr-only', ` an application for ${r.title}`)) : null));
 }
 
 let batchBar = null;

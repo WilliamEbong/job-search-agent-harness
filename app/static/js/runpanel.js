@@ -79,12 +79,12 @@ async function refreshCurrent() {
   cur.view = { ...cur.view, ...v, events: [...cur.view.events, ...(v.events || [])] };
   for (const ev of v.events || []) addEvent(ev);
   cur.count = v.count ?? cur.count + (v.events || []).length;
-  if (!cur.startedAt && v.status !== 'queued') cur.startedAt = (cur.view.events[0]?.at * 1000) || Date.now();
+  if (!cur.startedAt) cur.startedAt = v.created ? v.created * 1000 : (cur.view.events[0]?.at * 1000) || Date.now();
   if (prev !== v.status) {
     if (FINISHED.includes(v.status)) cur.endedAt = Date.now();
     announce(`${cur.view.title}: ${STATUS[v.status] || v.status}.`);
-    renderChrome();
   }
+  renderChrome();
 }
 
 function show(view) {
@@ -157,8 +157,13 @@ function renderChrome() {
   else d.reply.querySelector('.rp-reply-label').textContent =
     v.status === 'question' ? 'Your answer' : 'Anything to add? (optional)';
 
+  // The footer follows the latest state; rebuilt only when that state changes, so a
+  // focused Cancel button is not swapped out under the person every second.
+  const key = `${v.status}|${canReply}`;
+  if (d.key === key) return;
+  d.key = key;
   const live = ACTIVE.includes(v.status);
-  d.actions.replaceChildren(
+  d.actions.replaceChildren(...[
     live
       ? h('button.btn.btn-on-dark', { type: 'button', disabled: v.status === 'cancelling', onclick: busyClick(async () => {
           const r = await post(`/api/tasks/${cur.id}/cancel`);
@@ -167,8 +172,8 @@ function renderChrome() {
           schedule(300);
         }) }, icon('close'), h('span', v.status === 'queued' ? 'Remove from queue' : 'Cancel'))
       : h('button.btn.btn-on-dark', { type: 'button', onclick: close }, icon('check'), h('span', 'Close')),
-    v.status === 'running' ? h('p.rp-leave', 'You can keep using Candor or leave this window open and do something else.') : '',
-  );
+    v.status === 'running' ? h('p.rp-leave', 'You can keep using Candor or leave this window open and do something else.') : null,
+  ].filter(Boolean));
 }
 
 function tick() {

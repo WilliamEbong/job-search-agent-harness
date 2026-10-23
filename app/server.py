@@ -86,12 +86,13 @@ class Handler(BaseHTTPRequestHandler):
         return host in (f"127.0.0.1:{port}", f"localhost:{port}")
 
     def _authorised(self, query: dict) -> bool:
-        given = self.headers.get("X-Candor-Token") or (query.get("t") or [""])[0]
+        given = self.headers.get("X-Candor-Token") or (
+            (query.get("t") or [""])[0] if self.path.startswith("/files/") else "")
         return secrets.compare_digest(given, self.server.token)
 
     def _body(self) -> dict:
         length = int(self.headers.get("Content-Length") or 0)
-        if length > MAX_JSON:
+        if not 0 <= length <= MAX_JSON:
             raise Problem(413, "That is too much text at once.")
         raw = self.rfile.read(length) if length else b"{}"
         try:
@@ -212,8 +213,7 @@ def get_engines(h, _q):
 
 
 def get_tasks(h, _q):
-    runner = _runner(h)
-    live = sorted(runner.tasks.values(), key=lambda t: t.id)
+    live = sorted(_runner(h).snapshot(), key=lambda t: t.id)
     return {"tasks": [t.view(len(t.events)) | {"events": t.events[-3:]} for t in live
                       if t.status not in ("done", "failed", "cancelled")
                       or time.time() - t.created < 3600],
@@ -287,22 +287,17 @@ def post_apply(h, _q):
     payload = h._body()
     engine = _engine(h, "apply")
     batch: list[dict] = []
-    numbers = payload.get("numbers")
+    numbers = payload.get("numbers") or ([payload["number"]] if payload.get("number") else None)
     if isinstance(numbers, list) and numbers:
+        if len(numbers) > 10:
+            raise Problem(400, "Prepare up to 10 applications at a time.")
         search = data.last_search(root) or {"results": []}
-        for number in numbers[:10]:
+        for number in numbers:
             n = data._int(number)
             if not n or not 1 <= n <= len(search["results"]):
-                raise Problem(400, f"There is no job number {number} in the last search.")
+                raise Problem(400, f"Job {number} is not in the last search any more.")
             job = search["results"][n - 1]
             batch.append({"number": n, "company": job["company"], "role": job["title"]})
-    elif payload.get("number"):
-        n = data._int(payload["number"])
-        search = data.last_search(root) or {"results": []}
-        if not n or not 1 <= n <= len(search["results"]):
-            raise Problem(400, "That job is not in the last search any more.")
-        job = search["results"][n - 1]
-        batch.append({"number": n, "company": job["company"], "role": job["title"]})
     elif payload.get("url"):
         url = str(payload["url"]).strip()
         if not tasks.URL.fullmatch(url):
@@ -312,7 +307,7 @@ def post_apply(h, _q):
         text = str(payload["text"]).strip()
         if len(text) < 80:
             raise Problem(400, "Paste the whole posting, not just the title.")
-        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3)
         folder = root / "documents" / "postings"
         folder.mkdir(parents=True, exist_ok=True)
         (folder / f"pasted-{stamp}.md").write_text(text[:200_000], encoding="utf-8")
@@ -339,7 +334,7 @@ def post_status(h, _q):
     payload = h._body()
     company, role = str(payload.get("company", "")), str(payload.get("role", ""))
     status = str(payload.get("status", "in_progress"))
-    if not company or (not payload.get("sent") and status not in STATUSES):
+    if not company or not role or (not payload.get("sent") and status not in STATUSES):
         raise Problem(400, "Choose an application and an outcome.")
     try:
         data.mark(h.server.root, company, role, status, bool(payload.get("sent")))
@@ -375,6 +370,8 @@ def post_open(h, _q):
     target = data.inside(h.server.root, str(h._body().get("path", "")))
     if not target or not target.exists():
         raise Problem(404, "That folder is not there any more.")
+    if target.is_file() and target.suffix.lower() not in (".pdf", ".docx", ".md"):
+        raise Problem(400, "Candor only opens folders, PDFs and documents.")  # never a script
     if os.name == "nt":
         os.startfile(target)  # noqa: S606 - a path confined to documents/
     else:

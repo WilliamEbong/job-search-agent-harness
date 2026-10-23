@@ -40,10 +40,12 @@ setup only:
 {"engines": [{"name": "claude", "label": "Claude", "installed": true, "version": "2.1.303",
               "signed_in": true},
              {"name": "codex", "label": "Codex", "installed": true, "version": "0.160.0",
-              "signed_in": true}],
+              "signed_in": true, "api_key": false}],
  "chosen": "auto", "resolved": {"apply": "codex", "other": "claude"}}
 ```
-`resolved` is null-valued when nothing usable is installed.
+`resolved` is null-valued when nothing usable is installed. `signed_in` means signed in
+with the subscription (Claude: `authMethod` claude.ai; Codex: ChatGPT login). `api_key:
+true` means signed in with an API key, which bills per use: show a warning.
 
 `GET /api/jobs`:
 ```json
@@ -65,7 +67,7 @@ and 60 (below this it will not draft).
 ```json
 {"applications": [{"id": "Rivermouth_Environmental_Consulting_Environmental_Data_Analyst",
   "company": "...", "role": "...", "status": "in_progress", "status_label": "Sent, waiting",
-  "fit": 82, "date": "2026-08-04", "submitted_date": "2026-08-04", "location": "...",
+  "number": 1, "fit": 82, "date": "2026-08-04", "submitted_date": "2026-08-04", "location": "...",
   "source": "url", "rationale": "...", "followups_sent": 0, "days_quiet": 80,
   "stages": ["found", "drafted", "sent"],
   "folder": "documents/applications/Rivermouth_...",   // or "" when none
@@ -98,6 +100,7 @@ engine, summary}]}` (history newest first, up to 30).
 `GET /api/tasks/<id>?since=<n>` — one task view:
 ```json
 {"id": 3, "kind": "apply", "title": "Preparing an application", "engine": "codex",
+ "created": 1792778400.0, "can_reply": false,
  "status": "queued|running|question|done|failed|cancelled|cancelling",
  "args": {"number": 2}, "count": 14,
  "events": [{"kind": "note|step|say|you|done|error", "text": "...", "at": 1792778400.1}]}

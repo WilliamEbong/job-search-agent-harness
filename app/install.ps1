@@ -101,6 +101,11 @@ try {
         Write-Host '    type this in a terminal: npm install -g @anthropic-ai/claude-code'
         Write-Host 'Candor''s setup screen walks you through this too, so you can carry on now.'
     }
+    # Claude Code on Windows runs its commands through Git Bash.
+    if (-not (Have 'git') -and (Have 'winget') -and (Ask 'Install Git for Windows (Claude Code needs it to run commands)?')) {
+        Write-Host 'Installing Git. Windows may ask for permission: click Yes.'
+        if (-not (Winget-Install 'Git.Git')) { Write-Warning 'Git did not install. Claude Code may not be able to run commands; Codex still works.' }
+    }
 
     Step 4 'Creating the Candor shortcuts'
     $pythonw = Join-Path (Split-Path -Parent $py) 'pythonw.exe'

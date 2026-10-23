@@ -50,7 +50,7 @@ class Paths(TempRoot):
         (self.root / "documents" / "a.pdf").write_bytes(b"x")
         self.assertIsNotNone(data.inside(self.root, "documents/a.pdf"))
         for bad in ("documents/../preferences.yaml", "evidence/register.yaml", "", "/etc/passwd",
-                    "documents/\x00a"):
+                    "documents/\x00a", "\\\\host\\share\\x.pdf", "C:/Windows/x.pdf"):
             self.assertIsNone(data.inside(self.root, bad), bad)
 
     def test_upload_names_are_cleaned_and_never_overwrite(self):
@@ -159,11 +159,18 @@ class Applications(TempRoot):
         self.assertEqual(apps["Gamma"]["stages"], ["found", "sent", "rejected"])
 
     def test_mark_sent(self):
-        self.write_tracker(["2026-08-06,Beta,Clerk,in_progress,70,,,\n"])
+        self.write_tracker(["2026-08-06,Beta,Clerk,in_progress,70,followed up 2026-08-20,,\n",
+                            "2026-08-06,Beta,Senior Clerk,in_progress,70,,,\n"])
         data.mark(self.root, "Beta", "Clerk", "", sent=True)
-        self.assertEqual(data.applications(self.root)[0]["status_label"], "Sent, waiting")
+        apps = {a["role"]: a for a in data.applications(self.root)}
+        self.assertEqual(apps["Clerk"]["status_label"], "Sent, waiting")
+        self.assertEqual(apps["Senior Clerk"]["status_label"], "Ready to send")  # exact match
+        self.assertIn("followed up 2026-08-20; submitted",  # follow-up history kept
+                      (self.root / "job_search_tracker.csv").read_text(encoding="utf-8"))
         with self.assertRaises(ValueError):
             data.mark(self.root, "Beta", "Clerk", "applied-ish", sent=False)
+        with self.assertRaises(ValueError):
+            data.mark(self.root, "Beta", "", "rejected", sent=False)
 
 
 class Preferences(TempRoot):
@@ -179,6 +186,19 @@ class Preferences(TempRoot):
         self.assertIn("mode: focused", (self.root / "preferences.yaml").read_text())
         self.assertIn("plan: claude-pro", (self.root / "preferences.yaml").read_text())
         self.assertTrue((self.root / "preferences.yaml.bak").exists())
+
+    def test_unreadable_preferences_are_never_overwritten(self):
+        path = self.root / "preferences.yaml"
+        path.write_text("location: [unclosed\n", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            data.save_settings(self.root, {"mode": "lite"})
+        self.assertEqual(path.read_text(encoding="utf-8"), "location: [unclosed\n")
+
+    def test_odd_positions_do_not_break_state(self):
+        (self.root / "preferences.yaml").write_text("target_positions: [Analyst, Clerk]\n",
+                                                    encoding="utf-8")
+        self.assertFalse(data.setup_state(self.root)["has_positions"])
+        self.assertEqual(data.profile(self.root)["positions"], [])
 
 
 class Http(TempRoot):
@@ -203,13 +223,17 @@ class Http(TempRoot):
             with urllib.request.urlopen(request) as response:
                 return response.status, json.loads(response.read() or b"null")
         except urllib.error.HTTPError as error:
-            return error.code, json.loads(error.read() or b"null")
+            with error:
+                return error.code, json.loads(error.read() or b"null")
 
     def test_guards(self):
         self.assertEqual(self.call("/api/ping", token=False), (200, {"app": "candor"}))
         self.assertEqual(self.call("/api/state", token=False)[0], 403)
         self.assertEqual(self.call("/api/state", host="evil.example:80")[0], 403)
         self.assertEqual(self.call("/files/../preferences.yaml")[0], 404)
+        self.assertEqual(self.call(f"/api/state?t={self.server.token}", token=False)[0], 403)
+        (self.root / "documents" / "run.bat").write_text("echo hi", encoding="utf-8")
+        self.assertEqual(self.call("/api/open", body={"path": "documents/run.bat"})[0], 400)
 
     def test_state_and_setup_gate(self):
         status, body = self.call("/api/state")

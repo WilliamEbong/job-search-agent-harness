@@ -2,6 +2,7 @@ import json
 import socket
 import threading
 import unittest
+import unittest.mock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from app import launcher
@@ -46,6 +47,36 @@ class LauncherTest(unittest.TestCase):
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
         self.assertEqual(launcher.probe(server.server_address[1]), 'candor')
+
+
+class IdleShutdown(unittest.TestCase):
+    """The server stops once no page has checked in for IDLE_CHECKS checks, unless a run is working."""
+
+    def fake(self, statuses):
+        runner = type('Runner', (), {'active': lambda self: [
+            type('T', (), {'status': s})() for s in statuses]})()
+        server = type('Server', (), {'last_seen': 1.0, 'runner': runner, 'stopped': False})()
+        server.shutdown = lambda: setattr(server, 'stopped', True)
+        return server
+
+    def test_idle_window_stops_server(self):
+        server = self.fake([])
+        with unittest.mock.patch.object(launcher, 'CHECK_SECONDS', 0),                 unittest.mock.patch.object(launcher, 'IDLE_CHECKS', 3):
+            launcher._watch(server)
+        self.assertTrue(server.stopped)
+
+    def test_running_task_keeps_server_alive(self):
+        server = self.fake(['running'])
+        checks = []
+
+        def sleep(_):
+            checks.append(1)
+            if len(checks) > 10:  # then the run finishes
+                server.runner.active = lambda: []
+        with unittest.mock.patch.object(launcher, 'CHECK_SECONDS', 0),                 unittest.mock.patch.object(launcher, 'IDLE_CHECKS', 3),                 unittest.mock.patch.object(launcher.time, 'sleep', sleep):
+            launcher._watch(server)
+        self.assertGreater(len(checks), 10)
+        self.assertTrue(server.stopped)
 
 
 if __name__ == '__main__':

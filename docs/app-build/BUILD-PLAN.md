@@ -40,14 +40,14 @@ is installed.
 | # | Step | Status |
 |---|---|---|
 | 1 | Study harness, Qualia, CLIs | done |
-| 2 | PRODUCT.md, design direction (impeccable) | in progress |
-| 3 | Server: state readers, files, settings, deterministic actions | pending |
-| 4 | Agent runner: Claude/Codex adapters, tasks, streaming, reply, cancel | pending |
-| 5 | Front end: shell, wizard, Today, Jobs, Apply, Applications, Profile, Settings | pending |
-| 6 | Launcher, installer `.cmd`, desktop shortcut | pending |
-| 7 | Tests (A1, A2) | pending |
-| 8 | Playwright pass (A3), live agent run (A4), launcher (A5) | pending |
-| 9 | Review, DESIGN.md, docs (README, USER-GUIDE section) | pending |
+| 2 | PRODUCT.md, design direction (impeccable) | done |
+| 3 | Server: state readers, files, settings, deterministic actions | done |
+| 4 | Agent runner: Claude/Codex adapters, tasks, streaming, reply, cancel | done |
+| 5 | Front end: shell, wizard, Today, Jobs, Apply, Applications, Profile, Settings | done |
+| 6 | Launcher, installer `.cmd`, desktop shortcut | done (installer not executed) |
+| 7 | Tests (A1, A2) | done: 22 app tests, 461 harness, 154 upstream |
+| 8 | Browser pass (A3), live agent run (A4), launcher (A5) | done; live apply run in progress |
+| 9 | Review, DESIGN.md, docs (README, USER-GUIDE section) | in progress |
 | 10 | Commit, merge to main, push | pending |
 
 ## Later (not built)

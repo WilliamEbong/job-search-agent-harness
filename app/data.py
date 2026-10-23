@@ -22,7 +22,7 @@ import status as status_mod  # noqa: E402
 import today as today_mod  # noqa: E402
 import tracker_row  # noqa: E402
 
-from app import engines  # noqa: E402
+from app import engines, tasks  # noqa: E402
 
 SETTINGS = Path("state") / "app-settings.json"
 DEFAULTS = {"engine": "auto", "search_top": 5, "screen_after_search": True}
@@ -45,8 +45,14 @@ def _yaml(path: Path) -> dict | None:
 def _csv(path: Path) -> list[dict]:
     if not path.exists():
         return []
-    with path.open(newline="", encoding="utf-8-sig") as handle:
-        return [{k: (v or "") for k, v in row.items() if k} for row in csv.DictReader(handle)]
+    for encoding in ("utf-8-sig", "cp1252"):  # a file Excel re-saved is often cp1252
+        try:
+            with path.open(newline="", encoding=encoding) as handle:
+                return [{k: (v or "") if isinstance(v, str) else "" for k, v in row.items() if k}
+                        for row in csv.DictReader(handle)]
+        except UnicodeDecodeError:
+            continue
+    return []
 
 
 def _int(value) -> int | None:
@@ -58,8 +64,9 @@ def _int(value) -> int | None:
 
 def inside(root: Path, relative: str, base: str = "documents") -> Path | None:
     """`relative` resolved under root/base, or None if it escapes (.., drive, link)."""
-    if not relative or "\x00" in relative:
-        return None
+    if not relative or "\x00" in relative or relative.startswith(("/", "\\")) \
+            or Path(relative).is_absolute() or Path(relative).drive:
+        return None  # before resolve(): a \\host\share path would make Windows call out
     allowed = (root / base).resolve()
     target = (root / relative).resolve()
     return target if target == allowed or allowed in target.parents else None
@@ -94,7 +101,11 @@ def save_settings(root: Path, changes: dict) -> dict:
     if "mode" in changes:
         if changes["mode"] not in ("lite", "standard"):
             raise ValueError("Mode is lite or standard.")
-        prefs = _yaml(root / "preferences.yaml") or {}
+        prefs = _yaml(root / "preferences.yaml")
+        if prefs is None:
+            if (root / "preferences.yaml").exists():
+                raise ValueError("preferences.yaml could not be read, so it was left as it is.")
+            prefs = {}
         usage = prefs.get("usage") if isinstance(prefs.get("usage"), dict) else {}
         # The harness's standard modes are focused | balanced | full; keep one already set.
         if changes["mode"] == "lite":
@@ -121,6 +132,13 @@ def write_preferences(root: Path, prefs: dict) -> None:
     os.replace(tmp, path)
 
 
+def _positions(prefs: dict) -> list[dict]:
+    """target_positions as lite_search reads it: a mapping with `positions`, or a bare list."""
+    block = prefs.get("target_positions")
+    found = block.get("positions") if isinstance(block, dict) else block
+    return [p for p in found if isinstance(p, dict)] if isinstance(found, list) else []
+
+
 def engine_for(root: Path, kind: str, installed: dict | None = None) -> str | None:
     """Which engine runs a task. Auto: Codex for the long application and screening
     loops when it is installed, Claude for the rest; either one alone runs everything."""
@@ -136,14 +154,14 @@ def engine_for(root: Path, kind: str, installed: dict | None = None) -> str | No
 # -- screens -----------------------------------------------------------------------
 def setup_state(root: Path) -> dict:
     prefs = _yaml(root / "preferences.yaml") or {}
-    positions = ((prefs.get("target_positions") or {}).get("positions") or []) \
-        if isinstance(prefs.get("target_positions"), dict) else []
+    positions = _positions(prefs)
     cv_dir = root / "documents" / "cv"
     cvs = sorted(p for p in cv_dir.glob("*") if p.suffix.lower() in UPLOAD_TYPES) \
         if cv_dir.is_dir() else []
     has_register = (root / "evidence" / "register.yaml").exists()
     return {"has_register": has_register, "has_preferences": bool(prefs),
-            "has_positions": any((p or {}).get("status", "active") == "active" for p in positions),
+            "has_positions": any(str(p.get("status") or "active").strip().lower() == "active"
+                                 for p in positions),
             "onboarded": has_register and bool(prefs),
             "cv_files": [p.relative_to(root).as_posix() for p in cvs]}
 
@@ -221,7 +239,7 @@ def _folders(root: Path) -> dict[str, Path]:
     for parent in (base, base / "applied"):
         if parent.is_dir():
             for folder in parent.iterdir():
-                if folder.is_dir() and folder.name != "applied":
+                if folder.is_dir() and folder.name not in archive_applications.RESERVED:
                     found[folder.name] = folder
     return found
 
@@ -284,17 +302,28 @@ def applications(root: Path) -> list[dict]:
 def mark(root: Path, company: str, role: str, status: str, sent: bool) -> None:
     """The person's own report: they sent it, or an outcome came back. Goes through the
     harness's tracker script, then lets the archiver move a sent package to applied/."""
-    changes = {}
-    if sent:
-        changes = {"status": "in_progress", "submitted_date": date.today().isoformat(),
-                   "notes": f"submitted {date.today().isoformat()}"}
-    else:
+    if not role.strip():
+        raise ValueError("Choose an application first.")
+    if not sent:
         status = status_mod.normalize(status)
         if status not in status_mod.CANONICAL:
             raise ValueError("Unknown status.")
-        changes = {"status": status}
-    if not tracker_row.update(company, role, changes, root / "job_search_tracker.csv"):
+    path = root / "job_search_tracker.csv"
+    rows, _ = tracker_row.read_rows(path)
+    key = (company.strip().lower(), role.strip().lower())
+    hits = [row for row in rows if ((row.get("company") or "").strip().lower(),
+                                     (row.get("role") or "").strip().lower()) == key]
+    if not hits:  # exact match only: "Data Analyst" must never also mark "Senior Data Analyst"
         raise LookupError("That application is not in the tracker.")
+    today = date.today().isoformat()
+    for row in hits:
+        if sent:
+            notes = (row.get("notes") or "").strip()  # keep "followed up" history
+            row.update(status="in_progress", submitted_date=today,
+                       notes=f"{notes}; submitted {today}" if notes else f"submitted {today}")
+        else:
+            row["status"] = status
+    tracker_row.write_rows(rows, path)
     if root.resolve() == HARNESS.parent:  # the archiver works on the live tree only
         archive_applications.move_applied()
 
@@ -328,10 +357,8 @@ def profile(root: Path) -> dict:
             "entries": sum(len(v) for v in reg.values() if isinstance(v, list)),
         }
     prefs = _yaml(root / "preferences.yaml") or {}
-    tp = prefs.get("target_positions") if isinstance(prefs.get("target_positions"), dict) else {}
     positions = [{k: p.get(k) for k in ("rank", "title", "fit", "tier", "because", "gap")}
-                 | {"status": p.get("status", "active")}
-                 for p in tp.get("positions") or [] if isinstance(p, dict)]
+                 | {"status": p.get("status", "active")} for p in _positions(prefs)]
     location = prefs.get("location") if isinstance(prefs.get("location"), dict) else {}
     pay = prefs.get("compensation") if isinstance(prefs.get("compensation"), dict) else {}
     excl = prefs.get("exclusions") if isinstance(prefs.get("exclusions"), dict) else {}
@@ -353,8 +380,7 @@ def set_position(root: Path, rank, new_status: str) -> None:
     if new_status not in ("active", "dropped"):
         raise ValueError("A position is active or dropped.")
     prefs = _yaml(root / "preferences.yaml")
-    positions = ((prefs or {}).get("target_positions") or {}).get("positions") or []
-    hit = [p for p in positions if isinstance(p, dict) and _int(p.get("rank")) == _int(rank)]
+    hit = [p for p in _positions(prefs or {}) if _int(p.get("rank")) == _int(rank)]
     if not hit:
         raise LookupError("No position with that number.")
     hit[0]["status"] = new_status
@@ -377,7 +403,7 @@ def save_upload(root: Path, name: str, body: bytes, to: str = "cv") -> str:
 
 
 def history(root: Path, limit: int = 30) -> list[dict]:
-    path = root / "state" / "app-history.jsonl"
+    path = root / tasks.HISTORY
     try:
         lines = path.read_text(encoding="utf-8").splitlines()[-limit:]
     except OSError:

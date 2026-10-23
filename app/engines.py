@@ -17,13 +17,16 @@ from pathlib import Path
 
 # The harness's own scripts and tools, the same list harness_setup.py pre-approves.
 CLAUDE_TOOLS = [
-    "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "TodoWrite",
+    "Read", "Write", "Edit", "Glob", "Grep", "TodoWrite",
     "Bash(python harness/*)", "Bash(python3 harness/*)", "Bash(bun run:*)",
     "Bash(lualatex:*)", "Bash(xelatex:*)", "Bash(pandoc:*)", "Bash(pdftotext:*)",
     "Bash(pdftoppm:*)", "Bash(pdfinfo:*)",
 ]
 # A run on the person's subscription must never fall back to a paid API key.
-API_KEYS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "OPENAI_API_KEY", "CODEX_API_KEY")
+# ...and the settings that would route a run to another, paid backend.
+API_KEYS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL",
+            "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "OPENAI_API_KEY",
+            "OPENAI_BASE_URL", "CODEX_API_KEY", "AZURE_OPENAI_API_KEY")
 ENGINES = ("claude", "codex")
 LABELS = {"claude": "Claude", "codex": "Codex"}
 
@@ -67,13 +70,18 @@ def status(name: str) -> dict:
     if name == "claude":
         auth = _quiet([*command, "auth", "status"])
         try:
-            info["signed_in"] = bool(auth and json.loads(auth.stdout).get("loggedIn"))
+            found = json.loads(auth.stdout) if auth else {}
         except ValueError:
-            pass
+            found = {}
+        logged_in = bool(found.get("loggedIn"))
+        info["signed_in"] = logged_in and found.get("authMethod") == "claude.ai"
     else:
         auth = _quiet([*command, "login", "status"])
-        info["signed_in"] = bool(auth and auth.returncode == 0
-                                 and "logged in" in (auth.stdout + auth.stderr).lower())
+        text = (auth.stdout + auth.stderr).lower() if auth and auth.returncode == 0 else ""
+        logged_in = "logged in" in text
+        info["signed_in"] = logged_in and "chatgpt" in text
+    # Signed in with an API key bills per use, not the subscription: say so, never run it.
+    info["api_key"] = logged_in and not info["signed_in"]
     return info
 
 
@@ -89,9 +97,10 @@ def argv(name: str, root: Path, *, session: str = "", network: bool = False) -> 
     if not command:
         raise RuntimeError(f"{LABELS[name]} is not installed")
     if name == "claude":
+        tools = [*CLAUDE_TOOLS, *(("WebFetch", "WebSearch") if network else ())]
         args = [*command, "-p", "--output-format", "stream-json", "--verbose",
                 "--permission-mode", "acceptEdits", "--setting-sources", "project,local",
-                "--allowedTools", *CLAUDE_TOOLS]
+                "--allowedTools", *tools]
         return [*args, "--resume", session] if session else args
     # Codex: network for this run only (nothing is written to ~/.codex/config.toml).
     config = ["-c", 'sandbox_mode="workspace-write"']
@@ -110,6 +119,13 @@ def _short(text: str, limit: int = 140) -> str:
 
 def step_text(command: str) -> str:
     """A tool call in words a job seeker understands; unknown commands stay short."""
+    for flag, words in (("--package", "Packaging the application"),
+                        ("--save", "Saving the posting"), ("--start", "Saving the posting"),
+                        ("--verdict", "Updating the shortlist"),
+                        ("--gate-fail", "Setting aside a job that breaks your rules"),
+                        ("--applied", "Updating the tracker")):
+        if "lite_search.py" in command and flag in command:
+            return words
     plain = {
         "lite_search.py": "Searching job boards", "latex_build.py": "Building the PDFs",
         "ats_check.py": "Checking how screening software reads the CV",
@@ -145,6 +161,8 @@ def parse(name: str, line: str) -> list[dict]:
         if kind == "assistant":
             out = []
             for block in (event.get("message") or {}).get("content") or []:
+                if not isinstance(block, dict):
+                    continue
                 if block.get("type") == "text" and block.get("text", "").strip():
                     out.append({"kind": "say", "text": block["text"].strip()})
                 elif block.get("type") == "tool_use":
@@ -162,14 +180,17 @@ def parse(name: str, line: str) -> list[dict]:
                                     + Path(str(data.get("file_path", ""))).name})
             return out
         if kind == "result":
-            return [{"kind": "error" if event.get("is_error") else "done",
-                     "text": str(event.get("result") or "")}]
+            if event.get("is_error"):
+                return [{"kind": "error", "text": str(event.get("result") or event.get("subtype")
+                                                      or "The engine reported an error.")}]
+            return [{"kind": "done", "text": str(event.get("result") or "")}]
         return []
     if kind == "thread.started":
         return [{"kind": "session", "text": str(event.get("thread_id", ""))}]
     if kind in ("turn.failed", "error"):
-        message = (event.get("error") or {}).get("message") if kind == "turn.failed" \
-            else event.get("message")
+        error = event.get("error")
+        message = (error.get("message") if isinstance(error, dict) else error) \
+            if kind == "turn.failed" else event.get("message")
         return [{"kind": "error", "text": str(message or "The engine reported an error.")}]
     if kind == "turn.completed":
         return [{"kind": "done", "text": ""}]

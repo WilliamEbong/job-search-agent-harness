@@ -14,3 +14,8 @@
 - 2026-10-23 Verified A4: a live `ask` task completed on Claude (58 s) and on Codex (119 s) through the queue, streaming steps and replies; both returned a session id for follow-up replies.
 - 2026-10-23 Local demo data seeded for screens (gitignored): preferences.yaml from the example with mode lite, a synthetic 11-row state/lite-last-search.json, one gate-fail shortlist row.
 - 2026-10-23 Checkpoint commit 00c10d6 (server, queue, launcher, installer, docs, 20 app tests green).
+- 2026-10-23 Verified A4 in full: a live Codex `apply` run through the queue on a fictional posting built a complete package in 7 min (fit 94, CV 2 pages, letter 1, ATS and fact gate passed) with its tracker row.
+- 2026-10-23 Backend review (fresh agent): 19 confirmed findings fixed in 03bfebd, with regression tests (exact-match tracker marking, notes kept, unreadable prefs untouched, odd positions, UNC paths, /api/open scripts, query token scope).
+- 2026-10-23 Playwright MCP browser locked by another session's Chrome (started 00:21, not ours) - not killed. Verified in the built-in browser pane and a headless CDP script instead.
+- 2026-10-23 Design finish review: fix -> 8 material fixes applied by the front-end agent; verdict pass 7/8 resolved, fix 6 then confirmed by me at 1440 (README capture) and 390 (browser pane); one regression (queue hint read as status) reworded. Two-round budget reached.
+- 2026-10-23 Decision: README screenshots ship as .webp in docs/media/ because .gitignore ignores *.png/*.jpg (personal photos) and the guards forbid negations.

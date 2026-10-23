@@ -55,7 +55,7 @@ export function blockedReason() {
   if (s && !s.has_register) return 'Finish setup first';
   return null;
 }
-export const queueNote = () => (isBusy() ? 'Another task is running. This one will start after it.' : null);
+export const queueNote = () => (isBusy() ? 'Candor is busy with another task. If you start this now, it waits its turn.' : null);
 
 // The run panel registers itself here so any screen can start a task.
 export const taskHooks = { started: () => {} };

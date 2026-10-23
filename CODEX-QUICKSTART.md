@@ -1,5 +1,11 @@
 # Setting up your job search assistant (first time, with Codex)
 
+> **On Windows and not technical? Use the Candor app instead.** It installs with a
+> double-click and works with buttons rather than chat: see
+> [Get the app (no terminal)](README.md#get-the-app-no-terminal) in the README. You still
+> need Codex installed and signed in (step 1 below); the app does the rest. This page is
+> for people who would rather work in the Codex chat.
+
 Plan for 30 to 60 minutes, most of it waiting while things install. You need a ChatGPT
 account and your CV (PDF or Word).
 

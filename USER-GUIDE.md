@@ -4,11 +4,98 @@ Everything this system does, and how to use it. Read the README first for what i
 why; this is the manual.
 
 **Contents**
-[Install](#install) · [Lite mode](#lite-mode) · [Onboarding](#onboarding) · [Career review](#career-review) ·
+[Using the Candor app](#using-the-candor-app) · [Install](#install) · [Lite mode](#lite-mode) · [Onboarding](#onboarding) · [Career review](#career-review) ·
 [Companies of interest](#companies-of-interest) · [Finding jobs](#finding-jobs) ·
 [Applying](#applying) · [Truth checking](#truth-checking) · [Tracking](#tracking) ·
 [Interviews](#interviews) · [Continuity](#continuity) · [Both runtimes](#both-runtimes) ·
 [Command reference](#command-reference) · [When something goes wrong](#when-something-goes-wrong)
+
+---
+
+## Using the Candor app
+
+Candor is the desktop app over this system. It does everything below through screens
+and buttons, so you never type a command. Install it with **Install Candor** (see the
+README), then open it from the Candor icon. Closing the window stops it after a few
+minutes; if the assistant is still working on something, it finishes first.
+
+**The first time.** A short setup checks that Claude Code or Codex is installed and
+signed in, and says exactly what to do if not. Then you add your CV (PDF, Word or text)
+and answer five questions in boxes: where you can work, your minimum pay, work you
+refuse, skills a job must not require, and the gap that most changes what you may
+claim. Leave any blank to keep the default. The assistant reads your CV and names your
+20 best-fit positions. This takes 5 to 10 minutes.
+
+### Today
+
+The first screen. It lists what needs you now: follow-ups for applications that have
+gone quiet (with how many days), packages that are ready for you to send, interviews
+coming up, postings that close soon, strong jobs you have not applied to yet, and how
+long ago you last searched. Each item has a button for the next step, so you can work
+down the list.
+
+### Jobs
+
+Press **Find jobs** to search the job boards for your top target positions (5 unless
+you change it in Settings). The search itself uses no AI and only reads public job
+pages. The results come back ranked by a fit score from 0 to 100, with two lines across
+the list: at 80 and above the assistant will write the application; below 60 it will not.
+If screening is on, the assistant then reads the top jobs and marks each one qualified or
+not, with its reason; a job that breaks one of your hard rules says so.
+
+Pick a job and press **Prepare application**, or tick several to prepare them one after
+another. Found a job somewhere else? Paste its link or text, or add a PDF or screenshot.
+Underneath is the history of every job screened so far.
+
+### Applications
+
+One card per application: the company, the role, its fit score, where it is (found,
+drafted, sent, interview, offer) and its files: the CV, the cover letter, both combined,
+the ATS report and a copy of the posting. Open a PDF to read it, or open the whole folder.
+
+A card marked **Ready to send** is finished and waiting for you. Read the documents, send
+them to the employer yourself, then mark it sent; Candor records today's date and starts
+counting towards a follow-up. Later, change its status when you hear back (interview,
+offer, hired, rejected, no response, withdrawn). From a card you can also ask for a
+follow-up email draft or interview preparation. Candor never sends anything for you.
+
+### Profile
+
+What Candor knows about you, and the only facts it may put in an application: your
+employers and job titles, education, certificates (finished or in progress), tools (with
+how far you may claim them) and your numbers. Below that are your 20 target positions,
+each with its fit score, the reason and the honest gap. Cross out any you do not want and
+searches skip it; you can bring it back. Your preferences (where, pay, what you refuse)
+are shown too.
+
+If something is missing or wrong, add it as a fact in plain words, for example "I
+finished the Google certificate in May 2026". The assistant records it with where it came
+from.
+
+### Settings
+
+- **Assistant:** Automatic, Claude or Codex. Automatic uses Codex for applications when
+  it is installed (they are long runs) and Claude for the rest. This screen also shows
+  which assistants are installed and signed in.
+- **Mode:** lite (cheaper, the default below ChatGPT Pro or Claude Max) or standard.
+- **Search:** how many target positions each search covers, and whether the assistant
+  screens the results afterwards.
+- **Check my setup:** runs the same check as the installer and shows what works and what
+  is missing. It takes up to a minute.
+
+### The assistant panel
+
+Whenever the assistant is working, a panel shows what it is doing in plain steps ("step 2
+of 4, drafting the CV") and anything it says to you. An application takes 10 to 15
+minutes. If it needs an answer, the question appears with a reply box; the work waits
+until you answer. You can cancel at any time. Only one job runs at a time, so two runs
+never write over the same files; anything else you start waits its turn.
+
+### Ask
+
+A box for anything the screens do not cover: "what gaps should I close for analyst
+jobs?", "review my GitHub", "how is my search going?". The assistant answers in the
+panel and can do the work itself, such as a career review or a salary check.
 
 ---
 

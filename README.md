@@ -18,6 +18,38 @@ your own computer. There is no website to sign up for and no server holding your
 
 ---
 
+## Get the app (no terminal)
+
+**Candor** is the desktop app version: windows and buttons instead of a chat and
+commands. On Windows 10 or 11:
+
+1. **Download it.** On this page on GitHub, click the green **Code** button, then
+   **Download ZIP**.
+2. **Unblock and unpack it.** Right-click the downloaded ZIP, choose **Properties**, tick
+   **Unblock** at the bottom and click OK. Then right-click it again, choose **Extract
+   All**, and put the folder somewhere you will find it again, such as Documents.
+3. **Double-click "Install Candor"** in that folder. It installs what is missing (Python,
+   the job-board tools and the PDF tools), asking before each large one. The first time
+   takes 10 to 30 minutes, mostly downloads. Windows may ask "Do you want to allow this
+   app to make changes?": click Yes.
+4. **Double-click the Candor icon** on your Desktop from then on.
+
+The first time it opens, Candor checks that you have an AI assistant (Claude Code or
+Codex) and that you are signed in, then asks for your CV and five short questions: where
+you can work and whether you are allowed to, your minimum pay, work you refuse, skills a
+job must not require, and the one gap that most changes what you may claim. Any you skip
+keep a sensible default. It then names the 20 positions you fit best.
+
+It runs on your own Claude or Codex subscription; there is nothing else to pay for and
+no account to make. Long application runs use Codex when it is installed. Your CV and
+applications stay in that folder on your computer, and Candor never submits anything:
+it prepares the documents, and you send them.
+
+The rest of this page describes the chat version underneath it. The app's screens are
+explained in [USER-GUIDE.md](USER-GUIDE.md#using-the-candor-app).
+
+---
+
 ## Why use it
 
 - **Applications you can defend.** AI writing tools inflate: "supported" becomes "led",
@@ -64,9 +96,10 @@ your own computer. There is no website to sign up for and no server holding your
 
 ---
 
-## Quickstart
+## Prefer a terminal or chat?
 
-Three steps, done once.
+You can skip the app and talk to the harness directly in Claude Code or Codex. Three
+steps, done once.
 
 **1. In a terminal, download it and run the installer:**
 

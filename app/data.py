@@ -275,6 +275,8 @@ def applications(root: Path) -> list[dict]:
             "days_quiet": today_mod.days_quiet(entry, today), "stages": stages,
             "folder": folder.relative_to(root).as_posix() if folder else "", "files": files,
         })
+    for number, entry in enumerate(sorted(out, key=lambda a: a["date"]), 1):
+        entry["number"] = number  # oldest first, so a number never changes as new ones arrive
     out.sort(key=lambda a: (a["submitted_date"] or a["date"]), reverse=True)
     return out
 

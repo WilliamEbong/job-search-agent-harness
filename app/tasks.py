@@ -77,6 +77,10 @@ def build_prompt(kind: str, args: dict, mode: str = "lite") -> str:
     if kind == "apply":
         if args.get("number"):
             target = f"job #{int(args['number'])} from the last search"
+            if args.get("company"):  # a newer search renumbers rows; never apply to the wrong job
+                target += (f" ({_clean(args.get('role', ''), 200)} at "
+                           f"{_clean(args['company'], 200)}; if row {int(args['number'])} is now "
+                           "a different job, stop and say so)")
         elif args.get("url"):
             target = f"the posting at {args['url']}"
         else:
@@ -146,7 +150,10 @@ class Task:
         return {"id": self.id, "kind": self.kind, "title": self.title, "status": self.status,
                 "engine": self.engine, "args": {k: v for k, v in self.args.items()
                                                 if k in ("number", "company", "role", "url")},
-                "events": self.events[since:], "count": len(self.events)}
+                "events": self.events[since:], "count": len(self.events),
+                "created": self.created,
+                "can_reply": bool(self.session) and self.kind != "search"
+                and self.status in ("question", "done")}
 
 
 class Runner:

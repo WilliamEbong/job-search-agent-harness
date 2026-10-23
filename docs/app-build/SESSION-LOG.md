@@ -6,3 +6,11 @@
 - 2026-10-23 Decision: "/design" = the impeccable skill (no skill named design exists). No image generation on this machine, so code-led. William is away under build-continuously, so the direction round is decided by me instead of the decision page; disclosed in the report.
 - 2026-10-23 Decision: engine runs per task. "Auto" uses Codex for the long apply/search loops when installed, Claude otherwise; Codex gets network for that one run only via `-c sandbox_workspace_write.network_access=true` (nothing written to config.toml). Undo: Settings > Engine.
 - 2026-10-23 Decision: app name "Candor" (the harness's promise: it will not lie for you). Undo: one constant `APP_NAME` + title strings.
+- 2026-10-23 Design: impeccable concept-seed a2933040 assigned candidate 5 of my list (printed league table + form guide); kept. Contract in .impeccable/surfaces/app-static-index-html.md. Fonts: Barlow Condensed 500/600/700 self-hosted (OFL), system sans for prose.
+- 2026-10-23 Owner asked mid-run to use subagents: front end and launcher/installer/docs went to two parallel agents against docs/app-build/API.md; server, queue and tests stayed here.
+- 2026-10-23 Decision: job search runs harness/lite_search.py directly (no AI, no tokens); an optional AI screening task follows (Settings toggle). Undo: screen_after_search false.
+- 2026-10-23 Decision: app "Standard" mode writes harness mode `focused` (the harness's standard modes are focused|balanced|full) and keeps an existing balanced/full.
+- 2026-10-23 Decision: Claude runs with `--setting-sources project,local` so the person's own global hooks/plugins don't load into app runs (they cost ~70k cache tokens per run here). Undo: drop the flag in engines.argv.
+- 2026-10-23 Verified A4: a live `ask` task completed on Claude (58 s) and on Codex (119 s) through the queue, streaming steps and replies; both returned a session id for follow-up replies.
+- 2026-10-23 Local demo data seeded for screens (gitignored): preferences.yaml from the example with mode lite, a synthetic 11-row state/lite-last-search.json, one gate-fail shortlist row.
+- 2026-10-23 Checkpoint commit 00c10d6 (server, queue, launcher, installer, docs, 20 app tests green).

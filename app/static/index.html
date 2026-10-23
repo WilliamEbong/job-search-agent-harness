@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="candor-token" content="__CANDOR_TOKEN__">
+<meta name="color-scheme" content="light">
+<title>Candor</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/barlow-condensed-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/app.css">
+<script type="module" src="/static/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell" id="shell">
+  <header class="topbar">
+    <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="rail" aria-label="Menu"></button>
+    <span class="wordmark-sm">Candor</span>
+    <button class="btn btn-quiet ask-btn-top" id="ask-top" type="button">Ask</button>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="Main">
+    <div class="brand">
+      <a class="wordmark" href="#/today">Candor</a>
+      <p class="promise">Applications you can defend</p>
+    </div>
+    <ul class="nav" id="nav"></ul>
+    <button class="ask-btn" id="ask-rail" type="button"></button>
+    <div class="rail-foot">
+      <p class="engine-line" id="engine-line"><span class="dot" aria-hidden="true"></span><span id="engine-text">Checking…</span></p>
+      <p class="privacy-line" id="privacy-line"></p>
+    </div>
+  </nav>
+
+  <main class="main" id="main" tabindex="-1"></main>
+
+  <aside class="runpanel" id="runpanel" aria-label="Assistant progress" hidden></aside>
+</div>
+
+<div class="sr-only" aria-live="polite" id="live"></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<dialog class="ask-dialog" id="ask-dialog" aria-labelledby="ask-title">
+  <form method="dialog" id="ask-form">
+    <h2 id="ask-title">Ask Candor</h2>
+    <p class="muted">Ask anything about your job search, in your own words. For example: “Am I a good fit for project coordinator jobs?” or “I got an interview with Rivermouth.”</p>
+    <label class="field">
+      <span class="label">Your question</span>
+      <textarea id="ask-text" rows="4" required></textarea>
+    </label>
+    <p class="hint" id="ask-hint"></p>
+    <div class="row-actions">
+      <button class="btn btn-primary" id="ask-send" type="submit" value="send">Ask</button>
+      <button class="btn btn-quiet" type="submit" value="cancel" formnovalidate>Close</button>
+    </div>
+  </form>
+</dialog>
+</body>
+</html>

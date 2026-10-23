@@ -1,0 +1,668 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-23T18:08:21+00:00",
+  "title": "Design System: Candor",
+  "extensions": {
+    "colorMeta": {
+      "green": {
+        "role": "primary",
+        "displayName": "Bottle Green",
+        "canonical": "#0f3b2a",
+        "oklch": "oklch(31.7% 0.057 164)",
+        "tonalRamp": [
+          "oklch(15% 0.057 164)",
+          "oklch(26% 0.057 164)",
+          "oklch(38% 0.057 164)",
+          "oklch(49% 0.057 164)",
+          "oklch(61% 0.057 164)",
+          "oklch(72% 0.057 164)",
+          "oklch(84% 0.057 164)",
+          "oklch(95% 0.057 164)"
+        ]
+      },
+      "green-deep": {
+        "role": "primary",
+        "displayName": "Deep Bottle Green",
+        "canonical": "#0a2b1e",
+        "oklch": "oklch(26.1% 0.046 164)",
+        "tonalRamp": [
+          "oklch(15% 0.046 164)",
+          "oklch(26% 0.046 164)",
+          "oklch(38% 0.046 164)",
+          "oklch(49% 0.046 164)",
+          "oklch(61% 0.046 164)",
+          "oklch(72% 0.046 164)",
+          "oklch(84% 0.046 164)",
+          "oklch(95% 0.046 164)"
+        ]
+      },
+      "green-line": {
+        "role": "primary",
+        "displayName": "Rail Rule Green",
+        "canonical": "#2d5c47",
+        "oklch": "oklch(43.5% 0.063 163)",
+        "tonalRamp": [
+          "oklch(15% 0.063 163)",
+          "oklch(26% 0.063 163)",
+          "oklch(38% 0.063 163)",
+          "oklch(49% 0.063 163)",
+          "oklch(61% 0.063 163)",
+          "oklch(72% 0.063 163)",
+          "oklch(84% 0.063 163)",
+          "oklch(95% 0.063 163)"
+        ]
+      },
+      "green-hover": {
+        "role": "primary",
+        "displayName": "Rail Hover Green",
+        "canonical": "#164a35",
+        "oklch": "oklch(36.8% 0.066 163)",
+        "tonalRamp": [
+          "oklch(15% 0.066 163)",
+          "oklch(26% 0.066 163)",
+          "oklch(38% 0.066 163)",
+          "oklch(49% 0.066 163)",
+          "oklch(61% 0.066 163)",
+          "oklch(72% 0.066 163)",
+          "oklch(84% 0.066 163)",
+          "oklch(95% 0.066 163)"
+        ]
+      },
+      "on-green": {
+        "role": "primary",
+        "displayName": "Rail Text",
+        "canonical": "#f2f6f3",
+        "oklch": "oklch(96.9% 0.006 154)",
+        "tonalRamp": [
+          "oklch(15% 0.006 154)",
+          "oklch(26% 0.006 154)",
+          "oklch(38% 0.006 154)",
+          "oklch(49% 0.006 154)",
+          "oklch(61% 0.006 154)",
+          "oklch(72% 0.006 154)",
+          "oklch(84% 0.006 154)",
+          "oklch(95% 0.006 154)"
+        ]
+      },
+      "on-green-2": {
+        "role": "primary",
+        "displayName": "Rail Secondary Text",
+        "canonical": "#b6cdbf",
+        "oklch": "oklch(82.7% 0.031 159)",
+        "tonalRamp": [
+          "oklch(15% 0.031 159)",
+          "oklch(26% 0.031 159)",
+          "oklch(38% 0.031 159)",
+          "oklch(49% 0.031 159)",
+          "oklch(61% 0.031 159)",
+          "oklch(72% 0.031 159)",
+          "oklch(84% 0.031 159)",
+          "oklch(95% 0.031 159)"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Cool Ground",
+        "canonical": "#f3f6f5",
+        "oklch": "oklch(97.1% 0.003 174)",
+        "tonalRamp": [
+          "oklch(15% 0.003 174)",
+          "oklch(26% 0.003 174)",
+          "oklch(38% 0.003 174)",
+          "oklch(49% 0.003 174)",
+          "oklch(61% 0.003 174)",
+          "oklch(72% 0.003 174)",
+          "oklch(84% 0.003 174)",
+          "oklch(95% 0.003 174)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(26% 0.000 90)",
+          "oklch(38% 0.000 90)",
+          "oklch(49% 0.000 90)",
+          "oklch(61% 0.000 90)",
+          "oklch(72% 0.000 90)",
+          "oklch(84% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#121614",
+        "oklch": "oklch(19.5% 0.007 164)",
+        "tonalRamp": [
+          "oklch(15% 0.007 164)",
+          "oklch(26% 0.007 164)",
+          "oklch(38% 0.007 164)",
+          "oklch(49% 0.007 164)",
+          "oklch(61% 0.007 164)",
+          "oklch(72% 0.007 164)",
+          "oklch(84% 0.007 164)",
+          "oklch(95% 0.007 164)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "canonical": "#44514d",
+        "oklch": "oklch(42.2% 0.018 175)",
+        "tonalRamp": [
+          "oklch(15% 0.018 175)",
+          "oklch(26% 0.018 175)",
+          "oklch(38% 0.018 175)",
+          "oklch(49% 0.018 175)",
+          "oklch(61% 0.018 175)",
+          "oklch(72% 0.018 175)",
+          "oklch(84% 0.018 175)",
+          "oklch(95% 0.018 175)"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink Tertiary",
+        "canonical": "#5c6865",
+        "oklch": "oklch(50.6% 0.015 179)",
+        "tonalRamp": [
+          "oklch(15% 0.015 179)",
+          "oklch(26% 0.015 179)",
+          "oklch(38% 0.015 179)",
+          "oklch(49% 0.015 179)",
+          "oklch(61% 0.015 179)",
+          "oklch(72% 0.015 179)",
+          "oklch(84% 0.015 179)",
+          "oklch(95% 0.015 179)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#d4dcd9",
+        "oklch": "oklch(88.8% 0.010 172)",
+        "tonalRamp": [
+          "oklch(15% 0.010 172)",
+          "oklch(26% 0.010 172)",
+          "oklch(38% 0.010 172)",
+          "oklch(49% 0.010 172)",
+          "oklch(61% 0.010 172)",
+          "oklch(72% 0.010 172)",
+          "oklch(84% 0.010 172)",
+          "oklch(95% 0.010 172)"
+        ]
+      },
+      "rule-2": {
+        "role": "neutral",
+        "displayName": "Strong Rule",
+        "canonical": "#a9b6b1",
+        "oklch": "oklch(76.5% 0.016 171)",
+        "tonalRamp": [
+          "oklch(15% 0.016 171)",
+          "oklch(26% 0.016 171)",
+          "oklch(38% 0.016 171)",
+          "oklch(49% 0.016 171)",
+          "oklch(61% 0.016 171)",
+          "oklch(72% 0.016 171)",
+          "oklch(84% 0.016 171)",
+          "oklch(95% 0.016 171)"
+        ]
+      },
+      "yellow": {
+        "role": "secondary",
+        "displayName": "Kit Yellow",
+        "canonical": "#f5c518",
+        "oklch": "oklch(84.2% 0.168 90)",
+        "tonalRamp": [
+          "oklch(15% 0.168 90)",
+          "oklch(26% 0.168 90)",
+          "oklch(38% 0.168 90)",
+          "oklch(49% 0.168 90)",
+          "oklch(61% 0.168 90)",
+          "oklch(72% 0.168 90)",
+          "oklch(84% 0.168 90)",
+          "oklch(95% 0.168 90)"
+        ]
+      },
+      "yellow-hover": {
+        "role": "secondary",
+        "displayName": "Kit Yellow Hover",
+        "canonical": "#e3b406",
+        "oklch": "oklch(79.0% 0.161 90)",
+        "tonalRamp": [
+          "oklch(15% 0.161 90)",
+          "oklch(26% 0.161 90)",
+          "oklch(38% 0.161 90)",
+          "oklch(49% 0.161 90)",
+          "oklch(61% 0.161 90)",
+          "oklch(72% 0.161 90)",
+          "oklch(84% 0.161 90)",
+          "oklch(95% 0.161 90)"
+        ]
+      },
+      "yellow-edge": {
+        "role": "secondary",
+        "displayName": "Yellow Edge",
+        "canonical": "#c99f00",
+        "oklch": "oklch(72.1% 0.147 90)",
+        "tonalRamp": [
+          "oklch(15% 0.147 90)",
+          "oklch(26% 0.147 90)",
+          "oklch(38% 0.147 90)",
+          "oklch(49% 0.147 90)",
+          "oklch(61% 0.147 90)",
+          "oklch(72% 0.147 90)",
+          "oklch(84% 0.147 90)",
+          "oklch(95% 0.147 90)"
+        ]
+      },
+      "yellow-soft": {
+        "role": "secondary",
+        "displayName": "Yellow Wash",
+        "canonical": "#fdf3c6",
+        "oklch": "oklch(96.1% 0.059 97)",
+        "tonalRamp": [
+          "oklch(15% 0.059 97)",
+          "oklch(26% 0.059 97)",
+          "oklch(38% 0.059 97)",
+          "oklch(49% 0.059 97)",
+          "oklch(61% 0.059 97)",
+          "oklch(72% 0.059 97)",
+          "oklch(84% 0.059 97)",
+          "oklch(95% 0.059 97)"
+        ]
+      },
+      "yellow-text": {
+        "role": "secondary",
+        "displayName": "Yellow Ink",
+        "canonical": "#7a5c00",
+        "oklch": "oklch(49.2% 0.101 86)",
+        "tonalRamp": [
+          "oklch(15% 0.101 86)",
+          "oklch(26% 0.101 86)",
+          "oklch(38% 0.101 86)",
+          "oklch(49% 0.101 86)",
+          "oklch(61% 0.101 86)",
+          "oklch(72% 0.101 86)",
+          "oklch(84% 0.101 86)",
+          "oklch(95% 0.101 86)"
+        ]
+      },
+      "zone-strong": {
+        "role": "neutral",
+        "displayName": "Strong-Fit Zone",
+        "canonical": "#fffcf0",
+        "oklch": "oklch(99.0% 0.016 95)",
+        "tonalRamp": [
+          "oklch(15% 0.016 95)",
+          "oklch(26% 0.016 95)",
+          "oklch(38% 0.016 95)",
+          "oklch(49% 0.016 95)",
+          "oklch(61% 0.016 95)",
+          "oklch(72% 0.016 95)",
+          "oklch(84% 0.016 95)",
+          "oklch(95% 0.016 95)"
+        ]
+      },
+      "zone-weak": {
+        "role": "neutral",
+        "displayName": "Weak-Fit Zone",
+        "canonical": "#f7f8f8",
+        "oklch": "oklch(97.8% 0.001 197)",
+        "tonalRamp": [
+          "oklch(15% 0.001 197)",
+          "oklch(26% 0.001 197)",
+          "oklch(38% 0.001 197)",
+          "oklch(49% 0.001 197)",
+          "oklch(61% 0.001 197)",
+          "oklch(72% 0.001 197)",
+          "oklch(84% 0.001 197)",
+          "oklch(95% 0.001 197)"
+        ]
+      },
+      "claret": {
+        "role": "tertiary",
+        "displayName": "Claret",
+        "canonical": "#7b1e3a",
+        "oklch": "oklch(39.6% 0.128 7)",
+        "tonalRamp": [
+          "oklch(15% 0.128 7)",
+          "oklch(26% 0.128 7)",
+          "oklch(38% 0.128 7)",
+          "oklch(49% 0.128 7)",
+          "oklch(61% 0.128 7)",
+          "oklch(72% 0.128 7)",
+          "oklch(84% 0.128 7)",
+          "oklch(95% 0.128 7)"
+        ]
+      },
+      "claret-soft": {
+        "role": "tertiary",
+        "displayName": "Claret Wash",
+        "canonical": "#f7e8ed",
+        "oklch": "oklch(94.4% 0.018 355)",
+        "tonalRamp": [
+          "oklch(15% 0.018 355)",
+          "oklch(26% 0.018 355)",
+          "oklch(38% 0.018 355)",
+          "oklch(49% 0.018 355)",
+          "oklch(61% 0.018 355)",
+          "oklch(72% 0.018 355)",
+          "oklch(84% 0.018 355)",
+          "oklch(95% 0.018 355)"
+        ]
+      },
+      "claret-rule": {
+        "role": "tertiary",
+        "displayName": "Claret Rule",
+        "canonical": "#d9b3bf",
+        "oklch": "oklch(80.4% 0.047 357)",
+        "tonalRamp": [
+          "oklch(15% 0.047 357)",
+          "oklch(26% 0.047 357)",
+          "oklch(38% 0.047 357)",
+          "oklch(49% 0.047 357)",
+          "oklch(61% 0.047 357)",
+          "oklch(72% 0.047 357)",
+          "oklch(84% 0.047 357)",
+          "oklch(95% 0.047 357)"
+        ]
+      },
+      "up": {
+        "role": "tertiary",
+        "displayName": "Signal Green",
+        "canonical": "#1b6a46",
+        "oklch": "oklch(46.8% 0.096 159)",
+        "tonalRamp": [
+          "oklch(15% 0.096 159)",
+          "oklch(26% 0.096 159)",
+          "oklch(38% 0.096 159)",
+          "oklch(49% 0.096 159)",
+          "oklch(61% 0.096 159)",
+          "oklch(72% 0.096 159)",
+          "oklch(84% 0.096 159)",
+          "oklch(95% 0.096 159)"
+        ]
+      },
+      "up-soft": {
+        "role": "tertiary",
+        "displayName": "Signal Green Wash",
+        "canonical": "#e3f1ea",
+        "oklch": "oklch(94.6% 0.017 165)",
+        "tonalRamp": [
+          "oklch(15% 0.017 165)",
+          "oklch(26% 0.017 165)",
+          "oklch(38% 0.017 165)",
+          "oklch(49% 0.017 165)",
+          "oklch(61% 0.017 165)",
+          "oklch(72% 0.017 165)",
+          "oklch(84% 0.017 165)",
+          "oklch(95% 0.017 165)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page heading on every screen, uppercase; the date on Today."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The main action on Today."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Uppercase section titles beside the count tab."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All prose, in the system sans."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase table heads, threshold captions and capacity labels."
+      },
+      "field-label": {
+        "displayName": "Field label",
+        "purpose": "Form labels and button text."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Every number, tabular lining figures."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating-panel",
+        "value": "0 8px 24px rgba(10, 43, 30, 0.28)",
+        "purpose": "Minimised run panel docked bottom right."
+      },
+      {
+        "name": "bottom-sheet",
+        "value": "0 -8px 24px rgba(10, 43, 30, 0.25)",
+        "purpose": "Run panel as a mobile bottom sheet."
+      },
+      {
+        "name": "drawer-scrim",
+        "value": "0 0 0 100vmax rgba(10, 43, 30, 0.4)",
+        "purpose": "Dims the page behind the open mobile rail."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The single easing curve for all transitions."
+      },
+      {
+        "name": "state",
+        "value": "160ms",
+        "purpose": "Button, nav and drop-zone colour changes."
+      },
+      {
+        "name": "row",
+        "value": "200ms",
+        "purpose": "Table row hover and the disclosure chevron."
+      },
+      {
+        "name": "toast-in",
+        "value": "220ms",
+        "purpose": "Toast slides down 6px and fades in."
+      },
+      {
+        "name": "drawer",
+        "value": "240ms",
+        "purpose": "Mobile rail slides in from the left."
+      },
+      {
+        "name": "step-in",
+        "value": "700ms",
+        "purpose": "Yellow wash fades off a newly current run step."
+      },
+      {
+        "name": "pulse",
+        "value": "1.6s ease-in-out infinite",
+        "purpose": "Busy engine dot and current run-step marker."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "All animation and transition durations under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "860px",
+        "purpose": "Viewport max-width: rail to top bar and drawer, run panel to bottom sheet."
+      },
+      {
+        "name": "main-phone",
+        "value": "640px",
+        "purpose": "Container (main) max-width: jobs table rows become wrapped entries."
+      },
+      {
+        "name": "main-profile",
+        "value": "900px",
+        "purpose": "Container (main) min-width: Profile in two columns."
+      },
+      {
+        "name": "main-narrow",
+        "value": "1000px",
+        "purpose": "Container (main) max-width: jobs table drops location, board, posted."
+      },
+      {
+        "name": "main-today",
+        "value": "1080px",
+        "purpose": "Container (main) min-width: Today in two columns."
+      }
+    ],
+    "layout": {
+      "railWidth": "232px",
+      "panelWidth": "384px",
+      "screenMaxWidth": "1180px",
+      "mainPadding": "36px 44px 72px",
+      "mobileMainPadding": "22px 16px 120px",
+      "topBarHeight": "56px"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one next action on a view.",
+      "html": "<button class=\"ds-btn-primary\">Open the package</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 18px;border-radius:3px;border:1px solid transparent;font:600 0.95rem/1.2 var(--sans, 'Segoe UI', system-ui, sans-serif);cursor:pointer;transition:background-color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),border-color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1));background:var(--yellow, #f5c518);color:var(--ink, #121614);border-color:#c99f00;} .ds-btn-primary:hover{background:var(--yellow-hover, #e3b406);} .ds-btn-primary:focus-visible{outline:3px solid var(--focus, #1b6a46);outline-offset:2px;} .ds-btn-primary:active{transform:translateY(1px);}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Row actions such as Prepare; inverts to ink on hover.",
+      "html": "<button class=\"ds-btn-secondary\">Prepare</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 18px;border-radius:3px;border:1px solid transparent;font:600 0.95rem/1.2 var(--sans, 'Segoe UI', system-ui, sans-serif);cursor:pointer;transition:background-color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),border-color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1));background:var(--paper, #fff);color:var(--ink, #121614);border-color:var(--ink, #121614);} .ds-btn-secondary:hover{background:var(--ink, #121614);color:var(--paper, #fff);} .ds-btn-secondary:focus-visible{outline:3px solid var(--focus, #1b6a46);outline-offset:2px;} .ds-btn-secondary:active{transform:translateY(1px);}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Low-emphasis actions such as Close and Cancel.",
+      "html": "<button class=\"ds-btn-quiet\">Close</button>",
+      "css": ".ds-btn-quiet{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 18px;border-radius:3px;border:1px solid transparent;font:600 0.95rem/1.2 var(--sans, 'Segoe UI', system-ui, sans-serif);cursor:pointer;transition:background-color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),border-color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1));background:transparent;color:var(--ink, #121614);border-color:var(--rule-2, #a9b6b1);} .ds-btn-quiet:hover{border-color:var(--ink, #121614);background:var(--paper, #fff);} .ds-btn-quiet:focus-visible{outline:3px solid var(--focus, #1b6a46);outline-offset:2px;} .ds-btn-quiet:active{transform:translateY(1px);}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labelled field on paper with a flush signal-green focus ring.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Link to the job posting</span><input class=\"ds-input\" type=\"url\" placeholder=\"https://...\"></label>",
+      "css": ".ds-field{display:grid;gap:6px;max-width:420px;font-family:var(--sans, 'Segoe UI', system-ui, sans-serif);} .ds-field-label{font-weight:600;font-size:0.9rem;color:var(--ink, #121614);} .ds-input{min-height:42px;padding:9px 12px;background:var(--paper, #fff);border:1px solid var(--rule-2, #a9b6b1);border-radius:2px;color:var(--ink, #121614);font:15px/1.55 var(--sans, 'Segoe UI', system-ui, sans-serif);} .ds-input::placeholder{color:#66726f;} .ds-input:hover{border-color:var(--ink-3, #5c6865);} .ds-input:focus-visible{outline:3px solid var(--focus, #1b6a46);outline-offset:0;border-color:var(--ink, #121614);}"
+    },
+    {
+      "name": "Rail Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Flat bottle-green rail; current page in deep green with a yellow icon; yellow count badges.",
+      "html": "<nav class=\"ds-rail\"><a class=\"ds-nav-item is-current\" href=\"#\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\"><rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15\" rx=\"1.5\"/><path d=\"M3.5 9.5h17M8 3v4M16 3v4M8 14h3\"/></svg><span class=\"ds-nav-label\">Today</span><span class=\"ds-badge\">2</span></a><a class=\"ds-nav-item\" href=\"#\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\"><path d=\"M4 6h16M4 12h16M4 18h10\"/><path d=\"M18 16.5l1.5 1.5 3-3\"/></svg><span class=\"ds-nav-label\">Jobs</span><span class=\"ds-badge\">10</span></a></nav>",
+      "css": ".ds-rail{display:grid;gap:2px;width:232px;padding:16px;background:var(--green, #0f3b2a);font-family:var(--sans, 'Segoe UI', system-ui, sans-serif);} .ds-nav-item{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 10px;border-radius:3px;text-decoration:none;color:var(--on-green-2, #b6cdbf);font-weight:600;transition:background-color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),color 160ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1));} .ds-nav-item:hover{background:var(--green-hover, #164a35);color:var(--on-green, #f2f6f3);} .ds-nav-item.is-current{background:var(--green-deep, #0a2b1e);color:var(--on-green, #f2f6f3);} .ds-nav-item.is-current .ds-ico{color:var(--yellow, #f5c518);} .ds-nav-item:focus-visible{outline:3px solid var(--yellow, #f5c518);outline-offset:2px;} .ds-nav-label{flex:1;} .ds-ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;} .ds-badge{min-width:26px;height:22px;padding:0 6px;display:inline-grid;place-items:center;background:var(--yellow, #f5c518);color:var(--ink, #121614);border-radius:2px;font:700 0.95rem var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);font-variant-numeric:tabular-nums;}"
+    },
+    {
+      "name": "Status Labels",
+      "kind": "chip",
+      "refersTo": "status-strong",
+      "description": "Fit and application status; each variant carries a word, never colour alone.",
+      "html": "<span class=\"ds-status ds-st-strong\">Strong fit</span> <span class=\"ds-status ds-st-maybe\">Possible</span> <span class=\"ds-status ds-st-weak\">Weak fit</span> <span class=\"ds-status ds-st-gate\">Set aside</span> <span class=\"ds-status ds-st-ready\">Ready</span>",
+      "css": ".ds-status{display:inline-block;padding:2px 8px;border-radius:2px;font:600 0.82rem var(--sans, 'Segoe UI', system-ui, sans-serif);white-space:nowrap;border:1px solid var(--rule, #d4dcd9);} .ds-st-strong{background:var(--up-soft, #e3f1ea);color:var(--up, #1b6a46);border-color:#b9dccb;} .ds-st-maybe{background:var(--paper, #fff);color:var(--ink-2, #44514d);} .ds-st-weak{background:transparent;color:var(--ink-3, #5c6865);border-style:dashed;} .ds-st-gate{background:var(--claret, #7b1e3a);color:#fff;border-color:var(--claret, #7b1e3a);} .ds-st-ready{background:var(--yellow, #f5c518);color:var(--ink, #121614);border-color:#c99f00;}"
+    },
+    {
+      "name": "Ruled Section Head",
+      "kind": "card",
+      "refersTo": "count-tab",
+      "description": "Sections replace cards: a 2px ink rule, condensed uppercase title, and an ink count tab.",
+      "html": "<section class=\"ds-section\"><div class=\"ds-section-head\"><h2>Ranked by fit</h2><span class=\"ds-count\">11</span></div><p class=\"ds-section-body\">Section contents sit on the ground.</p></section>",
+      "css": ".ds-section{border-top:2px solid var(--ink, #121614);display:grid;gap:14px;max-width:560px;} .ds-section-head{display:flex;justify-content:space-between;gap:12px;} .ds-section-head h2{margin:0;padding-top:8px;font:600 1.2rem/1.2 var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);text-transform:uppercase;letter-spacing:0.03em;color:var(--ink, #121614);} .ds-count{background:var(--ink, #121614);color:var(--paper, #fff);min-width:40px;padding:4px 10px 5px;display:inline-grid;place-items:center;font:700 1.15rem var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);font-variant-numeric:tabular-nums;align-self:flex-start;} .ds-section-body{margin:0;color:var(--ink-2, #44514d);font:15px/1.55 var(--sans, 'Segoe UI', system-ui, sans-serif);}"
+    },
+    {
+      "name": "League Table with Threshold Line",
+      "kind": "custom",
+      "refersTo": "threshold-80-tag",
+      "description": "Signature: ranked rows with condensed figures and the yellow 80 line drawn where the ranking crosses it.",
+      "html": "<table class=\"ds-league\"><thead><tr><th>#</th><th>Fit</th><th>Job</th></tr></thead><tbody><tr class=\"ds-tier-a\"><td class=\"ds-pos\">4</td><td class=\"ds-score\">81</td><td><b>QA/QC Coordinator</b><br><span class=\"ds-co\">Red River Analytical</span></td></tr><tr class=\"ds-threshold\"><td colspan=\"3\"><div class=\"ds-rule\"><span class=\"ds-rule-num\">80</span><span class=\"ds-rule-text\">Strong fit above this line: Candor drafts these</span></div></td></tr><tr><td class=\"ds-pos\">5</td><td class=\"ds-score\">76</td><td><b>Monitoring Technician</b><br><span class=\"ds-co\">Manitoba Hydro Partners</span></td></tr></tbody></table>",
+      "css": ".ds-league{border-collapse:collapse;width:100%;max-width:560px;background:var(--paper, #fff);font:15px/1.55 var(--sans, 'Segoe UI', system-ui, sans-serif);color:var(--ink, #121614);} .ds-league th{text-align:left;padding:8px 10px;border-bottom:2px solid var(--ink, #121614);font:600 0.86rem var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-2, #44514d);} .ds-league td{padding:10px;border-bottom:1px solid var(--rule, #d4dcd9);vertical-align:middle;} .ds-league tbody tr:not(.ds-threshold) td{transition:background-color 200ms var(--ease, cubic-bezier(0.16, 1, 0.3, 1));} .ds-league tbody tr:not(.ds-threshold):hover td{background:#f7faf8;} .ds-tier-a td{background:#fffcf0;} .ds-pos{font:1.15rem var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);color:var(--ink-3, #5c6865);font-variant-numeric:tabular-nums;} .ds-score{font:700 1.45rem var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);font-variant-numeric:tabular-nums;} .ds-co{color:var(--ink-2, #44514d);font-size:0.92rem;} .ds-threshold td{padding:0;border-bottom:0;} .ds-rule{display:flex;gap:10px;border-top:3px solid var(--yellow, #f5c518);margin-top:-1px;} .ds-rule-num{background:var(--yellow, #f5c518);color:var(--ink, #121614);font:700 1rem/1.2 var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);padding:1px 8px 2px;} .ds-rule-text{font:600 0.92rem var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);text-transform:uppercase;letter-spacing:0.04em;color:var(--yellow-text, #7a5c00);padding-top:2px;}"
+    },
+    {
+      "name": "Form Guide Chips",
+      "kind": "custom",
+      "refersTo": "form-chip",
+      "description": "Signature: an application's stages as square chips; dashed squares for stages not yet reached.",
+      "html": "<ol class=\"ds-chips\" aria-label=\"Found, drafted, sent, interview\"><li class=\"ds-chip\">F</li><li class=\"ds-chip\">D</li><li class=\"ds-chip\">S</li><li class=\"ds-chip ds-ch-up\">I</li><li class=\"ds-chip ds-ch-ahead\" aria-hidden=\"true\"></li></ol>",
+      "css": ".ds-chips{display:flex;gap:3px;margin:0;padding:0;list-style:none;} .ds-chip{width:24px;height:24px;display:grid;place-items:center;border-radius:2px;font:700 0.92rem/1 var(--display, 'Barlow Condensed', 'Arial Narrow', sans-serif);background:var(--ink, #121614);color:var(--paper, #fff);} .ds-ch-up{background:var(--up, #1b6a46);} .ds-ch-win{background:var(--yellow, #f5c518);color:var(--ink, #121614);} .ds-ch-bad{background:var(--claret, #7b1e3a);} .ds-ch-ahead{background:transparent;border:1px dashed var(--rule-2, #a9b6b1);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Printed League Table",
+    "overview": "Candor looks like the results page of a sports paper: a ranked table of jobs with position numbers on the left, condensed figures, ruled rows, and lines drawn across the table at 80 and 60. A flat bottle-green rail holds the name and navigation; the work sits on a cool white ground. Colour is applied in large flat fields (the rail, the run panel, the mobile top bar) and in a small set of signals that each mean one thing: yellow for what to do next and the 80 line, claret for anything blocked or set aside, signal green for success and links.\n\nDensity is medium. Screens are built from ruled sections, tables and lists rather than cards. Every screen opens with a condensed uppercase heading and one plain sentence of status, then the main action. The run panel is the only place the green field carries running text; it reads as a log of what the assistant is doing, step by step.\n\nThe interface is light only (`color-scheme: light`). There is no dark theme.",
+    "keyCharacteristics": [
+      "Bottle-green rail and run panel as flat fields; no green tints on the work ground.",
+      "Barlow Condensed for headings, table heads and every number; system sans for prose.",
+      "Sections are a 2px ink top rule with an ink count tab, not boxed cards.",
+      "The jobs table draws a yellow 80 line and an ink 60 line where the ranking crosses them.",
+      "Each application shows its journey as a row of small square result chips (the form guide).",
+      "Square-ish corners (2px and 3px), one-pixel rules, no shadows on the work ground."
+    ],
+    "rules": [
+      {
+        "name": "The Flat Field Rule",
+        "body": "Bottle green appears only as a whole region (rail, top bar, run panel). On the white ground, green means success or a link and uses signal green, not bottle green.",
+        "section": "colors"
+      },
+      {
+        "name": "The Act-Now Yellow Rule",
+        "body": "Yellow marks the thing the person should act on or the line that decides drafting. It is never decoration, and it is never a text colour on white; yellow-family words use yellow ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Claret-Means-Blocked Rule",
+        "body": "Claret is reserved for blocked, set-aside, failed and rejected states, and always travels with words saying why.",
+        "section": "colors"
+      },
+      {
+        "name": "The Condensed Figures Rule",
+        "body": "Every number (scores, positions, counts, dates, durations) is set in Barlow Condensed with tabular lining figures so columns align.",
+        "section": "typography"
+      },
+      {
+        "name": "The Uppercase-Is-Structure Rule",
+        "body": "Uppercase appears only in the condensed face for headings, table heads and captions. Prose and buttons stay sentence case in the system sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Ground Rule",
+        "body": "Nothing on the work ground casts a shadow. A surface earns a shadow only when it floats above the page (minimised panel, bottom sheet, drawer).",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** set every number in Barlow Condensed with tabular lining figures.",
+      "**Do** open each section with the 2px ink rule and an ink count tab.",
+      "**Do** keep one yellow primary button per view, on the next thing the person should do.",
+      "**Do** write the reason next to anything claret: a set-aside job, a failed run, a rejection.",
+      "**Do** draw the 80 and 60 lines only where the ranking crosses them.",
+      "**Do** keep targets 40 to 44px tall and keep the 3px focus ring visible (yellow on green, signal green on light).",
+      "**Do** let layout respond to main's width through the container queries, so an open run panel reflows the screen."
+    ],
+    "donts": [
+      "**Don't** use bottle green as an accent on the white ground; use signal green for success and links.",
+      "**Don't** set yellow text on white or paper; use yellow ink.",
+      "**Don't** wrap sections in shadowed or rounded cards.",
+      "**Don't** add shadows to anything that does not float over the page.",
+      "**Don't** use claret for emphasis or decoration.",
+      "**Don't** set prose or button labels in uppercase or in the condensed face."
+    ]
+  }
+}
